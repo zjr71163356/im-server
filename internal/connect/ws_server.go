@@ -23,8 +23,7 @@ func wsHandler(w http.ResponseWriter, r *http.Request) {
 		slog.Error("Failed to upgrade connection", "error", err)
 		return
 	}
-	conn := NewWSConnection(wsConn, ConnContext{})
-
+	StartWSConn(wsConn, &Session{})
 
 }
 

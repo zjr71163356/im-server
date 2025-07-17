@@ -2,17 +2,22 @@ package connect
 
 import (
 	"container/list"
+	"im-server/pkg/protocol/pb/connectpb"
+	"log/slog"
 	"net"
 	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
+	"google.golang.org/protobuf/proto"
 )
 
 type Transport interface {
 	Write([]byte) error
 	Close() error
 	RemoteAddr() net.Addr
+	SetReadDeadline(t time.Time) error
+	ReadMessage() ([]byte, error)
 }
 type WSTransport struct {
 	Mutex sync.Mutex      // WS写锁
@@ -43,6 +48,26 @@ func (wst *WSTransport) RemoteAddr() net.Addr {
 	return wst.Ws.RemoteAddr()
 }
 
+func (wst *WSTransport) SetReadDeadline(t time.Time) error {
+	return wst.Ws.SetReadDeadline(t)
+}
+
+func (wst *WSTransport) ReadMessage() ([]byte, error) {
+	_, buf, err := wst.Ws.ReadMessage()
+	return buf, err
+
+}
+
+func (wst *WSTransport) handleConn() {
+	for {
+		err := wst.Ws.SetReadDeadline(time.Now().Add(12 * time.Minute))
+		if err != nil {
+			wst.Ws.Close()
+			return
+		}
+	}
+}
+
 type Session struct {
 	UserID   uint64        // 用户ID
 	DeviceID uint64        // 设备ID
@@ -55,20 +80,45 @@ type Conn struct {
 	Transport Transport
 }
 
-func NewWSConnection(ws *websocket.Conn, session *Session) *Conn {
-	return &Conn{
+func StartWSConn(ws *websocket.Conn, session *Session) {
+	conn := &Conn{
 		Session:   session,
 		Transport: &WSTransport{Ws: ws},
 	}
+	go conn.Serve()
 }
 
+// SignIn 登录
+func (c *Conn) SignIn(packet *connectpb.Packet) {}
+
 func (c *Conn) Write(buf []byte) error {
-	var err error
-	err = c.Transport.Write(buf)
+	err := c.Transport.Write(buf)
 	if err != nil {
 		c.Close()
 	}
 	return err
+}
+
+func (c *Conn) HandleMessage(buf []byte) {
+	var packet = new(connectpb.Packet)
+	err := proto.Unmarshal(buf, packet)
+	if err != nil {
+		slog.Error("unmarshal error", "error", err, "len", len(buf))
+		return
+	}
+
+	if packet.Command != connectpb.Command_SIGN_IN && c.Session.UserID == 0 {
+		slog.Error("unauthorized command", "command", packet.Command)
+		return
+	}
+	switch packet.Command {
+	case connectpb.Command_SIGN_IN:
+		c.SignIn(packet)
+
+	default:
+		slog.Error("handler switch other")
+	}
+
 }
 
 func (c *Conn) Close() {
@@ -79,4 +129,20 @@ func (c *Conn) Close() {
 
 	c.Transport.Close()
 
+}
+
+func (c *Conn) Serve() {
+	for {
+		err := c.Transport.SetReadDeadline(time.Now().Add(12 * time.Minute))
+		if err != nil {
+			c.Close()
+			return
+		}
+		data, err := c.Transport.ReadMessage() // 读取消息
+		if err != nil {
+			c.Close()
+			return
+		}
+		c.HandleMessage(data)
+	}
 }
