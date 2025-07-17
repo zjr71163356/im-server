@@ -176,3 +176,6 @@ im-server/
 main.go启动WS服务,设置路由及其处理器wsHandler，wsHandler中实现HTTP请求upgrade到websocket协议，再进行数据包的写入
 main()->StartWSServer(wsHandler)
 wsHandler->
+
+### 完成
+[7.11]完成了客户端请求->WsHandler->

@@ -1,0 +1,30 @@
+syntax = "proto3";
+package connect;
+option go_package = "pkg/protocol/pb/connectpb";
+
+ 
+
+enum Command {
+  UNKNOWN = 0; // 未知
+  SIGN_IN = 1; // 设备登录请求
+  SYNC = 2; // 消息同步触发
+  HEARTBEAT = 3; // 心跳
+  MESSAGE = 4; // 消息投递
+  SUBSCRIBE_ROOM = 5; // 订阅房间
+}
+
+// 包
+message Packet {
+  Command command = 1; // 指令 说明了用于通信的数据包对应的服务类型
+  int64 request_id = 2; // 请求id 用于解决异步请求时server端和客户端的请求响应匹配问题
+  int32 code = 3; // 错误码 
+  string message = 4; // 错误信息 
+  bytes data = 5; // 数据 
+}
+
+// 设备登录,package_type:1
+message SignInInput {
+  uint64 device_id = 1; // 设备id  
+  uint64 user_id = 2; // 用户id 
+  string token = 3; // 秘钥 
+}
