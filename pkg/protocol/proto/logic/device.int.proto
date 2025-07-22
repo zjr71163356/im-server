@@ -1,0 +1,28 @@
+syntax = "proto3";
+package logic;
+option go_package = "pkg/protocol/pb/logicpb";
+
+import "google/protobuf/empty.proto";
+
+
+service DeviceIntService {
+  // 登录
+  rpc ConnSignIn (ConnSignInRequest) returns (google.protobuf.Empty);
+  // 设备离线
+  rpc Offline (OfflineRequest) returns (google.protobuf.Empty);
+
+}
+
+message ConnSignInRequest {
+  uint64 device_id = 1; // 设备id
+  uint64 user_id = 2; // 用户id
+  string token = 3; // 秘钥
+  string conn_addr = 4; // 服务器地址 表示登录时connect层所在地址，用于room向设备发送消息
+  string client_addr = 5; // 客户端地址
+}
+
+message OfflineRequest {
+  uint64 user_id = 1; // 用户id
+  uint64 device_id = 2; // 设备id
+  string client_addr = 3; // 客户端地址
+}
