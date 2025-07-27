@@ -1,0 +1,31 @@
+version: "2"
+sql:
+  - engine: "mysql"
+    # 使用你的数据库迁移文件作为 schema
+    schema: "db/migrations/000001_init.up.sql"
+    # 查询文件，我们将在 db/queries 目录下创建
+    queries:
+      - "db/queries/user.sql"
+      - "db/queries/device.sql"
+      - "db/queries/friend.sql"
+      - "db/queries/group.sql"
+      - "db/queries/message.sql"
+      - "db/queries/seq.sql"
+    gen:
+      go:
+        package: "repo"
+        out: "internal/repo"
+        # 生成接口，方便 mock 测试
+        emit_interface: true
+        # 为 struct 添加 JSON 标签
+        emit_json_tags: true
+        # 为 struct 添加数据库标签
+        emit_db_tags: true
+        # 生成参数结构体，当查询参数较多时很有用
+        emit_params_struct_pointers: true
+        # 生成结果结构体指针
+        emit_result_struct_pointers: true
+        # 为空值生成指针类型，处理 NULL 值
+        emit_pointers_for_null_types: false
+        # 查询方法前缀，保持为空使用默认命名
+        query_parameter_limit: 32
