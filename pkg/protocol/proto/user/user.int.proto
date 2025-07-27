@@ -1,0 +1,18 @@
+syntax = "proto3";
+package user;
+option go_package = "gim/pkg/protocol/pb/userpb";
+
+import "google/protobuf/empty.proto";
+
+service UserIntService {
+  // 权限校验
+  rpc Auth (AuthRequest) returns (google.protobuf.Empty);
+
+}
+
+message AuthRequest {
+  uint64 user_id = 1;
+  uint64 device_id = 2;
+  string token = 3;
+}
+

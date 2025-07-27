@@ -166,23 +166,8 @@ im-server/
 
 ## ‍
 
-### 需求列表
-
-- 1.需要一个 websocket server，能够实现登录功能
-- main -> StartWSServer -> wsHandler -> StartWSConn -> Serve -> HandleMessage -> SignIn
-
-- 1.1 完成 func (c *Conn) Close() 功能
-- 1.2 完成 func (c *Conn) SignIn(packet \*connectpb.Packet)功能
-
-### 函数
-
-->X 调用 X
-(X) X 作为参数
-
-main.go 启动 WS 服务,设置路由及其处理器 wsHandler，wsHandler 中实现 HTTP 请求 upgrade 到 websocket 协议，再进行数据包的写入
-main()->StartWSServer(wsHandler)
-wsHandler->
 
 ### 完成
 
 [7.11]完成了客户端请求->WsHandler->
+
