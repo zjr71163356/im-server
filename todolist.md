@@ -1,6 +1,11 @@
+- 笔记部分
+- 1.完成了ER图设计思路的部分的总结
+- 2.还没完成关于数据库字段设计部分
 - 数据库部分
+- [7.27]
 - 1.使用golang-migrate包通过create_table.sql文件初始化迁移数据库 √
-- 2.使用
+- 2.编写queries文件夹下的sql文件，用于生成持久化层的函数 √
+- 3.使用sqlc将queries下的所有sql文件生成*.sql.go文件 √
 
 - 代码开发部分
 - 1.需要一个 websocket server，能够实现登录功能
