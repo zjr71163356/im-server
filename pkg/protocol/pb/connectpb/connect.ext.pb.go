@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.6
 // 	protoc        v3.21.12
-// source: connect.ext.proto
+// source: pkg/protocol/proto/connect/connect.ext.proto
 
 package connectpb
 
@@ -63,11 +63,11 @@ func (x Command) String() string {
 }
 
 func (Command) Descriptor() protoreflect.EnumDescriptor {
-	return file_connect_ext_proto_enumTypes[0].Descriptor()
+	return file_pkg_protocol_proto_connect_connect_ext_proto_enumTypes[0].Descriptor()
 }
 
 func (Command) Type() protoreflect.EnumType {
-	return &file_connect_ext_proto_enumTypes[0]
+	return &file_pkg_protocol_proto_connect_connect_ext_proto_enumTypes[0]
 }
 
 func (x Command) Number() protoreflect.EnumNumber {
@@ -76,7 +76,7 @@ func (x Command) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use Command.Descriptor instead.
 func (Command) EnumDescriptor() ([]byte, []int) {
-	return file_connect_ext_proto_rawDescGZIP(), []int{0}
+	return file_pkg_protocol_proto_connect_connect_ext_proto_rawDescGZIP(), []int{0}
 }
 
 // 包
@@ -93,7 +93,7 @@ type Packet struct {
 
 func (x *Packet) Reset() {
 	*x = Packet{}
-	mi := &file_connect_ext_proto_msgTypes[0]
+	mi := &file_pkg_protocol_proto_connect_connect_ext_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -105,7 +105,7 @@ func (x *Packet) String() string {
 func (*Packet) ProtoMessage() {}
 
 func (x *Packet) ProtoReflect() protoreflect.Message {
-	mi := &file_connect_ext_proto_msgTypes[0]
+	mi := &file_pkg_protocol_proto_connect_connect_ext_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -118,7 +118,7 @@ func (x *Packet) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Packet.ProtoReflect.Descriptor instead.
 func (*Packet) Descriptor() ([]byte, []int) {
-	return file_connect_ext_proto_rawDescGZIP(), []int{0}
+	return file_pkg_protocol_proto_connect_connect_ext_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Packet) GetCommand() Command {
@@ -168,7 +168,7 @@ type SignInInput struct {
 
 func (x *SignInInput) Reset() {
 	*x = SignInInput{}
-	mi := &file_connect_ext_proto_msgTypes[1]
+	mi := &file_pkg_protocol_proto_connect_connect_ext_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -180,7 +180,7 @@ func (x *SignInInput) String() string {
 func (*SignInInput) ProtoMessage() {}
 
 func (x *SignInInput) ProtoReflect() protoreflect.Message {
-	mi := &file_connect_ext_proto_msgTypes[1]
+	mi := &file_pkg_protocol_proto_connect_connect_ext_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -193,7 +193,7 @@ func (x *SignInInput) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SignInInput.ProtoReflect.Descriptor instead.
 func (*SignInInput) Descriptor() ([]byte, []int) {
-	return file_connect_ext_proto_rawDescGZIP(), []int{1}
+	return file_pkg_protocol_proto_connect_connect_ext_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *SignInInput) GetDeviceId() uint64 {
@@ -217,11 +217,11 @@ func (x *SignInInput) GetToken() string {
 	return ""
 }
 
-var File_connect_ext_proto protoreflect.FileDescriptor
+var File_pkg_protocol_proto_connect_connect_ext_proto protoreflect.FileDescriptor
 
-const file_connect_ext_proto_rawDesc = "" +
+const file_pkg_protocol_proto_connect_connect_ext_proto_rawDesc = "" +
 	"\n" +
-	"\x11connect.ext.proto\x12\aconnect\"\x95\x01\n" +
+	",pkg/protocol/proto/connect/connect.ext.proto\x12\aconnect\"\x95\x01\n" +
 	"\x06Packet\x12*\n" +
 	"\acommand\x18\x01 \x01(\x0e2\x10.connect.CommandR\acommand\x12\x1d\n" +
 	"\n" +
@@ -242,25 +242,25 @@ const file_connect_ext_proto_rawDesc = "" +
 	"\x0eSUBSCRIBE_ROOM\x10\x05B\x1bZ\x19pkg/protocol/pb/connectpbb\x06proto3"
 
 var (
-	file_connect_ext_proto_rawDescOnce sync.Once
-	file_connect_ext_proto_rawDescData []byte
+	file_pkg_protocol_proto_connect_connect_ext_proto_rawDescOnce sync.Once
+	file_pkg_protocol_proto_connect_connect_ext_proto_rawDescData []byte
 )
 
-func file_connect_ext_proto_rawDescGZIP() []byte {
-	file_connect_ext_proto_rawDescOnce.Do(func() {
-		file_connect_ext_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_connect_ext_proto_rawDesc), len(file_connect_ext_proto_rawDesc)))
+func file_pkg_protocol_proto_connect_connect_ext_proto_rawDescGZIP() []byte {
+	file_pkg_protocol_proto_connect_connect_ext_proto_rawDescOnce.Do(func() {
+		file_pkg_protocol_proto_connect_connect_ext_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_pkg_protocol_proto_connect_connect_ext_proto_rawDesc), len(file_pkg_protocol_proto_connect_connect_ext_proto_rawDesc)))
 	})
-	return file_connect_ext_proto_rawDescData
+	return file_pkg_protocol_proto_connect_connect_ext_proto_rawDescData
 }
 
-var file_connect_ext_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_connect_ext_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_connect_ext_proto_goTypes = []any{
+var file_pkg_protocol_proto_connect_connect_ext_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_pkg_protocol_proto_connect_connect_ext_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_pkg_protocol_proto_connect_connect_ext_proto_goTypes = []any{
 	(Command)(0),        // 0: connect.Command
 	(*Packet)(nil),      // 1: connect.Packet
 	(*SignInInput)(nil), // 2: connect.SignInInput
 }
-var file_connect_ext_proto_depIdxs = []int32{
+var file_pkg_protocol_proto_connect_connect_ext_proto_depIdxs = []int32{
 	0, // 0: connect.Packet.command:type_name -> connect.Command
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
@@ -269,27 +269,27 @@ var file_connect_ext_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_connect_ext_proto_init() }
-func file_connect_ext_proto_init() {
-	if File_connect_ext_proto != nil {
+func init() { file_pkg_protocol_proto_connect_connect_ext_proto_init() }
+func file_pkg_protocol_proto_connect_connect_ext_proto_init() {
+	if File_pkg_protocol_proto_connect_connect_ext_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_connect_ext_proto_rawDesc), len(file_connect_ext_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_protocol_proto_connect_connect_ext_proto_rawDesc), len(file_pkg_protocol_proto_connect_connect_ext_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_connect_ext_proto_goTypes,
-		DependencyIndexes: file_connect_ext_proto_depIdxs,
-		EnumInfos:         file_connect_ext_proto_enumTypes,
-		MessageInfos:      file_connect_ext_proto_msgTypes,
+		GoTypes:           file_pkg_protocol_proto_connect_connect_ext_proto_goTypes,
+		DependencyIndexes: file_pkg_protocol_proto_connect_connect_ext_proto_depIdxs,
+		EnumInfos:         file_pkg_protocol_proto_connect_connect_ext_proto_enumTypes,
+		MessageInfos:      file_pkg_protocol_proto_connect_connect_ext_proto_msgTypes,
 	}.Build()
-	File_connect_ext_proto = out.File
-	file_connect_ext_proto_goTypes = nil
-	file_connect_ext_proto_depIdxs = nil
+	File_pkg_protocol_proto_connect_connect_ext_proto = out.File
+	file_pkg_protocol_proto_connect_connect_ext_proto_goTypes = nil
+	file_pkg_protocol_proto_connect_connect_ext_proto_depIdxs = nil
 }

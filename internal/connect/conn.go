@@ -95,8 +95,8 @@ func (c *Conn) SignIn(packet *connectpb.Packet) {
 		slog.Error("unmarshal error", "error", err)
 		return
 	}
-	
-	//TO DO
+
+	//TODO
 	//使用gRPC进行远程调用函数验证登录
 	//需要验证传入的信息是否与数据库中的符合，必然涉及repo的开发，目前先不加(7.21)
 
