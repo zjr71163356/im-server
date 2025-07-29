@@ -7,7 +7,6 @@ import (
 // Config 应用程序配置
 type Config struct {
     Server   ServerConfig   `yaml:"server" json:"server"`
-    Database DatabaseConfig `yaml:"database" json:"database"`
     RPC      RPCConfig      `yaml:"rpc" json:"rpc"`
 }
 
@@ -17,19 +16,6 @@ type ServerConfig struct {
     Port         int           `yaml:"port" json:"port"`
     ReadTimeout  time.Duration `yaml:"read_timeout" json:"read_timeout"`
     WriteTimeout time.Duration `yaml:"write_timeout" json:"write_timeout"`
-}
-
-// DatabaseConfig 数据库配置
-type DatabaseConfig struct {
-    Driver          string        `yaml:"driver" json:"driver"`
-    Host            string        `yaml:"host" json:"host"`
-    Port            int           `yaml:"port" json:"port"`
-    Username        string        `yaml:"username" json:"username"`
-    Password        string        `yaml:"password" json:"password"`
-    Database        string        `yaml:"database" json:"database"`
-    MaxOpenConns    int           `yaml:"max_open_conns" json:"max_open_conns"`
-    MaxIdleConns    int           `yaml:"max_idle_conns" json:"max_idle_conns"`
-    ConnMaxLifetime time.Duration `yaml:"conn_max_lifetime" json:"conn_max_lifetime"`
 }
 
 // RPCConfig RPC 服务配置
