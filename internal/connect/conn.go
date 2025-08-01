@@ -103,7 +103,7 @@ func (c *Conn) SignIn(packet *connectpb.Packet) {
 	//TODO
 	//使用gRPC进行远程调用函数验证登录context
 	//需要验证传入的信息是否与数据库中的符合，必然涉及repo的开发，目前先不加(7.21)
-	rpc.GetDeviceIntServiceClient().ConnSignIn(context.TODO(), &logicpb.ConnSignInRequest{
+	_, err = rpc.GetDeviceIntServiceClient().ConnSignIn(context.TODO(), &logicpb.ConnSignInRequest{
 		DeviceId:   signInputReq.DeviceId,
 		UserId:     signInputReq.UserId,
 		Token:      signInputReq.Token,
@@ -111,7 +111,11 @@ func (c *Conn) SignIn(packet *connectpb.Packet) {
 		ClientAddr: c.Transport.RemoteAddr().String(),
 	})
 
+	// 发送登录结果给客户端
 	c.Send(packet, nil, err)
+	if err != nil {
+		return
+	}
 
 	c.Session.DeviceID = signInputReq.DeviceId
 	c.Session.UserID = signInputReq.UserId

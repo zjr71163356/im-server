@@ -24,12 +24,18 @@
 - RPC 远程的、在 `logic` 包中的一个函数，该函数是实现了 proto 生成的服务端接口的结构体 (`DeviceIntService`) 的方法 (`ConnSignIn`)
 
 #### 1.2 完成 `func (c *Conn) SignIn(packet *connectpb.Packet)` 功能
-1. 需要生成RPC远程调用时使用的客户端存根 ✅
-2. 需要通过DeviceIntService.proto生成 ✅
-3. 填充ConnSignIn的请求结构体 ✅
-4. 完成上述结构体涉及的config包中ServiceConfig.ConnectEndpoints 部分 ✅
+
+- 需要验证登录信息的正确性，涉及 DeviceIntService 的远程调用 
+
+1. 需要通过.proto 生成 RPC 远程调用 DeviceIntService 时使用的代码 ✅
+2. 需要创建 RPC 客户端(NewDeviceIntServiceClient)用于调用 ✅
+3. 需要通过 DeviceIntService.proto 生成 ✅
+4. 填充 ConnSignIn 的请求结构体 ✅
+5. 完成上述结构体涉及的 config 包中 ServiceConfig.ConnectEndpoints 部分 ✅
+
+- 对远程调用DeviceIntService是否报错进行验证 ✅
 
 ### grpc 的客户端部分
 
-1. 编写 config 中关于 RPC 的 Server/Client config 结构体(还有Database、Server config结构体)
-2. 
+1. 编写 config 中关于 RPC 的 Server/Client config 结构体(还有 Database、Server config 结构体)
+2.
