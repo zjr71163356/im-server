@@ -1,42 +1,65 @@
+// ...existing code...
 package config
 
-import (
-    "time"
-)
-
-// Config 应用程序配置
-type Config struct {
-    Server   ServerConfig   `yaml:"server" json:"server"`
-    RPC      RPCConfig      `yaml:"rpc" json:"rpc"`
+type Configuration struct {
+	Database DatabaseConfig
+	Services ServiceConfig
+	GRPC     GRPCConfig
 }
 
-// ServerConfig 服务器配置
-type ServerConfig struct {
-    Name         string        `yaml:"name" json:"name"`
-    Port         int           `yaml:"port" json:"port"`
-    ReadTimeout  time.Duration `yaml:"read_timeout" json:"read_timeout"`
-    WriteTimeout time.Duration `yaml:"write_timeout" json:"write_timeout"`
+// DatabaseConfig 封装了所有数据存储的配置
+type DatabaseConfig struct {
+	MySQL MySQLConfig
+	Redis RedisConfig
 }
 
-// RPCConfig RPC 服务配置
-type RPCConfig struct {
-    // 当前服务作为 gRPC 服务端时的配置
-    Server RPCServerConfig `yaml:"server" json:"server"`
-    // 当前服务作为 gRPC 客户端时的配置
-    Clients map[string]RPCClientConfig `yaml:"clients" json:"clients"`
+// MySQLConfig 封装了MySQL的配置
+type MySQLConfig struct {
+	DSN string // DSN (Data Source Name) 是更标准的叫法
 }
 
-// RPCServerConfig RPC 服务端配置
-type RPCServerConfig struct {
-    Port    int           `yaml:"port" json:"port"`
-    Timeout time.Duration `yaml:"timeout" json:"timeout"`
+// RedisConfig 封装了Redis的配置
+type RedisConfig struct {
+	Host     string
+	Password string
 }
 
-// RPCClientConfig RPC 客户端配置
-type RPCClientConfig struct {
-    Address     string        `yaml:"address" json:"address"`
-    Timeout     time.Duration `yaml:"timeout" json:"timeout"`
-    MaxRetries  int           `yaml:"max_retries" json:"max_retries"`
-    KeepAlive   time.Duration `yaml:"keep_alive" json:"keep_alive"`
-    DialTimeout time.Duration `yaml:"dial_timeout" json:"dial_timeout"`
+// ServiceConfig 封装了所有服务监听地址的配置
+type ServiceConfig struct {
+	Connect ConnectEndpoints
+	Logic   LogicEndpoints
+	User    UserEndpoints
+	File    FileEndpoints
+}
+
+// ConnectEndpoints 封装了Connect服务的所有监听端点
+type ConnectEndpoints struct {
+	LocalAddr string // 对外暴露给其他服务的地址
+	RPCAddr   string // RPC监听地址
+	TCPAddr   string // TCP长连接监听地址
+	WSAddr    string // WebSocket长连接监听地址
+}
+
+// LogicEndpoints 封装了Logic服务的监听端点
+type LogicEndpoints struct {
+	RPCAddr string
+}
+
+// UserEndpoints 封装了User服务的监听端点
+type UserEndpoints struct {
+	RPCAddr string
+}
+
+// FileEndpoints 封装了File服务的监听端点
+type FileEndpoints struct {
+	HTTPAddr string
+}
+
+// GRPCConfig 封装所有 gRPC 服务的地址
+type GRPCConfig struct {
+	ConnectAddr string // Connect 服务的地址
+	DeviceAddr  string // Device 服务的地址
+	MessageAddr string // Message 服务的地址
+	RoomAddr    string // Room 服务的地址
+	UserAddr    string // User 服务的地址
 }

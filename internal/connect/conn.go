@@ -2,7 +2,9 @@ package connect
 
 import (
 	"container/list"
+	"context"
 	"im-server/pkg/protocol/pb/connectpb"
+	"im-server/pkg/protocol/pb/logicpb"
 	"im-server/pkg/rpc"
 	"log/slog"
 	"net"
@@ -98,9 +100,16 @@ func (c *Conn) SignIn(packet *connectpb.Packet) {
 	}
 
 	//TODO
-	//使用gRPC进行远程调用函数验证登录
+	//使用gRPC进行远程调用函数验证登录context
 	//需要验证传入的信息是否与数据库中的符合，必然涉及repo的开发，目前先不加(7.21)
-	rpc.GetDeviceIntServiceClient().ConnSignIn()
+	rpc.GetDeviceIntServiceClient().ConnSignIn(context.TODO(), &logicpb.ConnSignInRequest{
+		DeviceId:   signInputReq.DeviceId,
+		UserId:     signInputReq.UserId,
+		Token:      signInputReq.Token,
+		ConnAddr:   c.Transport.RemoteAddr().String(),
+		ClientAddr: c.Transport.RemoteAddr().String(),
+	})
+	
 	c.Send(packet, nil, err)
 
 	c.Session.DeviceID = signInputReq.DeviceId

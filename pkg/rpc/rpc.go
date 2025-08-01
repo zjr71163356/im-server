@@ -12,16 +12,17 @@ import (
 var (
 	deviceIntClient logicpb.DeviceIntServiceClient
 	userIntClient   userpb.UserIntServiceClient
-	Config          config.RPCClientConfig
+	Config          config.GRPCConfig
 )
 
 func init() {
 	Config = NewConfig()
 }
 
-func NewConfig() config.RPCClientConfig {
-	return config.RPCClientConfig{
-		Address: "127.0.0.1:8000",
+func NewConfig() config.GRPCConfig {
+	return config.GRPCConfig{
+		DeviceAddr:  "addrs:///127.0.0.1:8010",
+		ConnectAddr: "addrs:///127.0.0.1:8000",
 	}
 }
 
@@ -29,7 +30,7 @@ func GetDeviceIntServiceClient() logicpb.DeviceIntServiceClient {
 
 	if deviceIntClient == nil {
 		// grpc.NewClient 需要 Go 1.59+，参数与 Dial 类似
-		conn := newGrpcClient(Config)
+		conn := newGrpcClient(Config.DeviceAddr)
 		deviceIntClient = logicpb.NewDeviceIntServiceClient(conn)
 
 	}
@@ -37,9 +38,9 @@ func GetDeviceIntServiceClient() logicpb.DeviceIntServiceClient {
 	return deviceIntClient
 }
 
-func newGrpcClient(cfg config.RPCClientConfig) *grpc.ClientConn {
+func newGrpcClient(address string) *grpc.ClientConn {
 	// grpc.NewClient 需要 Go 1.59+，参数与 Dial 类似
-	conn, err := grpc.NewClient(cfg.Address,
+	conn, err := grpc.NewClient(address,
 		grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
