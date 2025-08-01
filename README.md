@@ -20,14 +20,19 @@
 
 #### 完成 `func (c *Conn) Close()` 功能
 
-- 需要 `DeviceIntService` 的 proto 生成客户端存根 
-- RPC 远程的、在 `logic` 包中的一个函数，该函数是实现了 proto 生成的服务端接口的结构体 (`DeviceIntService`) 的方法 (`ConnSignIn`)
+- 对已登录的设备从全局连接管理器中删除连接 ✅ 
+- RPC远程调用DeviceIntService中的Offline使得设备离线
+   - 使用 `protoc` 编译 `DeviceIntService.proto` 文件，生成对应Offline的 Go 代码 ✅ 
+   - 在logic层实现RPC远程调用的服务端的服务中Offline函数
+- 关闭底层的物理连接✅ 
 
-####  完成 `func (c *Conn) SignIn(packet *connectpb.Packet)` 功能
+####  完成 `func (c *Conn) SignIn(packet *connectpb.Packet)` 功能   
+- 需要对传入的数据进行Unmarshal到变量结构体中 ✅
 
-- 需要验证登录时提交的信息的(这里是packet.Data)正确性，涉及 DeviceIntService 的远程调用  ✅
-   1. 需要通过 `.proto` 生成 RPC 远程调用 DeviceIntService 时使用的代码 ✅  
-       - 使用 `protoc` 编译 `DeviceIntService.proto` 文件，生成对应的 Go 代码 ✅  
+- 需要验证登录时提交的信息的(这里是packet.Data)正确性，涉及 DeviceIntService 的远程调用   
+   1. 需要通过 `.proto` 生成 RPC 远程调用 DeviceIntService 时访问的ConnSignIn函数代码 ✅  
+       - 使用 `protoc` 编译 `DeviceIntService.proto` 文件，生成对应的ConnSignIn的 Go 代码 ✅  
+       - 在logic层实现RPC远程调用的服务端的服务中的ConnSignIn函数
    2. 需要创建 RPC 客户端 (`NewDeviceIntServiceClient`) 用于调用 ✅  
    3. 填充 `ConnSignIn` 的请求结构体 ✅  
    4. 完成上述结构体涉及的 `config` 包中 `ServiceConfig.ConnectEndpoints` 部分 ✅  

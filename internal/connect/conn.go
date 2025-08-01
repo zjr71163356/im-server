@@ -206,6 +206,15 @@ func (c *Conn) Close() {
 
 	//TO DO
 	// gPRC远程调用函数，使得设备离线
+	_, err := rpc.GetDeviceIntServiceClient().Offline(context.TODO(), &logicpb.OfflineRequest{
+		UserId:     c.Session.UserID,
+		DeviceId:   c.Session.DeviceID,
+		ClientAddr: c.Transport.RemoteAddr().String(),
+	})
+
+	if err != nil {
+		slog.Error("offline error", "error", err, "userID", c.Session.UserID, "deviceID", c.Session.DeviceID, "clientAddr", c.Transport.RemoteAddr().String())
+	}
 
 	// 关闭底层的物理连接
 	c.Transport.Close()
