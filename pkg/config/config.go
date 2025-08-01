@@ -1,10 +1,60 @@
 // ...existing code...
 package config
 
+var (
+	Config Configuration
+)
+
+func init() {
+	Config = NewConfiguration()
+}
+
+func NewConfiguration() Configuration {
+	return Configuration{
+		Database:   NewDatabaseConfig(),
+		Services:   NewServiceConfig(),
+		GRPCClient: NewGRPCClientConfig(),
+	}
+}
+
+func NewDatabaseConfig() DatabaseConfig {
+	return DatabaseConfig{}
+}
+
+func NewServiceConfig() ServiceConfig {
+	return ServiceConfig{
+		Connect: ConnectEndpoints{
+			LocalAddr: "127.0.0.1:8000",
+			RPCAddr:   ":8000",
+			TCPAddr:   ":8001",
+			WSAddr:    ":8002",
+		},
+		Logic: LogicEndpoints{RPCAddr: ":8010"},
+		User:  UserEndpoints{RPCAddr: ":8020"},
+		File:  FileEndpoints{HTTPAddr: ":8030"},
+	}
+}
+
+func NewGRPCClientConfig() GRPCClientConfig {
+	return GRPCClientConfig{
+		ConnectTargetAddr: "addrs:///127.0.0.1:8000",
+		DeviceTargetAddr:  "addrs:///127.0.0.1:8010",
+	}
+}
+
+func init() {
+	Config = Configuration{
+		Database: DatabaseConfig{
+			MySQL: MySQLConfig{
+				DSN:  "mysql://root:azsx0123456@tcp(localhost:3307)/imserver?multiStatements=true",
+			}},
+	}
+}
+
 type Configuration struct {
-	Database DatabaseConfig
-	Services ServiceConfig
-	GRPC     GRPCConfig
+	Database   DatabaseConfig
+	Services   ServiceConfig
+	GRPCClient GRPCClientConfig
 }
 
 // DatabaseConfig 封装了所有数据存储的配置
@@ -56,10 +106,10 @@ type FileEndpoints struct {
 }
 
 // GRPCConfig 封装所有 gRPC 服务的地址
-type GRPCConfig struct {
-	ConnectAddr string // Connect 服务的地址
-	DeviceAddr  string // Device 服务的地址
-	MessageAddr string // Message 服务的地址
-	RoomAddr    string // Room 服务的地址
-	UserAddr    string // User 服务的地址
+type GRPCClientConfig struct {
+	ConnectTargetAddr string // Connect 服务的地址
+	DeviceTargetAddr  string // Device 服务的地址
+	MessageTargetAddr string // Message 服务的地址
+	RoomTargetAddr    string // Room 服务的地址
+	UserTargetAddr    string // User 服务的地址
 }

@@ -3,6 +3,7 @@ package connect
 import (
 	"container/list"
 	"context"
+	"im-server/pkg/config"
 	"im-server/pkg/protocol/pb/connectpb"
 	"im-server/pkg/protocol/pb/logicpb"
 	"im-server/pkg/rpc"
@@ -106,10 +107,10 @@ func (c *Conn) SignIn(packet *connectpb.Packet) {
 		DeviceId:   signInputReq.DeviceId,
 		UserId:     signInputReq.UserId,
 		Token:      signInputReq.Token,
-		ConnAddr:   c.Transport.RemoteAddr().String(),
+		ConnAddr:   config.Config.Services.Connect.LocalAddr, // 使用配置中的地址
 		ClientAddr: c.Transport.RemoteAddr().String(),
 	})
-	
+
 	c.Send(packet, nil, err)
 
 	c.Session.DeviceID = signInputReq.DeviceId
