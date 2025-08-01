@@ -3,7 +3,7 @@
 1. 完成了 ER 图设计思路的部分总结
 2. 还没完成关于数据库字段设计部分
 
-## 数据库部分
+## 数据库-持久化代码部分
 
 ### [7.27]
 
@@ -20,11 +20,14 @@
 
 #### 1.1 完成 `func (c *Conn) Close()` 功能
 
-- 需要 `DeviceIntService`
 - 需要 `DeviceIntService` 的 proto 生成客户端存根
 - RPC 远程的、在 `logic` 包中的一个函数，该函数是实现了 proto 生成的服务端接口的结构体 (`DeviceIntService`) 的方法 (`ConnSignIn`)
 
 #### 1.2 完成 `func (c *Conn) SignIn(packet *connectpb.Packet)` 功能
+1. 需要生成RPC远程调用时使用的客户端存根 ✅
+2. 需要通过DeviceIntService.proto生成 ✅
+3. 填充ConnSignIn的请求结构体 ✅
+4. 完成上述结构体涉及的config包中ServiceConfig.ConnectEndpoints 部分 ✅
 
 ### grpc 的客户端部分
 
