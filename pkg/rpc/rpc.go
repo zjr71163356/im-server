@@ -26,6 +26,16 @@ func GetDeviceIntServiceClient() logicpb.DeviceIntServiceClient {
 	return deviceIntClient
 }
 
+func GetUserIntServiceClient() userpb.UserIntServiceClient {
+	if userIntClient == nil {
+		// grpc.NewClient 需要 Go 1.59+，参数与 Dial 类似
+		conn := newGrpcClient(config.Config.GRPCClient.ConnectTargetAddr)
+		userIntClient = userpb.NewUserIntServiceClient(conn)
+	}
+
+	return userIntClient
+}
+
 func newGrpcClient(address string) *grpc.ClientConn {
 	// grpc.NewClient 需要 Go 1.59+，参数与 Dial 类似
 	// address 表示 gRPC 客户端要连接的目标服务地址
