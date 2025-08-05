@@ -18,7 +18,13 @@ func NewConfiguration() Configuration {
 }
 
 func NewDatabaseConfig() DatabaseConfig {
-	return DatabaseConfig{}
+	return DatabaseConfig{
+		MySQL: MySQLConfig{"mysql://root:azsx0123456@tcp(localhost:3307)/imserver?multiStatements=true"},
+		Redis: RedisConfig{
+			Host:     "localhost:6379",
+			Password: "",
+		},
+	}
 }
 
 func NewServiceConfig() ServiceConfig {
@@ -39,15 +45,6 @@ func NewGRPCClientConfig() GRPCClientConfig {
 	return GRPCClientConfig{
 		ConnectTargetAddr: "addrs:///127.0.0.1:8000",
 		DeviceTargetAddr:  "addrs:///127.0.0.1:8010",
-	}
-}
-
-func init() {
-	Config = Configuration{
-		Database: DatabaseConfig{
-			MySQL: MySQLConfig{
-				DSN:  "mysql://root:azsx0123456@tcp(localhost:3307)/imserver?multiStatements=true",
-			}},
 	}
 }
 

@@ -8,6 +8,11 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+// DeviceIntService 模拟设备服务
+// 继承 gRPC 的 DeviceIntServiceServer 接口
+// 以便实现设备相关的业务逻辑。
+// 这里的逻辑可以包括设备登录、状态更新等功能。
+
 type DeviceIntService struct {
 	logicpb.UnsafeDeviceIntServiceServer
 	queries *repo.Queries
@@ -17,7 +22,16 @@ func NewDeviceIntService(queries *repo.Queries) *DeviceIntService {
 	return &DeviceIntService{queries: queries}
 }
 
+//为了在ConnSignIn中能够使用repo包中访问数据库的方法
+//在DeviceIntService结构体中添加queries字段
+//通过函数的receiver访问queries再访问数据库函数
+
 func (s *DeviceIntService) ConnSignIn(ctx context.Context, req *logicpb.ConnSignInRequest) (*emptypb.Empty, error) {
+	err := SetUserOnline(req.UserId)
+	if err != nil {
+		return nil, err
+	}
+
 	// TODO: 实现登录逻辑
 	return new(emptypb.Empty), nil
 }
