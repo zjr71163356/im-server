@@ -2,6 +2,7 @@ package device
 
 import (
 	"context"
+	"fmt"
 	"im-server/internal/repo"
 	"im-server/pkg/protocol/pb/logicpb"
 
@@ -27,9 +28,13 @@ func NewDeviceIntService(queries *repo.Queries) *DeviceIntService {
 //通过函数的receiver访问queries再访问数据库函数
 
 func (s *DeviceIntService) ConnSignIn(ctx context.Context, req *logicpb.ConnSignInRequest) (*emptypb.Empty, error) {
-	err := SetUserOnline(req.UserId)
+	device, err := s.queries.GetDevice(ctx, req.DeviceId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get device: %v", err)
+	}
+	err = SetDeviceOnline(ctx, device)
+	if err != nil {
+		return nil, fmt.Errorf("failed to set device online: %v", err)
 	}
 
 	// TODO: 实现登录逻辑

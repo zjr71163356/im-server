@@ -2,32 +2,71 @@ package device
 
 import (
 	"context"
-	"fmt"
+	"im-server/internal/repo"
 	"im-server/pkg/storage"
-
+	"strconv"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 )
 
-// SetUserOnline 设置用户为在线状态
-func SetUserOnline(userID uint64) error {
-	key := fmt.Sprintf("user:online:%d", userID)
-	return storage.RedisClient.Set(context.Background(), key, "1", time.Hour).Err()
-}
+const (
+	deviceInfoKey = "device:info:"
+	OnLine        = 1 // 设备在线
+	OffLine       = 0 // 设备离线
+)
 
-// SetUserOffline 设置用户为离线状态
-func SetUserOffline(userID uint64) error {
-	key := fmt.Sprintf("user:online:%d", userID)
-	return storage.RedisClient.Del(context.Background(), key).Err()
-}
+// SetDeviceOnline 设置设备在线信息到redis
+func SetDeviceOnline(ctx context.Context, device *repo.Device) error {
+	key := deviceInfoKey + strconv.FormatUint(device.ID, 10)
+	device.Status = OnLine
+	device.UpdatedAt = time.Now()
 
-// IsUserOnline 检查用户是否在线
-func IsUserOnline(userID uint64) (bool, error) {
-	key := fmt.Sprintf("user:online:%d", userID)
-	result, err := storage.RedisClient.Get(context.Background(), key).Result()
-	if err == redis.Nil {
-		return false, nil // 用户不在线
+	fields := map[string]interface{}{
+		"user_id":     device.UserID,
+		"status":      device.Status,
+		"conn_addr":   device.ConnAddr,
+		"client_addr": device.ClientAddr,
+		"updated_at":  device.UpdatedAt.Unix(),
 	}
-	return result == "1", err
+	return storage.RedisClient.HSet(ctx, key, fields).Err()
+}
+
+// SetDeviceOffline 设置设备离线
+func SetDeviceOffline(ctx context.Context, deviceID uint64) error {
+	key := deviceInfoKey + strconv.FormatUint(deviceID, 10)
+	fields := map[string]interface{}{
+		"status":     OffLine,
+		"updated_at": time.Now().Unix(),
+	}
+	return storage.RedisClient.HSet(ctx, key, fields).Err()
+}
+
+// GetDeviceOnline 获取设备在线信息
+func GetDeviceOnline(ctx context.Context, deviceID uint64) (*repo.Device, error) {
+	key := deviceInfoKey + strconv.FormatUint(deviceID, 10)
+	ret, err := storage.RedisClient.HGetAll(ctx, key).Result()
+	if err != nil {
+		if err == redis.Nil {
+			return nil, nil
+		}
+		return nil, err
+	}
+	if len(ret) == 0 {
+		return nil, nil
+	}
+
+	device := &repo.Device{ID: deviceID}
+	if userID, err := strconv.ParseUint(ret["user_id"], 10, 64); err == nil {
+		device.UserID = userID
+	}
+	if status, err := strconv.ParseInt(ret["status"], 10, 8); err == nil {
+		device.Status = int8(status)
+	}
+	device.ConnAddr = ret["conn_addr"]
+	device.ClientAddr = ret["client_addr"]
+	if updatedAt, err := strconv.ParseInt(ret["updated_at"], 10, 64); err == nil {
+		device.UpdatedAt = time.Unix(updatedAt, 0)
+	}
+	return device, nil
 }
