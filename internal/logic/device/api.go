@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"im-server/internal/repo"
 	"im-server/pkg/protocol/pb/logicpb"
+	"im-server/pkg/protocol/pb/userpb"
+	"im-server/pkg/rpc"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -28,6 +30,14 @@ func NewDeviceIntService(queries *repo.Queries) *DeviceIntService {
 //通过函数的receiver访问queries再访问数据库函数
 
 func (s *DeviceIntService) ConnSignIn(ctx context.Context, req *logicpb.ConnSignInRequest) (*emptypb.Empty, error) {
+	_, err := rpc.GetUserIntServiceClient().Auth(ctx, &userpb.AuthRequest{
+		UserId:   req.UserId,
+		DeviceId: req.DeviceId,
+		Token:    req.Token,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("authentication failed: %v", err)
+	}
 	device, err := s.queries.GetDevice(ctx, req.DeviceId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get device: %v", err)
