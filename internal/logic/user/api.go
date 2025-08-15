@@ -3,7 +3,6 @@ package user
 import (
 	"context"
 	"im-server/internal/repo"
-	"im-server/pkg/auth"
 	"im-server/pkg/protocol/pb/userpb"
 
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -21,7 +20,11 @@ func NewUserIntService(queries *repo.Queries) *UserIntService {
 }
 
 func (s *UserIntService) Auth(ctx context.Context, req *userpb.AuthRequest) (*emptypb.Empty, error) {
-	auth.AuthRepo.Get(req.UserId, req.DeviceId)
+
+	err := Auth(ctx, req.UserId, req.DeviceId, req.Token)
+	if err != nil {
+		return nil, err // 返回认证错误
+	}
 	// 进行用户认证逻辑
 	return &emptypb.Empty{}, nil
 }

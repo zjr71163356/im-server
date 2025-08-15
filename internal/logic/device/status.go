@@ -3,7 +3,7 @@ package device
 import (
 	"context"
 	"im-server/internal/repo"
-	"im-server/pkg/storage"
+	redisPkg "im-server/pkg/redis"
 	"strconv"
 	"time"
 
@@ -29,7 +29,7 @@ func SetDeviceOnline(ctx context.Context, device *repo.Device) error {
 		"client_addr": device.ClientAddr,
 		"updated_at":  device.UpdatedAt.Unix(),
 	}
-	return storage.RedisClient.HSet(ctx, key, fields).Err()
+	return redisPkg.RedisClient.HSet(ctx, key, fields).Err()
 }
 
 // SetDeviceOffline 设置设备离线
@@ -39,13 +39,13 @@ func SetDeviceOffline(ctx context.Context, deviceID uint64) error {
 		"status":     OffLine,
 		"updated_at": time.Now().Unix(),
 	}
-	return storage.RedisClient.HSet(ctx, key, fields).Err()
+	return redisPkg.RedisClient.HSet(ctx, key, fields).Err()
 }
 
 // GetDeviceOnline 获取设备在线信息
 func GetDeviceOnline(ctx context.Context, deviceID uint64) (*repo.Device, error) {
 	key := deviceInfoKey + strconv.FormatUint(deviceID, 10)
-	ret, err := storage.RedisClient.HGetAll(ctx, key).Result()
+	ret, err := redisPkg.RedisClient.HGetAll(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {
 			return nil, nil
