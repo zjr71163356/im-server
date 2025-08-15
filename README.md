@@ -12,7 +12,16 @@
 
 ### Redis
 1. 在pkg中编写了创建redis客户端的代码
-2. 使用redis对用户设备在线状态进行存储、更新、获取 [8.5]
+2. device在线状态的读写，使用 Redis 作为实时状态存储（哈希结构），供系统快速查询和更新设备在线信息。(status.go) [8.5]
+3. token验证使用redis管理了user的device对应的token(auth.go)
+> auth.go在这份文件中，Redis 使用的是哈希（Hash）数据结构：
+>
+> - **Redis 键（key）**：`fmt.Sprintf(AuthKey, userID)` → `"auth:<userID>"`（每个用户对应一个哈希）
+> - **哈希字段（field）**：`strconv.FormatUint(deviceID, 10)`（设备 ID 的字符串形式）
+> - **哈希值（value）**：`json.Marshal(device)` 生成的 JSON 字符串（二进制/字节）
+>
+> 所以可以描述为：在 Redis 中以 Hash 存储，field 为 `deviceID`，value 为序列化后的 `AuthDevice`（JSON）。
+
 
 ## 代码开发部分
 
