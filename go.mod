@@ -4,6 +4,7 @@ go 1.24.4
 
 require (
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/golang/mock v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.6

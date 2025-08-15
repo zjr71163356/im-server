@@ -14,6 +14,10 @@ var (
 	userIntClient   userpb.UserIntServiceClient
 )
 
+func SetDeviceIntServiceClient(client logicpb.DeviceIntServiceClient) {
+	deviceIntClient = client
+}
+
 func GetDeviceIntServiceClient() logicpb.DeviceIntServiceClient {
 
 	if deviceIntClient == nil {
