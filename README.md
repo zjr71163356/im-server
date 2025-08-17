@@ -55,3 +55,6 @@
 
 1. 编写 config 中的DatabaseConfig、ServiceConfig、GRPCClientConfig(各种config)
 2. 
+
+### 测试部分
+1. 对gRPC客户端中的ConnSignIn函数进行了测试 conn_test.go
