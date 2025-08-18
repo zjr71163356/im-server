@@ -14,7 +14,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// TestWebSocketToSignInFlow 测试完整的 WebSocket 连接到 SignIn 的流程
+// TestWebSocketToSignInFlow 测试完整的 WebSocket 连接到发送 SignIn packet的流程
 func TestWebSocketToSignInFlow(t *testing.T) {
 	// 1. 初始化配置和 mock
 	config.Config.Services.Connect.LocalAddr = "127.0.0.1:8080"
@@ -24,7 +24,7 @@ func TestWebSocketToSignInFlow(t *testing.T) {
 
 	mockClient := mocks.NewMockDeviceIntServiceClient(ctrl)
 	rpc.SetDeviceIntServiceClient(mockClient)
-
+	
 	// 模拟 gRPC 调用成功
 	mockClient.EXPECT().ConnSignIn(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 	mockClient.EXPECT().Offline(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()

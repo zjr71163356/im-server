@@ -57,4 +57,7 @@
 2. 
 
 ### 测试部分
-1. 对gRPC客户端中的ConnSignIn函数进行了测试 conn_test.go
+1. 对创建websocket连接并发出SignIn packet的功能进行了测试 conn_test.go
+2. 创建了前端，使用前端测试了下述流程
+>   - `main` -> `StartWSServer` -> `wsHandler` -> `StartWSConn` -> `Serve` -> > `HandleMessage` -> `SignIn`
+虽然前端显示通过了，但有两个疑点1.为什么gRPC Server没有开启但是使用gRPC Client进行RPC的部分没有出错？2.为什么slog.Debug函数没有发送结果到终端？
