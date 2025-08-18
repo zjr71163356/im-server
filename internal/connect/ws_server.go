@@ -17,6 +17,7 @@ var upgrader = websocket.Upgrader{
 }
 
 func wsHandler(w http.ResponseWriter, r *http.Request) {
+	slog.Info("wsHandler has been called, attempting to upgrade connection...")
 	// Handle WebSocket connections
 	wsConn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
