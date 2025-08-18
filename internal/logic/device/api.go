@@ -8,6 +8,8 @@ import (
 	"im-server/pkg/protocol/pb/userpb"
 	"im-server/pkg/rpc"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -49,4 +51,8 @@ func (s *DeviceIntService) ConnSignIn(ctx context.Context, req *logicpb.ConnSign
 
 	// TODO: 实现登录逻辑
 	return new(emptypb.Empty), nil
+}
+
+func (s *DeviceIntService) Offline(ctx context.Context, req *logicpb.OfflineRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Offline not implemented")
 }

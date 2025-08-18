@@ -176,8 +176,8 @@ func (c *Conn) HandleMessage(buf []byte) {
 		slog.Error("unmarshal error", "error", err, "len", len(buf))
 		return
 	}
-
-	slog.Debug("HandleMessage", "packet", packet)
+	slog.Info("HandleMessage111", "command", packet.Command, "requestId", packet.RequestId, "dataLen", len(packet.Data), "bufLen", len(buf))
+	// slog.Debug("HandleMessage", "packet", packet)
 
 	// 检查除了登录指令外的所有请求是否已经认证
 	if packet.Command != connectpb.Command_SIGN_IN && c.Session.UserID == 0 {
