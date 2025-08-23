@@ -3,7 +3,7 @@ package device
 import (
 	"context"
 	"fmt"
-	"im-server/internal/repo"
+	"im-server/pkg/repo"
 	"im-server/pkg/protocol/pb/logicpb"
 	"im-server/pkg/protocol/pb/userpb"
 	"im-server/pkg/rpc"

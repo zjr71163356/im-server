@@ -2,7 +2,7 @@ package device
 
 import (
 	"context"
-	"im-server/internal/repo"
+	"im-server/pkg/repo"
 	redisPkg "im-server/pkg/redis"
 	"strconv"
 	"time"

@@ -2,8 +2,8 @@ package user
 
 import (
 	"context"
-	"im-server/internal/repo"
 	"im-server/pkg/protocol/pb/userpb"
+	"im-server/pkg/repo"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )

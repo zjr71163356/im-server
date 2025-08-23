@@ -27,7 +27,7 @@
 
 ## 项目目录介绍
 
-├── db
+├── db 存储相关的目录
 │ ├── migrations
 │ │ └── # 存放数据库迁移脚本（用于 golang-migrate 等工具），例如 create*table.sql、升级/回滚脚本。运行 `make migrate-up` 或 `migrate` 命令时会使用这里的 SQL 文件来初始化或变更数据库结构。
 │ └── queries
@@ -110,4 +110,10 @@
 
 ### 参考资料
 
-- GlideIM - Golang 实现的高性能的分布式 IM:https://learnku.com/articles/67271 -《从 0 到 1 搭建一个 IM 项目》 https://learnku.com/articles/74274
+- GlideIM - Golang 实现的高性能的分布式 IM:https://learnku.com/articles/67271
+
+- 《从 0 到 1 搭建一个 IM 项目》 https://learnku.com/articles/74274
+
+- fim 即时通讯微服务项目课程介绍 https://www.fengfengzhidao.com/article/JtzvhY4BEG4v2tWkjl7-
+
+- 
