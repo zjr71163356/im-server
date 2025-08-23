@@ -26,7 +26,7 @@ type Querier interface {
 	// 创建序列号记录
 	CreateSeq(ctx context.Context, createdAt time.Time, updatedAt time.Time, objectType int8, objectID uint64, seq uint64) error
 	// 创建用户
-	CreateUser(ctx context.Context, createdAt time.Time, updatedAt time.Time, phoneNumber string, nickname string, sex int8, avatarUrl string, extra string) (sql.Result, error)
+	CreateUser(ctx context.Context, createdAt time.Time, updatedAt time.Time, phoneNumber string, nickname string, sex int8, avatarUrl string, extra string, hashedPassword string, salt string) (sql.Result, error)
 	// 创建用户消息关联
 	CreateUserMessage(ctx context.Context, userID uint64, seq uint64, createdAt time.Time, updatedAt time.Time, messageID uint64) error
 	// 删除设备
@@ -71,6 +71,8 @@ type Querier interface {
 	GetUser(ctx context.Context, id uint64) (*User, error)
 	// 根据手机号获取用户信息
 	GetUserByPhone(ctx context.Context, phoneNumber string) (*User, error)
+	// 根据手机号获取用户认证信息
+	GetUserByPhoneForAuth(ctx context.Context, phoneNumber string) (*GetUserByPhoneForAuthRow, error)
 	// 获取用户的所有设备
 	GetUserDevices(ctx context.Context, userID uint64) ([]*Device, error)
 	// 获取用户的所有好友
@@ -111,6 +113,8 @@ type Querier interface {
 	UpdateUser(ctx context.Context, updatedAt time.Time, nickname string, sex int8, avatarUrl string, extra string, iD uint64) error
 	// 更新用户头像
 	UpdateUserAvatar(ctx context.Context, updatedAt time.Time, avatarUrl string, iD uint64) error
+	// 更新用户密码
+	UpdateUserPassword(ctx context.Context, updatedAt time.Time, hashedPassword string, salt string, iD uint64) error
 }
 
 var _ Querier = (*Queries)(nil)

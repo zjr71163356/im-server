@@ -13,14 +13,14 @@ import (
 
 const createUser = `-- name: CreateUser :execresult
 INSERT INTO ` + "`" + `user` + "`" + ` (
-    created_at, updated_at, phone_number, nickname, sex, avatar_url, extra
+    created_at, updated_at, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?
 )
 `
 
 // 创建用户
-func (q *Queries) CreateUser(ctx context.Context, createdAt time.Time, updatedAt time.Time, phoneNumber string, nickname string, sex int8, avatarUrl string, extra string) (sql.Result, error) {
+func (q *Queries) CreateUser(ctx context.Context, createdAt time.Time, updatedAt time.Time, phoneNumber string, nickname string, sex int8, avatarUrl string, extra string, hashedPassword string, salt string) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createUser,
 		createdAt,
 		updatedAt,
@@ -29,6 +29,8 @@ func (q *Queries) CreateUser(ctx context.Context, createdAt time.Time, updatedAt
 		sex,
 		avatarUrl,
 		extra,
+		hashedPassword,
+		salt,
 	)
 }
 
@@ -44,7 +46,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uint64) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra FROM ` + "`" + `user` + "`" + ` 
+SELECT id, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt FROM ` + "`" + `user` + "`" + ` 
 WHERE id = ? LIMIT 1
 `
 
@@ -61,12 +63,14 @@ func (q *Queries) GetUser(ctx context.Context, id uint64) (*User, error) {
 		&i.Sex,
 		&i.AvatarUrl,
 		&i.Extra,
+		&i.HashedPassword,
+		&i.Salt,
 	)
 	return &i, err
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra FROM ` + "`" + `user` + "`" + ` 
+SELECT id, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt FROM ` + "`" + `user` + "`" + ` 
 WHERE phone_number = ? LIMIT 1
 `
 
@@ -83,12 +87,39 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phoneNumber string) (*User
 		&i.Sex,
 		&i.AvatarUrl,
 		&i.Extra,
+		&i.HashedPassword,
+		&i.Salt,
+	)
+	return &i, err
+}
+
+const getUserByPhoneForAuth = `-- name: GetUserByPhoneForAuth :one
+SELECT id, phone_number, hashed_password, salt FROM ` + "`" + `user` + "`" + ` 
+WHERE phone_number = ? LIMIT 1
+`
+
+type GetUserByPhoneForAuthRow struct {
+	ID             uint64 `db:"id" json:"id"`
+	PhoneNumber    string `db:"phone_number" json:"phone_number"`
+	HashedPassword string `db:"hashed_password" json:"hashed_password"`
+	Salt           string `db:"salt" json:"salt"`
+}
+
+// 根据手机号获取用户认证信息
+func (q *Queries) GetUserByPhoneForAuth(ctx context.Context, phoneNumber string) (*GetUserByPhoneForAuthRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserByPhoneForAuth, phoneNumber)
+	var i GetUserByPhoneForAuthRow
+	err := row.Scan(
+		&i.ID,
+		&i.PhoneNumber,
+		&i.HashedPassword,
+		&i.Salt,
 	)
 	return &i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra FROM ` + "`" + `user` + "`" + ` 
+SELECT id, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt FROM ` + "`" + `user` + "`" + ` 
 ORDER BY created_at DESC 
 LIMIT ? OFFSET ?
 `
@@ -112,6 +143,8 @@ func (q *Queries) ListUsers(ctx context.Context, limit int32, offset int32) ([]*
 			&i.Sex,
 			&i.AvatarUrl,
 			&i.Extra,
+			&i.HashedPassword,
+			&i.Salt,
 		); err != nil {
 			return nil, err
 		}
@@ -154,5 +187,22 @@ WHERE id = ?
 // 更新用户头像
 func (q *Queries) UpdateUserAvatar(ctx context.Context, updatedAt time.Time, avatarUrl string, iD uint64) error {
 	_, err := q.db.ExecContext(ctx, updateUserAvatar, updatedAt, avatarUrl, iD)
+	return err
+}
+
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+UPDATE ` + "`" + `user` + "`" + ` 
+SET updated_at = ?, hashed_password = ?, salt = ?
+WHERE id = ?
+`
+
+// 更新用户密码
+func (q *Queries) UpdateUserPassword(ctx context.Context, updatedAt time.Time, hashedPassword string, salt string, iD uint64) error {
+	_, err := q.db.ExecContext(ctx, updateUserPassword,
+		updatedAt,
+		hashedPassword,
+		salt,
+		iD,
+	)
 	return err
 }

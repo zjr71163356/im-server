@@ -1,9 +1,9 @@
 -- name: CreateUser :execresult
 -- 创建用户
 INSERT INTO `user` (
-    created_at, updated_at, phone_number, nickname, sex, avatar_url, extra
+    created_at, updated_at, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?
 );
 
 -- name: GetUser :one
@@ -38,3 +38,14 @@ WHERE id = ?;
 SELECT * FROM `user` 
 ORDER BY created_at DESC 
 LIMIT ? OFFSET ?;
+
+-- name: GetUserByPhoneForAuth :one
+-- 根据手机号获取用户认证信息
+SELECT id, phone_number, hashed_password, salt FROM `user` 
+WHERE phone_number = ? LIMIT 1;
+
+-- name: UpdateUserPassword :exec
+-- 更新用户密码
+UPDATE `user` 
+SET updated_at = ?, hashed_password = ?, salt = ?
+WHERE id = ?;

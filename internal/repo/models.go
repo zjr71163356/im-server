@@ -146,6 +146,10 @@ type User struct {
 	AvatarUrl string `db:"avatar_url" json:"avatar_url"`
 	// 附加属性
 	Extra string `db:"extra" json:"extra"`
+	// 哈希后的密码
+	HashedPassword string `db:"hashed_password" json:"hashed_password"`
+	// 密码盐值
+	Salt string `db:"salt" json:"salt"`
 }
 
 // 用户消息

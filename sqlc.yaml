@@ -2,7 +2,9 @@ version: "2"
 sql:
   - engine: "mysql"
     # 使用你的数据库迁移文件作为 schema
-    schema: "db/migrations/000001_init.up.sql"
+    schema:
+      - "db/migrations/000001_init.up.sql"
+      - "db/migrations/000002_add_user_auth_fields.up.sql"
     # 查询文件，我们将在 db/queries 目录下创建
     queries:
       - "db/queries/user.sql"
