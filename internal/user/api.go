@@ -28,3 +28,4 @@ func (s *UserIntService) Auth(ctx context.Context, req *userpb.AuthRequest) (*em
 	// 进行用户认证逻辑
 	return &emptypb.Empty{}, nil
 }
+

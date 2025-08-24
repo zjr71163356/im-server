@@ -3,7 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
-	"im-server/pkg/auth"
+	"im-server/internal/auth"
 	"time"
 )
 

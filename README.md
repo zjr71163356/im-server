@@ -8,7 +8,8 @@
 ### 功能需求
 
 1. 登录与注册
-预期是实现登录的HTTP api，但通过gRPC Server实现的登录服务，所以需要实现网关gateway将HTTP请求转为gRPC请求，gRPC请求再转为gRPC响应
+   预期是实现登录的 HTTP api，但通过 gRPC Server 实现的登录服务，所以需要实现网关 gateway 将 HTTP 请求转为 gRPC 请求，gRPC 请求再转为 gRPC 响应
+   - HTTP 请求 → API 网关路由 → 认证服务验证 → 令牌生成 → 返回响应。
 
 ## 笔记部分
 
