@@ -2,8 +2,8 @@ package user
 
 import (
 	"context"
+	"im-server/pkg/dao"
 	"im-server/pkg/protocol/pb/userpb"
-	"im-server/pkg/repo"
 
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -11,11 +11,11 @@ import (
 // UserIntService 模拟用户服务
 type UserIntService struct {
 	userpb.UnsafeUserIntServiceServer // 继承 gRPC 的 UserIntServiceServer
-	queries                           *repo.Queries
+	queries                           *dao.Queries
 }
 
 // NewUserIntService 创建一个新的 UserIntService 实例
-func NewUserIntService(queries *repo.Queries) *UserIntService {
+func NewUserIntService(queries *dao.Queries) *UserIntService {
 	return &UserIntService{queries: queries}
 }
 

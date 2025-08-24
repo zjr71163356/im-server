@@ -3,7 +3,7 @@ package device
 import (
 	"context"
 	"fmt"
-	"im-server/pkg/repo"
+	"im-server/pkg/dao"
 	"im-server/pkg/protocol/pb/logicpb"
 	"im-server/pkg/protocol/pb/userpb"
 	"im-server/pkg/rpc"
@@ -20,14 +20,14 @@ import (
 
 type DeviceIntService struct {
 	logicpb.UnsafeDeviceIntServiceServer
-	queries *repo.Queries
+	queries *dao.Queries
 }
 
-func NewDeviceIntService(queries *repo.Queries) *DeviceIntService {
+func NewDeviceIntService(queries *dao.Queries) *DeviceIntService {
 	return &DeviceIntService{queries: queries}
 }
 
-//为了在ConnSignIn中能够使用repo包中访问数据库的方法
+//为了在ConnSignIn中能够使用dao包中访问数据库的方法
 //在DeviceIntService结构体中添加queries字段
 //通过函数的receiver访问queries再访问数据库函数
 

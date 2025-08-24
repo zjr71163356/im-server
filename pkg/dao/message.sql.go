@@ -3,7 +3,7 @@
 //   sqlc v1.29.0
 // source: message.sql
 
-package repo
+package dao
 
 import (
 	"context"

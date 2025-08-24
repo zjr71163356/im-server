@@ -2,7 +2,7 @@ package device
 
 import (
 	"context"
-	"im-server/pkg/repo"
+	"im-server/pkg/dao"
 	redisPkg "im-server/pkg/redis"
 	"strconv"
 	"time"
@@ -17,7 +17,7 @@ const (
 )
 
 // SetDeviceOnline 设置设备在线信息到redis
-func SetDeviceOnline(ctx context.Context, device *repo.Device) error {
+func SetDeviceOnline(ctx context.Context, device *dao.Device) error {
 	key := deviceInfoKey + strconv.FormatUint(device.ID, 10)
 	device.Status = OnLine
 	device.UpdatedAt = time.Now()
@@ -43,7 +43,7 @@ func SetDeviceOffline(ctx context.Context, deviceID uint64) error {
 }
 
 // GetDeviceOnline 获取设备在线信息
-func GetDeviceOnline(ctx context.Context, deviceID uint64) (*repo.Device, error) {
+func GetDeviceOnline(ctx context.Context, deviceID uint64) (*dao.Device, error) {
 	key := deviceInfoKey + strconv.FormatUint(deviceID, 10)
 	ret, err := redisPkg.RedisClient.HGetAll(ctx, key).Result()
 	if err != nil {
@@ -56,7 +56,7 @@ func GetDeviceOnline(ctx context.Context, deviceID uint64) (*repo.Device, error)
 		return nil, nil
 	}
 
-	device := &repo.Device{ID: deviceID}
+	device := &dao.Device{ID: deviceID}
 	if userID, err := strconv.ParseUint(ret["user_id"], 10, 64); err == nil {
 		device.UserID = userID
 	}
