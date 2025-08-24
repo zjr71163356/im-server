@@ -3,20 +3,15 @@ sql:
   - engine: "mysql"
     # 使用你的数据库迁移文件作为 schema
     schema:
-      - "db/migrations/000001_init.up.sql"
-      - "db/migrations/000002_add_user_auth_fields.up.sql"
+      - "db/migrations/*.up.sql"
+
     # 查询文件，我们将在 db/queries 目录下创建
     queries:
-      - "db/queries/user.sql"
-      - "db/queries/device.sql"
-      - "db/queries/friend.sql"
-      - "db/queries/group.sql"
-      - "db/queries/message.sql"
-      - "db/queries/seq.sql"
+      - "db/queries/*.sql"
     gen:
       go:
-        package: "repo"
-        out: "internal/repo"
+        package: "dao"
+        out: "pkg/dao"
         # 生成接口，方便 mock 测试
         emit_interface: true
         # 为 struct 添加 JSON 标签

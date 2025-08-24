@@ -1,6 +1,11 @@
 # 查找项目中所有的 .proto 文件
 PROTO_FILES := $(shell find . -name "*.proto")
 DATABASE_URL := "mysql://root:azsx0123456@tcp(localhost:3307)/imserver?multiStatements=true"
+# 运行docker命令启动mysql
+startdb:
+	@echo "Starting MySQL Docker container..."
+	docker start mysql_db
+
 
 # 数据库迁移相关
 migrate-up:
@@ -28,13 +33,13 @@ proto:
 	@echo "Protobuf code generation complete."
 
 # 使用 sqlc 生成数据库操作代码
-sqlc-generate:
+sqlc-gen:
 	@echo "Generating Go code from SQL queries..."
 	sqlc generate
 	@echo "SQLC code generation complete."
 
 # 完整的数据库更新流程：迁移 + 生成代码
-db-update: migrate-up sqlc-generate
+db-update: migrate-up sqlc-gen
 	@echo "Database schema updated and Go code regenerated."
 
 # 验证数据库连接
@@ -42,4 +47,4 @@ db-check:
 	@echo "Checking database connection..."
 	migrate -database $(DATABASE_URL) -path db/migrations version
 
-.PHONY: migrate-up migrate-down migrate-create proto sqlc-generate db-update db-check
+.PHONY: migrate-up migrate-down migrate-create proto sqlc-gen db-update db-check

@@ -1,0 +1,12 @@
+service UserExtService {
+  // 登录
+  rpc SignIn (SignInRequest) returns (SignInReply);
+ 
+  rpc SignUp (SignUpRequest) returns (SignUpReply);
+}
+
+message SignInRequest {
+  string identifier = 1; //用户名或邮箱
+  string credential = 2; //密码
+  string device_id = 3; //设备ID
+}

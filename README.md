@@ -8,7 +8,7 @@
 ### 功能需求
 
 1. 登录与注册
-2.
+预期是实现登录的HTTP api，但通过gRPC Server实现的登录服务，所以需要实现网关gateway将HTTP请求转为gRPC请求，gRPC请求再转为gRPC响应
 
 ## 笔记部分
 
@@ -56,38 +56,9 @@
 
 ## 代码开发部分
 
-### WebSocket Server
-
-1. 需要一个 WebSocket Server，能够实现登录功能
-   - `main` -> `StartWSServer` -> `wsHandler` -> `StartWSConn` -> `Serve` -> `HandleMessage` -> `SignIn`
-
-#### 完成关闭连接的功能 ---`func (c *Conn) Close()` 功能
-
-- 对已登录的设备从全局连接管理器中删除连接 ✅
-- RPC 远程调用 DeviceIntService 中的 Offline 使得设备离线
-  - 使用 `protoc` 编译 `DeviceIntService.proto` 文件，生成对应 Offline 的 Go 代码 ✅
-  - 在 logic 层实现 RPC 远程调用的服务端的服务中 Offline 函数
-- 关闭底层的物理连接 ✅
-
-#### 完成登录功能 --- `func (c *Conn) SignIn(packet *connectpb.Packet)` 功能
-
-- 需要对传入的数据进行 Unmarshal 到变量结构体中 ✅
-
-- 需要验证登录时提交的信息的(这里是 packet.Data)正确性，涉及 DeviceIntService 的远程调用
-
-  1.  需要通过 `.proto` 生成 RPC 远程调用 DeviceIntService 时访问的 ConnSignIn 函数代码 ✅
-      - 使用 `protoc` 编译 `DeviceIntService.proto` 文件，生成对应的 ConnSignIn 的 Go 代码 ✅
-      - 在 logic 层实现 RPC 远程调用的服务端的服务中的 ConnSignIn 函数 //TO DO
-  2.  需要创建 RPC 客户端 (`NewDeviceIntServiceClient`) 用于调用 ✅
-  3.  填充 `ConnSignIn` 的请求结构体 ✅
-  4.  完成上述结构体涉及的 `config` 包中 `ServiceConfig.ConnectEndpoints` 部分 ✅
-
-- 对远程调用 DeviceIntService 是否报错进行验证 ✅
-
 ### grpc 的客户端部分
 
 1. 编写 config 中的 DatabaseConfig、ServiceConfig、GRPCClientConfig(各种 config)
-2.
 
 ### 前端部分
 
@@ -116,4 +87,4 @@
 
 - fim 即时通讯微服务项目课程介绍 https://www.fengfengzhidao.com/article/JtzvhY4BEG4v2tWkjl7-
 
-- 
+-

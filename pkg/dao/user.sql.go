@@ -46,7 +46,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uint64) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt FROM ` + "`" + `user` + "`" + ` 
+SELECT id, hashed_password, salt, username, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra FROM ` + "`" + `user` + "`" + ` 
 WHERE id = ? LIMIT 1
 `
 
@@ -56,6 +56,9 @@ func (q *Queries) GetUser(ctx context.Context, id uint64) (*User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.HashedPassword,
+		&i.Salt,
+		&i.Username,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PhoneNumber,
@@ -63,14 +66,12 @@ func (q *Queries) GetUser(ctx context.Context, id uint64) (*User, error) {
 		&i.Sex,
 		&i.AvatarUrl,
 		&i.Extra,
-		&i.HashedPassword,
-		&i.Salt,
 	)
 	return &i, err
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt FROM ` + "`" + `user` + "`" + ` 
+SELECT id, hashed_password, salt, username, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra FROM ` + "`" + `user` + "`" + ` 
 WHERE phone_number = ? LIMIT 1
 `
 
@@ -80,6 +81,9 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phoneNumber string) (*User
 	var i User
 	err := row.Scan(
 		&i.ID,
+		&i.HashedPassword,
+		&i.Salt,
+		&i.Username,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.PhoneNumber,
@@ -87,8 +91,6 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phoneNumber string) (*User
 		&i.Sex,
 		&i.AvatarUrl,
 		&i.Extra,
-		&i.HashedPassword,
-		&i.Salt,
 	)
 	return &i, err
 }
@@ -119,7 +121,7 @@ func (q *Queries) GetUserByPhoneForAuth(ctx context.Context, phoneNumber string)
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt FROM ` + "`" + `user` + "`" + ` 
+SELECT id, hashed_password, salt, username, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra FROM ` + "`" + `user` + "`" + ` 
 ORDER BY created_at DESC 
 LIMIT ? OFFSET ?
 `
@@ -136,6 +138,9 @@ func (q *Queries) ListUsers(ctx context.Context, limit int32, offset int32) ([]*
 		var i User
 		if err := rows.Scan(
 			&i.ID,
+			&i.HashedPassword,
+			&i.Salt,
+			&i.Username,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.PhoneNumber,
@@ -143,8 +148,6 @@ func (q *Queries) ListUsers(ctx context.Context, limit int32, offset int32) ([]*
 			&i.Sex,
 			&i.AvatarUrl,
 			&i.Extra,
-			&i.HashedPassword,
-			&i.Salt,
 		); err != nil {
 			return nil, err
 		}

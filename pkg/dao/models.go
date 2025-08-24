@@ -132,6 +132,12 @@ type Seq struct {
 type User struct {
 	// 自增主键
 	ID uint64 `db:"id" json:"id"`
+	// 哈希后的密码
+	HashedPassword string `db:"hashed_password" json:"hashed_password"`
+	// 密码盐值
+	Salt string `db:"salt" json:"salt"`
+	// 用户名
+	Username string `db:"username" json:"username"`
 	// 创建时间
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	// 更新时间
@@ -146,10 +152,6 @@ type User struct {
 	AvatarUrl string `db:"avatar_url" json:"avatar_url"`
 	// 附加属性
 	Extra string `db:"extra" json:"extra"`
-	// 哈希后的密码
-	HashedPassword string `db:"hashed_password" json:"hashed_password"`
-	// 密码盐值
-	Salt string `db:"salt" json:"salt"`
 }
 
 // 用户消息
