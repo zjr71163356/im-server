@@ -1,6 +1,7 @@
 # 查找项目中所有的 .proto 文件
 PROTO_FILES := $(shell find . -name "*.proto")
 DATABASE_URL := "mysql://root:azsx0123456@tcp(localhost:3307)/imserver?multiStatements=true"
+DAO_PATH := "pkg/dao"
 # 运行docker命令启动mysql
 startdb:
 	@echo "Starting MySQL Docker container..."
@@ -25,21 +26,30 @@ migrate-create:
 
 # 生成代码相关
 proto:
+	@echo "Removing existing generated protobuf files..."
+	@find . -type f -name "*.pb.go" -print -exec rm -f {} \;
 	@echo "Generating Go code from .proto files..."
 	@protoc --proto_path=. \
-            --go_out=. \
-            --go-grpc_out=. \
-            $(PROTO_FILES)
+		--go_out=. \
+		--go-grpc_out=. \
+		$(PROTO_FILES)
 	@echo "Protobuf code generation complete."
 
 # 使用 sqlc 生成数据库操作代码
-sqlc-gen:
+sqlc-generate:
+	@echo "Removing existing generated DAO files..."
+	@if [ -d $(DAO_PATH) ]; then \
+		echo "Cleaning $(DAO_PATH)..."; \
+		rm -rf $(DAO_PATH)/*; \
+	else \
+		echo "$(DAO_PATH) does not exist, skipping removal."; \
+	fi
 	@echo "Generating Go code from SQL queries..."
-	sqlc generate
+	@sqlc generate
 	@echo "SQLC code generation complete."
 
 # 完整的数据库更新流程：迁移 + 生成代码
-db-update: migrate-up sqlc-gen
+db-update: migrate-up sqlc-generate
 	@echo "Database schema updated and Go code regenerated."
 
 # 验证数据库连接
@@ -47,4 +57,24 @@ db-check:
 	@echo "Checking database connection..."
 	migrate -database $(DATABASE_URL) -path db/migrations version
 
-.PHONY: migrate-up migrate-down migrate-create proto sqlc-gen db-update db-check
+# 构建服务
+build-auth:
+	@echo "Building auth service..."
+	go build -o bin/auth ./cmd/auth
+
+build-connect:
+	@echo "Building connect service..."
+	go build -o bin/connect ./cmd/connect
+
+build-logic:
+	@echo "Building logic service..."
+	go build -o bin/logic ./cmd/logic
+
+build-user:
+	@echo "Building user service..."
+	go build -o bin/user ./cmd/user
+
+build-all: build-auth build-connect build-logic build-user
+	@echo "All services built successfully."
+
+.PHONY: migrate-up migrate-down migrate-create proto sqlc-generate db-update db-check build-auth build-connect build-logic build-user build-all

@@ -138,6 +138,8 @@ type User struct {
 	Salt string `db:"salt" json:"salt"`
 	// 用户名
 	Username string `db:"username" json:"username"`
+	// 邮箱
+	Email string `db:"email" json:"email"`
 	// 创建时间
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	// 更新时间

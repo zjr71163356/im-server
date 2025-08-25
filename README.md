@@ -28,11 +28,31 @@
 
 ## 项目目录介绍
 
-├── db 存储相关的目录
-│ ├── migrations
-│ │ └── # 存放数据库迁移脚本（用于 golang-migrate 等工具），例如 create*table.sql、升级/回滚脚本。运行 `make migrate-up` 或 `migrate` 命令时会使用这里的 SQL 文件来初始化或变更数据库结构。
-│ └── queries
-│ └── # 存放 sqlc 使用的 SQL 查询定义（*.sql），这些文件会被 sqlc 读取并生成类型安全的 Go 持久化层代码（`internal/db` 或 `internal/repo` 下的 \_.sql.go 文件）。
+示例树状结构（便于渲染）：
+
+```
+db/
+├─ migrations/      # 数据库迁移脚本（用于 golang-migrate）
+│  ├─ *.up.sql
+│  └─ *.down.sql
+└─ queries/         # sqlc 的 SQL 查询定义（*.sql），用于生成类型安全的 Go 持久化层
+   ├─ *.sql
+```
+
+- migrations/
+  - 存放数据库版本化迁移脚本（up/down）。使用 golang-migrate 或 Makefile 中的命令管理数据库结构变更。
+  - 常用命令：`make migrate-up`、`migrate`（根据项目 Makefile 或 CI 配置）。
+  - 建议使用语义化/时间戳前缀命名（例如 `000002_add_user_auth_fields.up.sql` / `.down.sql`）。
+
+- queries/
+  - 存放 sqlc 识别的 SQL 文件（SELECT/INSERT/UPDATE/DELETE 等），sqlc 会根据这些文件生成类型安全的 Go 数据访问代码（*.sql.go）。
+  - 生成命令：`sqlc generate` 或项目中的 `make sqlc-generate`。
+  - 生成路径由 `sqlc.yaml` 配置控制（项目中常见输出位置：`internal/repo`、`pkg/dao` 或 `internal/db`）。
+  - 编写建议：单个文件按资源划分（如 `user.sql`、`message.sql`），为复杂查询添加注释以提高可读性和可维护性。
+
+小贴士：
+- 变更迁移脚本后同时更新 `sqlc.yaml`（如需包含新文件），并执行相应的 migrate / sqlc 命令以保持本地与 CI 的一致性。
+- 在 PR 中同时提交 migration、queries 与生成代码或提供生成步骤说明，便于代码审查与 CI 校验。
 
 ## 存储相关代码部分
 

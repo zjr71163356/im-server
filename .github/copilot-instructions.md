@@ -9,8 +9,8 @@ This project is a high-performance, distributed IM (Instant Messaging) server, d
 - **Gateway Layer**: Manages WebSocket/TCP long connections, user authentication, heartbeats, and connection binding. See `internal/connect/` and `StartWSServer` in `cmd/main.go`.
 - **IM Core Service**: Handles message routing, storage, and forwarding. Message processing logic is in `internal/connect/conn.go` (`Conn`, `HandleMessage`, `SignIn`, etc.).
 - **Message Queue**: Kafka/NATS/NSQ is used for decoupling message delivery and persistence (see `DESIGN.md`).
-- **User System**: Auth, session, and friend management. User/device info is in MySQL, with SQLC-generated code in `internal/db/`.
-- **Storage**: MongoDB for message bodies, Redis for online state and offline messages, MySQL for user/device/friend data.
+- **User System**: Auth, session, and friend management. User/device info is in MySQL, with SQLC-generated code in `pkg/dao/`.
+- **Storage**: MongoDB for message bodies, Redis for online state and offline messages, MySQL for user/device/friend/group data.
 - **Push Service**: For offline push (APNs/FCM), see design notes in `DESIGN.md`.
 
 ## Data Flow Example
@@ -22,7 +22,7 @@ This project is a high-performance, distributed IM (Instant Messaging) server, d
 - **Build**: Standard Go build. Entrypoint: `cmd/main.go`.
 - **Proto Generation**: Run `make proto` to generate Go code from all `.proto` files. Output is controlled by each proto's `option go_package`.
 - **DB Migration**: Use `make migrate-up` and `make migrate-down` (see `Makefile`).
-- **SQLC**: SQL queries in `db/queries/`, generate Go code with `sqlc generate`.
+- **SQLC**: SQL queries in `db/queries/`, generate Go code with `make sqlc-generate` or `sqlc generate`.
 - **Testing**: (Add test conventions here if present.)
 
 ## Project Conventions & Patterns
@@ -47,10 +47,32 @@ This project is a high-performance, distributed IM (Instant Messaging) server, d
 - `pkg/protocol/proto/`: Protobuf definitions.
 - `pkg/protocol/pb/`: Generated Go code from proto.
 - `db/queries/`: SQLC query files.
-- `internal/db/`: SQLC-generated DB access code.
+- `pkg/dao/`: SQLC-generated DB access code (models, queries, and interfaces).
+- `internal/repo/`: Alternative location for SQLC-generated code.
 - `pkg/config/config.go`: Central config structs.
 - `Makefile`: Build, proto, and migration commands.
 - `DESIGN.md`: High-level architecture, rationale, and workflow notes.
+
+## Database Schema
+
+The database schema includes the following main tables:
+
+- **user**: User accounts with authentication (username, email, phone_number, hashed_password, salt)
+- **device**: User devices with connection info and online status
+- **friend**: User friendship relationships
+- **group**: Group chat entities
+- **group_user**: Group membership relationships
+- **message**: Message storage
+- **user_message**: User-specific message indexing
+- **seq**: Sequence numbers for message ordering
+
+Key features:
+
+- Multi-field unique constraints (username, email, phone_number)
+- Password hashing with salt for security
+- Device-based session management
+- Group chat support
+- Message sequencing for proper ordering
 
 ## Examples
 

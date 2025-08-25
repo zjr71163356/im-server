@@ -10,10 +10,6 @@ import (
 
 const AuthKey = "auth:%d"
 
-type authRepo struct{}
-
-var AuthRepo = new(authRepo)
-
 type AuthDevice struct {
 	DeviceID       uint64 `json:"device_id"`        // 设备ID
 	Token          string `json:"token"`            // 设备Token
@@ -21,7 +17,7 @@ type AuthDevice struct {
 
 }
 
-func (*authRepo) Get(userID, deviceID uint64) (*AuthDevice, error) {
+func AuthDeviceGet(userID, deviceID uint64) (*AuthDevice, error) {
 	key := fmt.Sprintf(AuthKey, userID)
 	bytes, err := redisPkg.RedisClient.HGet(context.Background(), key, strconv.FormatUint(deviceID, 10)).Bytes()
 	if err != nil {
@@ -33,7 +29,7 @@ func (*authRepo) Get(userID, deviceID uint64) (*AuthDevice, error) {
 	return &device, err
 }
 
-func (*authRepo) Set(userID, deviceID uint64, device AuthDevice) error {
+func AuthDeviceSet(userID, deviceID uint64, device AuthDevice) error {
 	bytes, err := json.Marshal(device)
 	if err != nil {
 		return err
@@ -44,7 +40,7 @@ func (*authRepo) Set(userID, deviceID uint64, device AuthDevice) error {
 	return err
 }
 
-func (*authRepo) GetAll(userID uint64) (map[uint64]AuthDevice, error) {
+func AuthDeviceGetAll(userID uint64) (map[uint64]AuthDevice, error) {
 	key := fmt.Sprintf(AuthKey, userID)
 	result, err := redisPkg.RedisClient.HGetAll(context.Background(), key).Result()
 	if err != nil {

@@ -1,4 +1,3 @@
-// ...existing code...
 package config
 
 var (
@@ -36,8 +35,9 @@ func NewServiceConfig() ServiceConfig {
 			WSAddr:    ":8002",
 		},
 		Logic: LogicEndpoints{RPCAddr: ":8010"},
-		User:  UserEndpoints{RPCAddr: ":8020"},
-		File:  FileEndpoints{HTTPAddr: ":8030"},
+		Auth:  AuthEndpoints{RPCAddr: ":8020"},
+		User:  UserEndpoints{RPCAddr: ":8030"},
+		File:  FileEndpoints{HTTPAddr: ":8040"},
 	}
 }
 
@@ -45,6 +45,7 @@ func NewGRPCClientConfig() GRPCClientConfig {
 	return GRPCClientConfig{
 		ConnectTargetAddr: "addrs:///127.0.0.1:8000",
 		DeviceTargetAddr:  "addrs:///127.0.0.1:8010",
+		AuthTargetAddr:    "addrs:///127.0.0.1:8020",
 	}
 }
 
@@ -75,6 +76,7 @@ type RedisConfig struct {
 type ServiceConfig struct {
 	Connect ConnectEndpoints
 	Logic   LogicEndpoints
+	Auth    AuthEndpoints
 	User    UserEndpoints
 	File    FileEndpoints
 }
@@ -108,5 +110,11 @@ type GRPCClientConfig struct {
 	DeviceTargetAddr  string // Device 服务的地址
 	MessageTargetAddr string // Message 服务的地址
 	RoomTargetAddr    string // Room 服务的地址
-	UserTargetAddr    string // User 服务的地址
+	AuthTargetAddr    string // Auth 服务的地址
+
+}
+
+// AuthEndpoints 封装了Auth服务的监听端点
+type AuthEndpoints struct {
+	RPCAddr string // gRPC服务监听地址
 }

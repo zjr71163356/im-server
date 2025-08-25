@@ -1,9 +1,9 @@
 -- name: CreateUser :execresult
 -- 创建用户
 INSERT INTO `user` (
-    created_at, updated_at, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt
+    created_at, updated_at, username, email, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 );
 
 -- name: GetUser :one
@@ -49,3 +49,23 @@ WHERE phone_number = ? LIMIT 1;
 UPDATE `user` 
 SET updated_at = ?, hashed_password = ?, salt = ?
 WHERE id = ?;
+
+-- name: GetUserByUsername :one
+-- 根据用户名获取用户信息
+SELECT * FROM `user` 
+WHERE username = ? LIMIT 1;
+
+-- name: GetUserByEmail :one
+-- 根据邮箱获取用户信息
+SELECT * FROM `user` 
+WHERE email = ? LIMIT 1;
+
+-- name: GetUserByUsernameForAuth :one
+-- 根据用户名获取用户认证信息
+SELECT id, username, hashed_password, salt FROM `user` 
+WHERE username = ? LIMIT 1;
+
+-- name: GetUserByEmailForAuth :one
+-- 根据邮箱获取用户认证信息
+SELECT id, email, hashed_password, salt FROM `user` 
+WHERE email = ? LIMIT 1;

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"im-server/internal/user"
 	"im-server/pkg/config"
-	"im-server/pkg/protocol/pb/userpb"
 	"log/slog"
 	"net"
 
@@ -11,14 +9,17 @@ import (
 )
 
 func main() {
-
 	server := grpc.NewServer()
-	// pb.RegisterConnectServiceServer(server, &connect.ConnectService{})
+
+	// 注册用户服务（不包括认证功能）
+	// 认证功能已迁移到 auth 服务
+
 	listener, err := net.Listen("tcp", config.Config.Services.User.RPCAddr)
 	if err != nil {
 		panic(err)
 	}
-	userpb.RegisterUserIntServiceServer(server, &user.UserIntService{})
+
+	slog.Info("User service starting", "addr", config.Config.Services.User.RPCAddr)
 	err = server.Serve(listener)
 	if err != nil {
 		slog.Error("serve error", "error", err)

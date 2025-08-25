@@ -7,7 +7,7 @@ import (
 )
 
 func Auth(ctx context.Context, userID, deviceID uint64, token string) error {
-	authDevice, err := AuthRepo.Get(userID, deviceID)
+	authDevice, err := AuthDeviceGet(userID, deviceID)
 	if err != nil {
 		return err
 	}

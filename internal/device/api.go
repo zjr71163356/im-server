@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"im-server/pkg/dao"
+	"im-server/pkg/protocol/pb/authpb"
 	"im-server/pkg/protocol/pb/logicpb"
-	"im-server/pkg/protocol/pb/userpb"
 	"im-server/pkg/rpc"
 
 	"google.golang.org/grpc/codes"
@@ -32,7 +32,7 @@ func NewDeviceIntService(queries *dao.Queries) *DeviceIntService {
 //通过函数的receiver访问queries再访问数据库函数
 
 func (s *DeviceIntService) ConnSignIn(ctx context.Context, req *logicpb.ConnSignInRequest) (*emptypb.Empty, error) {
-	_, err := rpc.GetUserIntServiceClient().Auth(ctx, &userpb.AuthRequest{
+	_, err := rpc.GetAuthIntServiceClient().Auth(ctx, &authpb.AuthRequest{
 		UserId:   req.UserId,
 		DeviceId: req.DeviceId,
 		Token:    req.Token,
