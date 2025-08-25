@@ -1,14 +1,13 @@
-package user
+package auth
 
 import (
 	"context"
 	"fmt"
-	"im-server/internal/auth"
 	"time"
 )
 
 func Auth(ctx context.Context, userID, deviceID uint64, token string) error {
-	authDevice, err := auth.AuthRepo.Get(userID, deviceID)
+	authDevice, err := AuthRepo.Get(userID, deviceID)
 	if err != nil {
 		return err
 	}

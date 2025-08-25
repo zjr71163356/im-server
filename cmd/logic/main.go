@@ -1,7 +1,7 @@
 package main
 
 import (
-	"im-server/internal/logic/device"
+	"im-server/internal/device"
 	"im-server/pkg/config"
 	"im-server/pkg/protocol/pb/logicpb"
 	"log/slog"

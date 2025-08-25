@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"im-server/internal/auth"
 	"im-server/pkg/dao"
 	"im-server/pkg/protocol/pb/userpb"
 
@@ -21,7 +22,7 @@ func NewUserIntService(queries *dao.Queries) *UserIntService {
 
 func (s *UserIntService) Auth(ctx context.Context, req *userpb.AuthRequest) (*emptypb.Empty, error) {
 
-	err := Auth(ctx, req.UserId, req.DeviceId, req.Token)
+	err := auth.Auth(ctx, req.UserId, req.DeviceId, req.Token)
 	if err != nil {
 		return nil, err // 返回认证错误
 	}
@@ -29,3 +30,17 @@ func (s *UserIntService) Auth(ctx context.Context, req *userpb.AuthRequest) (*em
 	return &emptypb.Empty{}, nil
 }
 
+type UserExtService struct {
+	userpb.UnsafeUserExtServiceServer // 继承 gRPC 的 UserExtServiceServer
+	queries                           *dao.Queries
+}
+
+func NewUserExtService(queries *dao.Queries) *UserExtService {
+	return &UserExtService{queries: queries}
+}
+
+func (s *UserExtService) Login(ctx context.Context, req *userpb.LoginRequest) (*userpb.LoginResponse, error) {
+	// 进行用户登录逻辑
+
+	return nil, nil
+}

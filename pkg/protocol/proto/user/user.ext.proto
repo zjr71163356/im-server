@@ -5,7 +5,7 @@ package user;
 option go_package = "pkg/protocol/pb/userpb";
 
 // 用户登录服务
-service UserLoginService {
+service UserExtService {
   // 登录请求
   rpc Login(LoginRequest) returns (LoginResponse);
 }

@@ -19,107 +19,107 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserLoginService_Login_FullMethodName = "/user.UserLoginService/Login"
+	UserExtService_Login_FullMethodName = "/user.UserExtService/Login"
 )
 
-// UserLoginServiceClient is the client API for UserLoginService service.
+// UserExtServiceClient is the client API for UserExtService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // 用户登录服务
-type UserLoginServiceClient interface {
+type UserExtServiceClient interface {
 	// 登录请求
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 }
 
-type userLoginServiceClient struct {
+type userExtServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewUserLoginServiceClient(cc grpc.ClientConnInterface) UserLoginServiceClient {
-	return &userLoginServiceClient{cc}
+func NewUserExtServiceClient(cc grpc.ClientConnInterface) UserExtServiceClient {
+	return &userExtServiceClient{cc}
 }
 
-func (c *userLoginServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
+func (c *userExtServiceClient) Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(LoginResponse)
-	err := c.cc.Invoke(ctx, UserLoginService_Login_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, UserExtService_Login_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// UserLoginServiceServer is the server API for UserLoginService service.
-// All implementations must embed UnimplementedUserLoginServiceServer
+// UserExtServiceServer is the server API for UserExtService service.
+// All implementations must embed UnimplementedUserExtServiceServer
 // for forward compatibility.
 //
 // 用户登录服务
-type UserLoginServiceServer interface {
+type UserExtServiceServer interface {
 	// 登录请求
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
-	mustEmbedUnimplementedUserLoginServiceServer()
+	mustEmbedUnimplementedUserExtServiceServer()
 }
 
-// UnimplementedUserLoginServiceServer must be embedded to have
+// UnimplementedUserExtServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedUserLoginServiceServer struct{}
+type UnimplementedUserExtServiceServer struct{}
 
-func (UnimplementedUserLoginServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
+func (UnimplementedUserExtServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedUserLoginServiceServer) mustEmbedUnimplementedUserLoginServiceServer() {}
-func (UnimplementedUserLoginServiceServer) testEmbeddedByValue()                          {}
+func (UnimplementedUserExtServiceServer) mustEmbedUnimplementedUserExtServiceServer() {}
+func (UnimplementedUserExtServiceServer) testEmbeddedByValue()                        {}
 
-// UnsafeUserLoginServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to UserLoginServiceServer will
+// UnsafeUserExtServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UserExtServiceServer will
 // result in compilation errors.
-type UnsafeUserLoginServiceServer interface {
-	mustEmbedUnimplementedUserLoginServiceServer()
+type UnsafeUserExtServiceServer interface {
+	mustEmbedUnimplementedUserExtServiceServer()
 }
 
-func RegisterUserLoginServiceServer(s grpc.ServiceRegistrar, srv UserLoginServiceServer) {
-	// If the following call pancis, it indicates UnimplementedUserLoginServiceServer was
+func RegisterUserExtServiceServer(s grpc.ServiceRegistrar, srv UserExtServiceServer) {
+	// If the following call pancis, it indicates UnimplementedUserExtServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&UserLoginService_ServiceDesc, srv)
+	s.RegisterService(&UserExtService_ServiceDesc, srv)
 }
 
-func _UserLoginService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UserExtService_Login_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(LoginRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserLoginServiceServer).Login(ctx, in)
+		return srv.(UserExtServiceServer).Login(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UserLoginService_Login_FullMethodName,
+		FullMethod: UserExtService_Login_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserLoginServiceServer).Login(ctx, req.(*LoginRequest))
+		return srv.(UserExtServiceServer).Login(ctx, req.(*LoginRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// UserLoginService_ServiceDesc is the grpc.ServiceDesc for UserLoginService service.
+// UserExtService_ServiceDesc is the grpc.ServiceDesc for UserExtService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var UserLoginService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "user.UserLoginService",
-	HandlerType: (*UserLoginServiceServer)(nil),
+var UserExtService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "user.UserExtService",
+	HandlerType: (*UserExtServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "Login",
-			Handler:    _UserLoginService_Login_Handler,
+			Handler:    _UserExtService_Login_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -165,8 +165,8 @@ const file_pkg_protocol_proto_user_user_ext_proto_rawDesc = "" +
 	"\x05token\x18\x02 \x01(\tR\x05token\x12\x1d\n" +
 	"\n" +
 	"expires_at\x18\x03 \x01(\x03R\texpiresAt\x12\x18\n" +
-	"\amessage\x18\x04 \x01(\tR\amessage2D\n" +
-	"\x10UserLoginService\x120\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage2B\n" +
+	"\x0eUserExtService\x120\n" +
 	"\x05Login\x12\x12.user.LoginRequest\x1a\x13.user.LoginResponseB\x18Z\x16pkg/protocol/pb/userpbb\x06proto3"
 
 var (
@@ -187,8 +187,8 @@ var file_pkg_protocol_proto_user_user_ext_proto_goTypes = []any{
 	(*LoginResponse)(nil), // 1: user.LoginResponse
 }
 var file_pkg_protocol_proto_user_user_ext_proto_depIdxs = []int32{
-	0, // 0: user.UserLoginService.Login:input_type -> user.LoginRequest
-	1, // 1: user.UserLoginService.Login:output_type -> user.LoginResponse
+	0, // 0: user.UserExtService.Login:input_type -> user.LoginRequest
+	1, // 1: user.UserExtService.Login:output_type -> user.LoginResponse
 	1, // [1:2] is the sub-list for method output_type
 	0, // [0:1] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name

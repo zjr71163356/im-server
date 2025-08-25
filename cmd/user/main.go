@@ -1,7 +1,7 @@
 package main
 
 import (
-	"im-server/internal/logic/user"
+	"im-server/internal/user"
 	"im-server/pkg/config"
 	"im-server/pkg/protocol/pb/userpb"
 	"log/slog"
