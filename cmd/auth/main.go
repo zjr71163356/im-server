@@ -9,6 +9,7 @@ import (
 	"im-server/pkg/config"
 	"im-server/pkg/dao"
 	"im-server/pkg/protocol/pb/authpb"
+	Redis "im-server/pkg/redis"
 
 	_ "github.com/go-sql-driver/mysql"
 	"google.golang.org/grpc"
@@ -26,7 +27,7 @@ func main() {
 	queries := dao.New(db)
 
 	// 创建 Auth 服务实例
-	authService := auth.NewAuthIntService(queries)
+	authService := auth.NewAuthIntService(queries, Redis.RedisClient)
 
 	// 启动 gRPC 服务器
 	listener, err := net.Listen("tcp", config.Config.Services.Auth.RPCAddr)

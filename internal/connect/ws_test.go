@@ -24,7 +24,7 @@ func TestMockServerSignInFlow(t *testing.T) {
 
 	mockClient := mocks.NewMockDeviceIntServiceClient(ctrl)
 	rpc.SetDeviceIntServiceClient(mockClient)
-	
+
 	// 模拟 gRPC 调用成功
 	mockClient.EXPECT().ConnSignIn(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()
 	mockClient.EXPECT().Offline(gomock.Any(), gomock.Any()).Return(nil, nil).AnyTimes()

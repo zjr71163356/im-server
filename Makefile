@@ -77,4 +77,8 @@ build-user:
 build-all: build-auth build-connect build-logic build-user
 	@echo "All services built successfully."
 
+mockdb:
+	@echo "Generating mock for DAO layer..."
+	mockgen -source=pkg/dao/querier.go -destination=pkg/mocks/mock_querier.go -package=mocks
+
 .PHONY: migrate-up migrate-down migrate-create proto sqlc-generate db-update db-check build-auth build-connect build-logic build-user build-all
