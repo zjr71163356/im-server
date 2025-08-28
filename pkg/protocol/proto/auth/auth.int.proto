@@ -5,11 +5,25 @@ option go_package = "pkg/protocol/pb/authpb";
 import "google/protobuf/empty.proto";
 
 service AuthIntService {
+  // 注册
+  rpc Register (RegisterRequest) returns (RegisterResponse);
+  // 登录
+  rpc Login (LoginRequest) returns (LoginResponse);
   // 权限校验
   rpc Auth (AuthRequest) returns (google.protobuf.Empty);
   
   // 用户登录
-  rpc Login (LoginRequest) returns (LoginResponse);
+}
+
+message RegisterRequest {
+  string username = 1; // 用户名
+  string password = 2; // 密码
+}
+
+message RegisterResponse {
+  uint64 user_id = 1; // 注册成功后返回的用户ID
+  string message = 2; // 注册结果信息（如错误原因或成功提示）
+  int32 code = 3; // 注册结果代码（如0表示成功，非0表示失败）
 }
 
 message AuthRequest {

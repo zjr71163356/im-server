@@ -19,16 +19,26 @@ INSERT INTO ` + "`" + `group` + "`" + ` (
 )
 `
 
+type CreateGroupParams struct {
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Name         string    `json:"name"`
+	AvatarUrl    string    `json:"avatar_url"`
+	Introduction string    `json:"introduction"`
+	UserNum      int32     `json:"user_num"`
+	Extra        string    `json:"extra"`
+}
+
 // 创建群组
-func (q *Queries) CreateGroup(ctx context.Context, createdAt time.Time, updatedAt time.Time, name string, avatarUrl string, introduction string, userNum int32, extra string) (sql.Result, error) {
+func (q *Queries) CreateGroup(ctx context.Context, arg CreateGroupParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createGroup,
-		createdAt,
-		updatedAt,
-		name,
-		avatarUrl,
-		introduction,
-		userNum,
-		extra,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.Name,
+		arg.AvatarUrl,
+		arg.Introduction,
+		arg.UserNum,
+		arg.Extra,
 	)
 }
 
@@ -40,17 +50,28 @@ INSERT INTO ` + "`" + `group_user` + "`" + ` (
 )
 `
 
+type CreateGroupUserParams struct {
+	GroupID    uint64    `json:"group_id"`
+	UserID     uint64    `json:"user_id"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	MemberType int8      `json:"member_type"`
+	Remarks    string    `json:"remarks"`
+	Extra      string    `json:"extra"`
+	Status     int8      `json:"status"`
+}
+
 // 添加群组成员
-func (q *Queries) CreateGroupUser(ctx context.Context, groupID uint64, userID uint64, createdAt time.Time, updatedAt time.Time, memberType int8, remarks string, extra string, status int8) error {
+func (q *Queries) CreateGroupUser(ctx context.Context, arg CreateGroupUserParams) error {
 	_, err := q.db.ExecContext(ctx, createGroupUser,
-		groupID,
-		userID,
-		createdAt,
-		updatedAt,
-		memberType,
-		remarks,
-		extra,
-		status,
+		arg.GroupID,
+		arg.UserID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.MemberType,
+		arg.Remarks,
+		arg.Extra,
+		arg.Status,
 	)
 	return err
 }
@@ -71,9 +92,14 @@ DELETE FROM ` + "`" + `group_user` + "`" + `
 WHERE group_id = ? AND user_id = ?
 `
 
+type DeleteGroupUserParams struct {
+	GroupID uint64 `json:"group_id"`
+	UserID  uint64 `json:"user_id"`
+}
+
 // 移除群组成员
-func (q *Queries) DeleteGroupUser(ctx context.Context, groupID uint64, userID uint64) error {
-	_, err := q.db.ExecContext(ctx, deleteGroupUser, groupID, userID)
+func (q *Queries) DeleteGroupUser(ctx context.Context, arg DeleteGroupUserParams) error {
+	_, err := q.db.ExecContext(ctx, deleteGroupUser, arg.GroupID, arg.UserID)
 	return err
 }
 
@@ -83,7 +109,7 @@ WHERE id = ? LIMIT 1
 `
 
 // 根据群组ID获取群组信息
-func (q *Queries) GetGroup(ctx context.Context, id uint64) (*Group, error) {
+func (q *Queries) GetGroup(ctx context.Context, id uint64) (Group, error) {
 	row := q.db.QueryRowContext(ctx, getGroup, id)
 	var i Group
 	err := row.Scan(
@@ -96,7 +122,7 @@ func (q *Queries) GetGroup(ctx context.Context, id uint64) (*Group, error) {
 		&i.UserNum,
 		&i.Extra,
 	)
-	return &i, err
+	return i, err
 }
 
 const getGroupUser = `-- name: GetGroupUser :one
@@ -105,9 +131,14 @@ WHERE group_id = ? AND user_id = ?
 LIMIT 1
 `
 
+type GetGroupUserParams struct {
+	GroupID uint64 `json:"group_id"`
+	UserID  uint64 `json:"user_id"`
+}
+
 // 获取群组成员信息
-func (q *Queries) GetGroupUser(ctx context.Context, groupID uint64, userID uint64) (*GroupUser, error) {
-	row := q.db.QueryRowContext(ctx, getGroupUser, groupID, userID)
+func (q *Queries) GetGroupUser(ctx context.Context, arg GetGroupUserParams) (GroupUser, error) {
+	row := q.db.QueryRowContext(ctx, getGroupUser, arg.GroupID, arg.UserID)
 	var i GroupUser
 	err := row.Scan(
 		&i.GroupID,
@@ -119,7 +150,7 @@ func (q *Queries) GetGroupUser(ctx context.Context, groupID uint64, userID uint6
 		&i.Extra,
 		&i.Status,
 	)
-	return &i, err
+	return i, err
 }
 
 const getGroupUsers = `-- name: GetGroupUsers :many
@@ -129,13 +160,13 @@ ORDER BY member_type ASC, created_at ASC
 `
 
 // 获取群组所有成员
-func (q *Queries) GetGroupUsers(ctx context.Context, groupID uint64) ([]*GroupUser, error) {
+func (q *Queries) GetGroupUsers(ctx context.Context, groupID uint64) ([]GroupUser, error) {
 	rows, err := q.db.QueryContext(ctx, getGroupUsers, groupID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GroupUser
+	items := []GroupUser{}
 	for rows.Next() {
 		var i GroupUser
 		if err := rows.Scan(
@@ -150,7 +181,7 @@ func (q *Queries) GetGroupUsers(ctx context.Context, groupID uint64) ([]*GroupUs
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, &i)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -168,13 +199,13 @@ ORDER BY created_at DESC
 `
 
 // 获取用户参与的所有群组
-func (q *Queries) GetUserGroups(ctx context.Context, userID uint64) ([]*GroupUser, error) {
+func (q *Queries) GetUserGroups(ctx context.Context, userID uint64) ([]GroupUser, error) {
 	rows, err := q.db.QueryContext(ctx, getUserGroups, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GroupUser
+	items := []GroupUser{}
 	for rows.Next() {
 		var i GroupUser
 		if err := rows.Scan(
@@ -189,7 +220,7 @@ func (q *Queries) GetUserGroups(ctx context.Context, userID uint64) ([]*GroupUse
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, &i)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -206,14 +237,19 @@ ORDER BY created_at DESC
 LIMIT ? OFFSET ?
 `
 
+type ListGroupsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
 // 获取群组列表
-func (q *Queries) ListGroups(ctx context.Context, limit int32, offset int32) ([]*Group, error) {
-	rows, err := q.db.QueryContext(ctx, listGroups, limit, offset)
+func (q *Queries) ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error) {
+	rows, err := q.db.QueryContext(ctx, listGroups, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Group
+	items := []Group{}
 	for rows.Next() {
 		var i Group
 		if err := rows.Scan(
@@ -228,7 +264,7 @@ func (q *Queries) ListGroups(ctx context.Context, limit int32, offset int32) ([]
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, &i)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -245,15 +281,24 @@ SET updated_at = ?, name = ?, avatar_url = ?, introduction = ?, extra = ?
 WHERE id = ?
 `
 
+type UpdateGroupParams struct {
+	UpdatedAt    time.Time `json:"updated_at"`
+	Name         string    `json:"name"`
+	AvatarUrl    string    `json:"avatar_url"`
+	Introduction string    `json:"introduction"`
+	Extra        string    `json:"extra"`
+	ID           uint64    `json:"id"`
+}
+
 // 更新群组信息
-func (q *Queries) UpdateGroup(ctx context.Context, updatedAt time.Time, name string, avatarUrl string, introduction string, extra string, iD uint64) error {
+func (q *Queries) UpdateGroup(ctx context.Context, arg UpdateGroupParams) error {
 	_, err := q.db.ExecContext(ctx, updateGroup,
-		updatedAt,
-		name,
-		avatarUrl,
-		introduction,
-		extra,
-		iD,
+		arg.UpdatedAt,
+		arg.Name,
+		arg.AvatarUrl,
+		arg.Introduction,
+		arg.Extra,
+		arg.ID,
 	)
 	return err
 }
@@ -264,9 +309,15 @@ SET updated_at = ?, user_num = ?
 WHERE id = ?
 `
 
+type UpdateGroupUserNumParams struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	UserNum   int32     `json:"user_num"`
+	ID        uint64    `json:"id"`
+}
+
 // 更新群组人数
-func (q *Queries) UpdateGroupUserNum(ctx context.Context, updatedAt time.Time, userNum int32, iD uint64) error {
-	_, err := q.db.ExecContext(ctx, updateGroupUserNum, updatedAt, userNum, iD)
+func (q *Queries) UpdateGroupUserNum(ctx context.Context, arg UpdateGroupUserNumParams) error {
+	_, err := q.db.ExecContext(ctx, updateGroupUserNum, arg.UpdatedAt, arg.UserNum, arg.ID)
 	return err
 }
 
@@ -276,13 +327,20 @@ SET updated_at = ?, member_type = ?
 WHERE group_id = ? AND user_id = ?
 `
 
+type UpdateGroupUserTypeParams struct {
+	UpdatedAt  time.Time `json:"updated_at"`
+	MemberType int8      `json:"member_type"`
+	GroupID    uint64    `json:"group_id"`
+	UserID     uint64    `json:"user_id"`
+}
+
 // 更新群组成员类型
-func (q *Queries) UpdateGroupUserType(ctx context.Context, updatedAt time.Time, memberType int8, groupID uint64, userID uint64) error {
+func (q *Queries) UpdateGroupUserType(ctx context.Context, arg UpdateGroupUserTypeParams) error {
 	_, err := q.db.ExecContext(ctx, updateGroupUserType,
-		updatedAt,
-		memberType,
-		groupID,
-		userID,
+		arg.UpdatedAt,
+		arg.MemberType,
+		arg.GroupID,
+		arg.UserID,
 	)
 	return err
 }

@@ -11,161 +11,161 @@ import (
 // 设备
 type Device struct {
 	// 自增主键
-	ID uint64 `db:"id" json:"id"`
+	ID uint64 `json:"id"`
 	// 创建时间
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 	// 更新时间
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// 账户id
-	UserID uint64 `db:"user_id" json:"user_id"`
+	UserID uint64 `json:"user_id"`
 	// 设备类型,1:Android；2：IOS；3：Windows; 4：MacOS；5：Web
-	Type int8 `db:"type" json:"type"`
+	Type int8 `json:"type"`
 	// 手机厂商
-	Brand string `db:"brand" json:"brand"`
+	Brand string `json:"brand"`
 	// 机型
-	Model string `db:"model" json:"model"`
+	Model string `json:"model"`
 	// 系统版本
-	SystemVersion string `db:"system_version" json:"system_version"`
+	SystemVersion string `json:"system_version"`
 	// app版本
-	SdkVersion string `db:"sdk_version" json:"sdk_version"`
+	SdkVersion string `json:"sdk_version"`
 	// 在线状态，0：离线；1：在线
-	Status int8 `db:"status" json:"status"`
+	Status int8 `json:"status"`
 	// 连接层服务器地址
-	ConnAddr string `db:"conn_addr" json:"conn_addr"`
+	ConnAddr string `json:"conn_addr"`
 	// 客户端地址
-	ClientAddr string `db:"client_addr" json:"client_addr"`
+	ClientAddr string `json:"client_addr"`
 }
 
 // 好友
 type Friend struct {
 	// 用户id
-	UserID uint64 `db:"user_id" json:"user_id"`
+	UserID uint64 `json:"user_id"`
 	// 好友id
-	FriendID uint64 `db:"friend_id" json:"friend_id"`
+	FriendID uint64 `json:"friend_id"`
 	// 创建时间
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 	// 更新时间
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// 备注
-	Remarks string `db:"remarks" json:"remarks"`
+	Remarks string `json:"remarks"`
 	// 附加属性
-	Extra string `db:"extra" json:"extra"`
+	Extra string `json:"extra"`
 	// 状态，1：申请，2：同意
-	Status int8 `db:"status" json:"status"`
+	Status int8 `json:"status"`
 }
 
 // 群组
 type Group struct {
 	// 自增主键
-	ID uint64 `db:"id" json:"id"`
+	ID uint64 `json:"id"`
 	// 创建时间
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 	// 更新时间
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// 群组名称
-	Name string `db:"name" json:"name"`
+	Name string `json:"name"`
 	// 群组头像
-	AvatarUrl string `db:"avatar_url" json:"avatar_url"`
+	AvatarUrl string `json:"avatar_url"`
 	// 群组简介
-	Introduction string `db:"introduction" json:"introduction"`
+	Introduction string `json:"introduction"`
 	// 群组人数
-	UserNum int32 `db:"user_num" json:"user_num"`
+	UserNum int32 `json:"user_num"`
 	// 附加属性
-	Extra string `db:"extra" json:"extra"`
+	Extra string `json:"extra"`
 }
 
 // 群组成员
 type GroupUser struct {
 	// 组id
-	GroupID uint64 `db:"group_id" json:"group_id"`
+	GroupID uint64 `json:"group_id"`
 	// 用户id
-	UserID uint64 `db:"user_id" json:"user_id"`
+	UserID uint64 `json:"user_id"`
 	// 创建时间
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 	// 更新时间
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// 成员类型，1：管理员；2：普通成员
-	MemberType int8 `db:"member_type" json:"member_type"`
+	MemberType int8 `json:"member_type"`
 	// 备注
-	Remarks string `db:"remarks" json:"remarks"`
+	Remarks string `json:"remarks"`
 	// 附加属性
-	Extra string `db:"extra" json:"extra"`
+	Extra string `json:"extra"`
 	// 状态
-	Status int8 `db:"status" json:"status"`
+	Status int8 `json:"status"`
 }
 
 // 消息
 type Message struct {
 	// 自增主键
-	ID uint64 `db:"id" json:"id"`
+	ID uint64 `json:"id"`
 	// 创建时间
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 	// 更新时间
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// 请求id
-	RequestID int64 `db:"request_id" json:"request_id"`
+	RequestID int64 `json:"request_id"`
 	// 消息类型
-	Code int32 `db:"code" json:"code"`
+	Code int32 `json:"code"`
 	// 消息内容
-	Content []byte `db:"content" json:"content"`
+	Content []byte `json:"content"`
 	// 消息状态，0：未处理1：消息撤回
-	Status int8 `db:"status" json:"status"`
+	Status int8 `json:"status"`
 }
 
 // 序列号
 type Seq struct {
 	// 自增主键
-	ID uint64 `db:"id" json:"id"`
+	ID uint64 `json:"id"`
 	// 创建时间
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 	// 更新时间
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// 对象类型,1:用户；2：群组
-	ObjectType int8 `db:"object_type" json:"object_type"`
+	ObjectType int8 `json:"object_type"`
 	// 对象id
-	ObjectID uint64 `db:"object_id" json:"object_id"`
+	ObjectID uint64 `json:"object_id"`
 	// 序列号
-	Seq uint64 `db:"seq" json:"seq"`
+	Seq uint64 `json:"seq"`
 }
 
 // 用户
 type User struct {
 	// 自增主键
-	ID uint64 `db:"id" json:"id"`
+	ID uint64 `json:"id"`
 	// 哈希后的密码
-	HashedPassword string `db:"hashed_password" json:"hashed_password"`
+	HashedPassword string `json:"hashed_password"`
 	// 密码盐值
-	Salt string `db:"salt" json:"salt"`
+	Salt string `json:"salt"`
 	// 用户名
-	Username string `db:"username" json:"username"`
+	Username string `json:"username"`
 	// 邮箱
-	Email string `db:"email" json:"email"`
+	Email string `json:"email"`
 	// 创建时间
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 	// 更新时间
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// 手机号
-	PhoneNumber string `db:"phone_number" json:"phone_number"`
+	PhoneNumber string `json:"phone_number"`
 	// 昵称
-	Nickname string `db:"nickname" json:"nickname"`
+	Nickname string `json:"nickname"`
 	// 性别，0:未知；1:男；2:女
-	Sex int8 `db:"sex" json:"sex"`
+	Sex int8 `json:"sex"`
 	// 用户头像链接
-	AvatarUrl string `db:"avatar_url" json:"avatar_url"`
+	AvatarUrl string `json:"avatar_url"`
 	// 附加属性
-	Extra string `db:"extra" json:"extra"`
+	Extra string `json:"extra"`
 }
 
 // 用户消息
 type UserMessage struct {
 	// 所属类型的id
-	UserID uint64 `db:"user_id" json:"user_id"`
+	UserID uint64 `json:"user_id"`
 	// 消息序列号
-	Seq uint64 `db:"seq" json:"seq"`
+	Seq uint64 `json:"seq"`
 	// 创建时间
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 	// 更新时间
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 	// 消息ID
-	MessageID uint64 `db:"message_id" json:"message_id"`
+	MessageID uint64 `json:"message_id"`
 }

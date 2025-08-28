@@ -20,20 +20,34 @@ INSERT INTO ` + "`" + `device` + "`" + ` (
 )
 `
 
+type CreateDeviceParams struct {
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+	UserID        uint64    `json:"user_id"`
+	Type          int8      `json:"type"`
+	Brand         string    `json:"brand"`
+	Model         string    `json:"model"`
+	SystemVersion string    `json:"system_version"`
+	SdkVersion    string    `json:"sdk_version"`
+	Status        int8      `json:"status"`
+	ConnAddr      string    `json:"conn_addr"`
+	ClientAddr    string    `json:"client_addr"`
+}
+
 // 创建设备
-func (q *Queries) CreateDevice(ctx context.Context, createdAt time.Time, updatedAt time.Time, userID uint64, type_ int8, brand string, model string, systemVersion string, sdkVersion string, status int8, connAddr string, clientAddr string) (sql.Result, error) {
+func (q *Queries) CreateDevice(ctx context.Context, arg CreateDeviceParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createDevice,
-		createdAt,
-		updatedAt,
-		userID,
-		type_,
-		brand,
-		model,
-		systemVersion,
-		sdkVersion,
-		status,
-		connAddr,
-		clientAddr,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.UserID,
+		arg.Type,
+		arg.Brand,
+		arg.Model,
+		arg.SystemVersion,
+		arg.SdkVersion,
+		arg.Status,
+		arg.ConnAddr,
+		arg.ClientAddr,
 	)
 }
 
@@ -54,7 +68,7 @@ WHERE id = ? LIMIT 1
 `
 
 // 根据设备ID获取设备信息
-func (q *Queries) GetDevice(ctx context.Context, id uint64) (*Device, error) {
+func (q *Queries) GetDevice(ctx context.Context, id uint64) (Device, error) {
 	row := q.db.QueryRowContext(ctx, getDevice, id)
 	var i Device
 	err := row.Scan(
@@ -71,7 +85,7 @@ func (q *Queries) GetDevice(ctx context.Context, id uint64) (*Device, error) {
 		&i.ConnAddr,
 		&i.ClientAddr,
 	)
-	return &i, err
+	return i, err
 }
 
 const getDeviceByUserAndType = `-- name: GetDeviceByUserAndType :one
@@ -80,9 +94,14 @@ WHERE user_id = ? AND type = ?
 LIMIT 1
 `
 
+type GetDeviceByUserAndTypeParams struct {
+	UserID uint64 `json:"user_id"`
+	Type   int8   `json:"type"`
+}
+
 // 根据用户ID和设备类型获取设备
-func (q *Queries) GetDeviceByUserAndType(ctx context.Context, userID uint64, type_ int8) (*Device, error) {
-	row := q.db.QueryRowContext(ctx, getDeviceByUserAndType, userID, type_)
+func (q *Queries) GetDeviceByUserAndType(ctx context.Context, arg GetDeviceByUserAndTypeParams) (Device, error) {
+	row := q.db.QueryRowContext(ctx, getDeviceByUserAndType, arg.UserID, arg.Type)
 	var i Device
 	err := row.Scan(
 		&i.ID,
@@ -98,7 +117,7 @@ func (q *Queries) GetDeviceByUserAndType(ctx context.Context, userID uint64, typ
 		&i.ConnAddr,
 		&i.ClientAddr,
 	)
-	return &i, err
+	return i, err
 }
 
 const getOnlineDevices = `-- name: GetOnlineDevices :many
@@ -108,13 +127,13 @@ ORDER BY updated_at DESC
 `
 
 // 获取在线设备列表
-func (q *Queries) GetOnlineDevices(ctx context.Context) ([]*Device, error) {
+func (q *Queries) GetOnlineDevices(ctx context.Context) ([]Device, error) {
 	rows, err := q.db.QueryContext(ctx, getOnlineDevices)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Device
+	items := []Device{}
 	for rows.Next() {
 		var i Device
 		if err := rows.Scan(
@@ -133,7 +152,7 @@ func (q *Queries) GetOnlineDevices(ctx context.Context) ([]*Device, error) {
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, &i)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -151,13 +170,13 @@ ORDER BY updated_at DESC
 `
 
 // 获取用户的所有设备
-func (q *Queries) GetUserDevices(ctx context.Context, userID uint64) ([]*Device, error) {
+func (q *Queries) GetUserDevices(ctx context.Context, userID uint64) ([]Device, error) {
 	rows, err := q.db.QueryContext(ctx, getUserDevices, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Device
+	items := []Device{}
 	for rows.Next() {
 		var i Device
 		if err := rows.Scan(
@@ -176,7 +195,7 @@ func (q *Queries) GetUserDevices(ctx context.Context, userID uint64) ([]*Device,
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, &i)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -193,9 +212,14 @@ SET updated_at = ?, status = 0, conn_addr = '', client_addr = ''
 WHERE id = ?
 `
 
+type UpdateDeviceOfflineParams struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	ID        uint64    `json:"id"`
+}
+
 // 设置设备离线
-func (q *Queries) UpdateDeviceOffline(ctx context.Context, updatedAt time.Time, iD uint64) error {
-	_, err := q.db.ExecContext(ctx, updateDeviceOffline, updatedAt, iD)
+func (q *Queries) UpdateDeviceOffline(ctx context.Context, arg UpdateDeviceOfflineParams) error {
+	_, err := q.db.ExecContext(ctx, updateDeviceOffline, arg.UpdatedAt, arg.ID)
 	return err
 }
 
@@ -205,14 +229,22 @@ SET updated_at = ?, status = ?, conn_addr = ?, client_addr = ?
 WHERE id = ?
 `
 
+type UpdateDeviceStatusParams struct {
+	UpdatedAt  time.Time `json:"updated_at"`
+	Status     int8      `json:"status"`
+	ConnAddr   string    `json:"conn_addr"`
+	ClientAddr string    `json:"client_addr"`
+	ID         uint64    `json:"id"`
+}
+
 // 更新设备在线状态
-func (q *Queries) UpdateDeviceStatus(ctx context.Context, updatedAt time.Time, status int8, connAddr string, clientAddr string, iD uint64) error {
+func (q *Queries) UpdateDeviceStatus(ctx context.Context, arg UpdateDeviceStatusParams) error {
 	_, err := q.db.ExecContext(ctx, updateDeviceStatus,
-		updatedAt,
-		status,
-		connAddr,
-		clientAddr,
-		iD,
+		arg.UpdatedAt,
+		arg.Status,
+		arg.ConnAddr,
+		arg.ClientAddr,
+		arg.ID,
 	)
 	return err
 }

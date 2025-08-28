@@ -1,8 +1,6 @@
 package user
 
-import (
-	"im-server/pkg/dao"
-)
+import "im-server/pkg/dao"
 
 // UserService 用户服务
 type UserService struct {

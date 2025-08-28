@@ -13,16 +13,8 @@ sql:
         package: "dao"
         out: "pkg/dao"
         # 生成接口，方便 mock 测试
-        emit_interface: true
-        # 为 struct 添加 JSON 标签
         emit_json_tags: true
-        # 为 struct 添加数据库标签
-        emit_db_tags: true
-        # 生成参数结构体，当查询参数较多时很有用
-        emit_params_struct_pointers: true
-        # 生成结果结构体指针
-        emit_result_struct_pointers: true
-        # 为空值生成指针类型，处理 NULL 值
-        emit_pointers_for_null_types: false
-        # 查询方法前缀，保持为空使用默认命名
-        query_parameter_limit: 32
+        emit_prepared_queries: false
+        emit_interface: true
+        emit_exact_table_names: false
+        emit_empty_slices: true

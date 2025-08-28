@@ -44,7 +44,7 @@ func (s *DeviceIntService) ConnSignIn(ctx context.Context, req *logicpb.ConnSign
 	if err != nil {
 		return nil, fmt.Errorf("failed to get device: %v", err)
 	}
-	err = SetDeviceOnline(ctx, device)
+	err = SetDeviceOnline(ctx, &device)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set device online: %v", err)
 	}

@@ -11,28 +11,28 @@ import (
 	"time"
 )
 
-const createUser = `-- name: CreateUser :execresult
+const createUserByUsername = `-- name: CreateUserByUsername :execresult
 INSERT INTO ` + "`" + `user` + "`" + ` (
-    created_at, updated_at, username, email, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt
+    created_at, updated_at, username, hashed_password
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    ?, ?, ?, ?
 )
 `
 
+type CreateUserByUsernameParams struct {
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+	Username       string    `json:"username"`
+	HashedPassword string    `json:"hashed_password"`
+}
+
 // 创建用户
-func (q *Queries) CreateUser(ctx context.Context, createdAt time.Time, updatedAt time.Time, username string, email string, phoneNumber string, nickname string, sex int8, avatarUrl string, extra string, hashedPassword string, salt string) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createUser,
-		createdAt,
-		updatedAt,
-		username,
-		email,
-		phoneNumber,
-		nickname,
-		sex,
-		avatarUrl,
-		extra,
-		hashedPassword,
-		salt,
+func (q *Queries) CreateUserByUsername(ctx context.Context, arg CreateUserByUsernameParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createUserByUsername,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.Username,
+		arg.HashedPassword,
 	)
 }
 
@@ -53,7 +53,7 @@ WHERE id = ? LIMIT 1
 `
 
 // 根据用户ID获取用户信息
-func (q *Queries) GetUser(ctx context.Context, id uint64) (*User, error) {
+func (q *Queries) GetUser(ctx context.Context, id uint64) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUser, id)
 	var i User
 	err := row.Scan(
@@ -70,7 +70,7 @@ func (q *Queries) GetUser(ctx context.Context, id uint64) (*User, error) {
 		&i.AvatarUrl,
 		&i.Extra,
 	)
-	return &i, err
+	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -79,7 +79,7 @@ WHERE email = ? LIMIT 1
 `
 
 // 根据邮箱获取用户信息
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, error) {
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
@@ -96,7 +96,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (*User, erro
 		&i.AvatarUrl,
 		&i.Extra,
 	)
-	return &i, err
+	return i, err
 }
 
 const getUserByEmailForAuth = `-- name: GetUserByEmailForAuth :one
@@ -105,14 +105,14 @@ WHERE email = ? LIMIT 1
 `
 
 type GetUserByEmailForAuthRow struct {
-	ID             uint64 `db:"id" json:"id"`
-	Email          string `db:"email" json:"email"`
-	HashedPassword string `db:"hashed_password" json:"hashed_password"`
-	Salt           string `db:"salt" json:"salt"`
+	ID             uint64 `json:"id"`
+	Email          string `json:"email"`
+	HashedPassword string `json:"hashed_password"`
+	Salt           string `json:"salt"`
 }
 
 // 根据邮箱获取用户认证信息
-func (q *Queries) GetUserByEmailForAuth(ctx context.Context, email string) (*GetUserByEmailForAuthRow, error) {
+func (q *Queries) GetUserByEmailForAuth(ctx context.Context, email string) (GetUserByEmailForAuthRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmailForAuth, email)
 	var i GetUserByEmailForAuthRow
 	err := row.Scan(
@@ -121,7 +121,7 @@ func (q *Queries) GetUserByEmailForAuth(ctx context.Context, email string) (*Get
 		&i.HashedPassword,
 		&i.Salt,
 	)
-	return &i, err
+	return i, err
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
@@ -130,7 +130,7 @@ WHERE phone_number = ? LIMIT 1
 `
 
 // 根据手机号获取用户信息
-func (q *Queries) GetUserByPhone(ctx context.Context, phoneNumber string) (*User, error) {
+func (q *Queries) GetUserByPhone(ctx context.Context, phoneNumber string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByPhone, phoneNumber)
 	var i User
 	err := row.Scan(
@@ -147,7 +147,7 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phoneNumber string) (*User
 		&i.AvatarUrl,
 		&i.Extra,
 	)
-	return &i, err
+	return i, err
 }
 
 const getUserByPhoneForAuth = `-- name: GetUserByPhoneForAuth :one
@@ -156,14 +156,14 @@ WHERE phone_number = ? LIMIT 1
 `
 
 type GetUserByPhoneForAuthRow struct {
-	ID             uint64 `db:"id" json:"id"`
-	PhoneNumber    string `db:"phone_number" json:"phone_number"`
-	HashedPassword string `db:"hashed_password" json:"hashed_password"`
-	Salt           string `db:"salt" json:"salt"`
+	ID             uint64 `json:"id"`
+	PhoneNumber    string `json:"phone_number"`
+	HashedPassword string `json:"hashed_password"`
+	Salt           string `json:"salt"`
 }
 
 // 根据手机号获取用户认证信息
-func (q *Queries) GetUserByPhoneForAuth(ctx context.Context, phoneNumber string) (*GetUserByPhoneForAuthRow, error) {
+func (q *Queries) GetUserByPhoneForAuth(ctx context.Context, phoneNumber string) (GetUserByPhoneForAuthRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByPhoneForAuth, phoneNumber)
 	var i GetUserByPhoneForAuthRow
 	err := row.Scan(
@@ -172,7 +172,7 @@ func (q *Queries) GetUserByPhoneForAuth(ctx context.Context, phoneNumber string)
 		&i.HashedPassword,
 		&i.Salt,
 	)
-	return &i, err
+	return i, err
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
@@ -181,7 +181,7 @@ WHERE username = ? LIMIT 1
 `
 
 // 根据用户名获取用户信息
-func (q *Queries) GetUserByUsername(ctx context.Context, username string) (*User, error) {
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
 	var i User
 	err := row.Scan(
@@ -198,7 +198,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (*User
 		&i.AvatarUrl,
 		&i.Extra,
 	)
-	return &i, err
+	return i, err
 }
 
 const getUserByUsernameForAuth = `-- name: GetUserByUsernameForAuth :one
@@ -207,14 +207,14 @@ WHERE username = ? LIMIT 1
 `
 
 type GetUserByUsernameForAuthRow struct {
-	ID             uint64 `db:"id" json:"id"`
-	Username       string `db:"username" json:"username"`
-	HashedPassword string `db:"hashed_password" json:"hashed_password"`
-	Salt           string `db:"salt" json:"salt"`
+	ID             uint64 `json:"id"`
+	Username       string `json:"username"`
+	HashedPassword string `json:"hashed_password"`
+	Salt           string `json:"salt"`
 }
 
 // 根据用户名获取用户认证信息
-func (q *Queries) GetUserByUsernameForAuth(ctx context.Context, username string) (*GetUserByUsernameForAuthRow, error) {
+func (q *Queries) GetUserByUsernameForAuth(ctx context.Context, username string) (GetUserByUsernameForAuthRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByUsernameForAuth, username)
 	var i GetUserByUsernameForAuthRow
 	err := row.Scan(
@@ -223,7 +223,7 @@ func (q *Queries) GetUserByUsernameForAuth(ctx context.Context, username string)
 		&i.HashedPassword,
 		&i.Salt,
 	)
-	return &i, err
+	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
@@ -232,14 +232,19 @@ ORDER BY created_at DESC
 LIMIT ? OFFSET ?
 `
 
+type ListUsersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
 // 获取用户列表
-func (q *Queries) ListUsers(ctx context.Context, limit int32, offset int32) ([]*User, error) {
-	rows, err := q.db.QueryContext(ctx, listUsers, limit, offset)
+func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUsers, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*User
+	items := []User{}
 	for rows.Next() {
 		var i User
 		if err := rows.Scan(
@@ -258,7 +263,7 @@ func (q *Queries) ListUsers(ctx context.Context, limit int32, offset int32) ([]*
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, &i)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -275,15 +280,24 @@ SET updated_at = ?, nickname = ?, sex = ?, avatar_url = ?, extra = ?
 WHERE id = ?
 `
 
+type UpdateUserParams struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	Nickname  string    `json:"nickname"`
+	Sex       int8      `json:"sex"`
+	AvatarUrl string    `json:"avatar_url"`
+	Extra     string    `json:"extra"`
+	ID        uint64    `json:"id"`
+}
+
 // 更新用户信息
-func (q *Queries) UpdateUser(ctx context.Context, updatedAt time.Time, nickname string, sex int8, avatarUrl string, extra string, iD uint64) error {
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	_, err := q.db.ExecContext(ctx, updateUser,
-		updatedAt,
-		nickname,
-		sex,
-		avatarUrl,
-		extra,
-		iD,
+		arg.UpdatedAt,
+		arg.Nickname,
+		arg.Sex,
+		arg.AvatarUrl,
+		arg.Extra,
+		arg.ID,
 	)
 	return err
 }
@@ -294,9 +308,15 @@ SET updated_at = ?, avatar_url = ?
 WHERE id = ?
 `
 
+type UpdateUserAvatarParams struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	AvatarUrl string    `json:"avatar_url"`
+	ID        uint64    `json:"id"`
+}
+
 // 更新用户头像
-func (q *Queries) UpdateUserAvatar(ctx context.Context, updatedAt time.Time, avatarUrl string, iD uint64) error {
-	_, err := q.db.ExecContext(ctx, updateUserAvatar, updatedAt, avatarUrl, iD)
+func (q *Queries) UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserAvatar, arg.UpdatedAt, arg.AvatarUrl, arg.ID)
 	return err
 }
 
@@ -306,13 +326,20 @@ SET updated_at = ?, hashed_password = ?, salt = ?
 WHERE id = ?
 `
 
+type UpdateUserPasswordParams struct {
+	UpdatedAt      time.Time `json:"updated_at"`
+	HashedPassword string    `json:"hashed_password"`
+	Salt           string    `json:"salt"`
+	ID             uint64    `json:"id"`
+}
+
 // 更新用户密码
-func (q *Queries) UpdateUserPassword(ctx context.Context, updatedAt time.Time, hashedPassword string, salt string, iD uint64) error {
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
 	_, err := q.db.ExecContext(ctx, updateUserPassword,
-		updatedAt,
-		hashedPassword,
-		salt,
-		iD,
+		arg.UpdatedAt,
+		arg.HashedPassword,
+		arg.Salt,
+		arg.ID,
 	)
 	return err
 }

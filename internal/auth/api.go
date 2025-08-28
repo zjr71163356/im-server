@@ -2,9 +2,7 @@ package auth
 
 import (
 	"context"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/hex"
+	"database/sql"
 	"errors"
 	"time"
 
@@ -80,9 +78,47 @@ func (s *AuthIntService) Login(ctx context.Context, req *authpb.LoginRequest) (*
 	}, nil
 }
 
+func (s *AuthIntService) Register(ctx context.Context, req *authpb.RegisterRequest) (*authpb.RegisterResponse, error) {
+	// TODO: Implement user registration logic
+	_, err := s.queries.GetUserByUsername(ctx, req.Username)
+	if err == nil {
+		return &authpb.RegisterResponse{
+			Message: "用户已存在",
+		}, nil
+	}
+	// 如果错误不是 "未找到记录"，则是一个真正的数据库错误
+	if !errors.Is(err, sql.ErrNoRows) {
+		return nil, status.Errorf(codes.Internal, "查询用户失败: %v", err)
+	}
+	// 在实际应用中应使用更安全的随机盐值
+	hashedPassword, err := hashPassword(req.Password)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "注册失败: %v", err)
+	}
+	// 创建新用户
+	result, err := s.queries.CreateUserByUsername(ctx, dao.CreateUserByUsernameParams{
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+		Username:       req.Username,
+		HashedPassword: hashedPassword,
+	})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "注册失败: %v", err)
+	}
+	lastID, err := result.LastInsertId()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "获取用户ID失败: %v", err)
+	}
+
+	return &authpb.RegisterResponse{
+		UserId:  uint64(lastID),
+		Message: "注册成功",
+	}, nil
+}
+
 // validateUserCredentials 验证用户凭据
 func (s *AuthIntService) validateUserCredentials(ctx context.Context, username, password string) (*dao.User, error) {
-	var user *dao.User
+	var user dao.User
 
 	// 通过用户名获取认证信息
 	authRow, err := s.queries.GetUserByUsernameForAuth(ctx, username)
@@ -90,7 +126,7 @@ func (s *AuthIntService) validateUserCredentials(ctx context.Context, username, 
 		return nil, errors.New("用户不存在")
 	}
 
-	if !s.verifyPassword(password, authRow.HashedPassword, authRow.Salt) {
+	if !verifyPassword(password, authRow.HashedPassword) {
 		return nil, errors.New("密码错误")
 	}
 
@@ -99,7 +135,7 @@ func (s *AuthIntService) validateUserCredentials(ctx context.Context, username, 
 		return nil, err
 	}
 
-	return user, nil
+	return &user, nil
 }
 
 // generateToken 生成访问token
@@ -122,12 +158,3 @@ func (s *AuthIntService) generateToken(userID, deviceID uint64) (string, int64, 
 
 	return token, expiresAt, nil
 }
-
-// verifyPassword 验证密码
-func (s *AuthIntService) verifyPassword(password, hashedPassword, salt string) bool {
-	hash := sha256.Sum256([]byte(password + salt))
-	return hex.EncodeToString(hash[:]) == hashedPassword
-}
-
- 
- 

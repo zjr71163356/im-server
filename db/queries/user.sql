@@ -1,10 +1,12 @@
--- name: CreateUser :execresult
+-- name: CreateUserByUsername :execresult
 -- 创建用户
 INSERT INTO `user` (
-    created_at, updated_at, username, email, phone_number, nickname, sex, avatar_url, extra, hashed_password, salt
+    created_at, updated_at, username, hashed_password
 ) VALUES (
-    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+    sqlc.arg(created_at), sqlc.arg(updated_at), sqlc.arg(username), sqlc.arg(hashed_password)
 );
+
+SELECT * FROM `user` WHERE id = LAST_INSERT_ID();
 
 -- name: GetUser :one
 -- 根据用户ID获取用户信息

@@ -18,14 +18,22 @@ INSERT INTO ` + "`" + `seq` + "`" + ` (
 )
 `
 
+type CreateSeqParams struct {
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	ObjectType int8      `json:"object_type"`
+	ObjectID   uint64    `json:"object_id"`
+	Seq        uint64    `json:"seq"`
+}
+
 // 创建序列号记录
-func (q *Queries) CreateSeq(ctx context.Context, createdAt time.Time, updatedAt time.Time, objectType int8, objectID uint64, seq uint64) error {
+func (q *Queries) CreateSeq(ctx context.Context, arg CreateSeqParams) error {
 	_, err := q.db.ExecContext(ctx, createSeq,
-		createdAt,
-		updatedAt,
-		objectType,
-		objectID,
-		seq,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.ObjectType,
+		arg.ObjectID,
+		arg.Seq,
 	)
 	return err
 }
@@ -35,9 +43,14 @@ DELETE FROM ` + "`" + `seq` + "`" + `
 WHERE object_type = ? AND object_id = ?
 `
 
+type DeleteSeqParams struct {
+	ObjectType int8   `json:"object_type"`
+	ObjectID   uint64 `json:"object_id"`
+}
+
 // 删除序列号记录
-func (q *Queries) DeleteSeq(ctx context.Context, objectType int8, objectID uint64) error {
-	_, err := q.db.ExecContext(ctx, deleteSeq, objectType, objectID)
+func (q *Queries) DeleteSeq(ctx context.Context, arg DeleteSeqParams) error {
+	_, err := q.db.ExecContext(ctx, deleteSeq, arg.ObjectType, arg.ObjectID)
 	return err
 }
 
@@ -49,13 +62,20 @@ ON DUPLICATE KEY UPDATE
     seq = seq + 1
 `
 
+type GetOrCreateSeqParams struct {
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	ObjectType int8      `json:"object_type"`
+	ObjectID   uint64    `json:"object_id"`
+}
+
 // 获取或创建序列号（使用 INSERT ... ON DUPLICATE KEY UPDATE）
-func (q *Queries) GetOrCreateSeq(ctx context.Context, createdAt time.Time, updatedAt time.Time, objectType int8, objectID uint64) error {
+func (q *Queries) GetOrCreateSeq(ctx context.Context, arg GetOrCreateSeqParams) error {
 	_, err := q.db.ExecContext(ctx, getOrCreateSeq,
-		createdAt,
-		updatedAt,
-		objectType,
-		objectID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.ObjectType,
+		arg.ObjectID,
 	)
 	return err
 }
@@ -66,9 +86,14 @@ WHERE object_type = ? AND object_id = ?
 LIMIT 1
 `
 
+type GetSeqParams struct {
+	ObjectType int8   `json:"object_type"`
+	ObjectID   uint64 `json:"object_id"`
+}
+
 // 获取序列号
-func (q *Queries) GetSeq(ctx context.Context, objectType int8, objectID uint64) (*Seq, error) {
-	row := q.db.QueryRowContext(ctx, getSeq, objectType, objectID)
+func (q *Queries) GetSeq(ctx context.Context, arg GetSeqParams) (Seq, error) {
+	row := q.db.QueryRowContext(ctx, getSeq, arg.ObjectType, arg.ObjectID)
 	var i Seq
 	err := row.Scan(
 		&i.ID,
@@ -78,7 +103,7 @@ func (q *Queries) GetSeq(ctx context.Context, objectType int8, objectID uint64) 
 		&i.ObjectID,
 		&i.Seq,
 	)
-	return &i, err
+	return i, err
 }
 
 const incrementSeq = `-- name: IncrementSeq :exec
@@ -87,9 +112,15 @@ SET updated_at = ?, seq = seq + 1
 WHERE object_type = ? AND object_id = ?
 `
 
+type IncrementSeqParams struct {
+	UpdatedAt  time.Time `json:"updated_at"`
+	ObjectType int8      `json:"object_type"`
+	ObjectID   uint64    `json:"object_id"`
+}
+
 // 递增序列号
-func (q *Queries) IncrementSeq(ctx context.Context, updatedAt time.Time, objectType int8, objectID uint64) error {
-	_, err := q.db.ExecContext(ctx, incrementSeq, updatedAt, objectType, objectID)
+func (q *Queries) IncrementSeq(ctx context.Context, arg IncrementSeqParams) error {
+	_, err := q.db.ExecContext(ctx, incrementSeq, arg.UpdatedAt, arg.ObjectType, arg.ObjectID)
 	return err
 }
 
@@ -99,13 +130,20 @@ SET updated_at = ?, seq = ?
 WHERE object_type = ? AND object_id = ?
 `
 
+type UpdateSeqParams struct {
+	UpdatedAt  time.Time `json:"updated_at"`
+	Seq        uint64    `json:"seq"`
+	ObjectType int8      `json:"object_type"`
+	ObjectID   uint64    `json:"object_id"`
+}
+
 // 更新序列号
-func (q *Queries) UpdateSeq(ctx context.Context, updatedAt time.Time, seq uint64, objectType int8, objectID uint64) error {
+func (q *Queries) UpdateSeq(ctx context.Context, arg UpdateSeqParams) error {
 	_, err := q.db.ExecContext(ctx, updateSeq,
-		updatedAt,
-		seq,
-		objectType,
-		objectID,
+		arg.UpdatedAt,
+		arg.Seq,
+		arg.ObjectType,
+		arg.ObjectID,
 	)
 	return err
 }

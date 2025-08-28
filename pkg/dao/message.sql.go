@@ -19,15 +19,24 @@ INSERT INTO ` + "`" + `message` + "`" + ` (
 )
 `
 
+type CreateMessageParams struct {
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	RequestID int64     `json:"request_id"`
+	Code      int32     `json:"code"`
+	Content   []byte    `json:"content"`
+	Status    int8      `json:"status"`
+}
+
 // 创建消息
-func (q *Queries) CreateMessage(ctx context.Context, createdAt time.Time, updatedAt time.Time, requestID int64, code int32, content []byte, status int8) (sql.Result, error) {
+func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (sql.Result, error) {
 	return q.db.ExecContext(ctx, createMessage,
-		createdAt,
-		updatedAt,
-		requestID,
-		code,
-		content,
-		status,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.RequestID,
+		arg.Code,
+		arg.Content,
+		arg.Status,
 	)
 }
 
@@ -39,14 +48,22 @@ INSERT INTO ` + "`" + `user_message` + "`" + ` (
 )
 `
 
+type CreateUserMessageParams struct {
+	UserID    uint64    `json:"user_id"`
+	Seq       uint64    `json:"seq"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	MessageID uint64    `json:"message_id"`
+}
+
 // 创建用户消息关联
-func (q *Queries) CreateUserMessage(ctx context.Context, userID uint64, seq uint64, createdAt time.Time, updatedAt time.Time, messageID uint64) error {
+func (q *Queries) CreateUserMessage(ctx context.Context, arg CreateUserMessageParams) error {
 	_, err := q.db.ExecContext(ctx, createUserMessage,
-		userID,
-		seq,
-		createdAt,
-		updatedAt,
-		messageID,
+		arg.UserID,
+		arg.Seq,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.MessageID,
 	)
 	return err
 }
@@ -67,9 +84,14 @@ DELETE FROM ` + "`" + `user_message` + "`" + `
 WHERE user_id = ? AND seq = ?
 `
 
+type DeleteUserMessageParams struct {
+	UserID uint64 `json:"user_id"`
+	Seq    uint64 `json:"seq"`
+}
+
 // 删除用户消息关联
-func (q *Queries) DeleteUserMessage(ctx context.Context, userID uint64, seq uint64) error {
-	_, err := q.db.ExecContext(ctx, deleteUserMessage, userID, seq)
+func (q *Queries) DeleteUserMessage(ctx context.Context, arg DeleteUserMessageParams) error {
+	_, err := q.db.ExecContext(ctx, deleteUserMessage, arg.UserID, arg.Seq)
 	return err
 }
 
@@ -79,7 +101,7 @@ WHERE id = ? LIMIT 1
 `
 
 // 根据消息ID获取消息
-func (q *Queries) GetMessage(ctx context.Context, id uint64) (*Message, error) {
+func (q *Queries) GetMessage(ctx context.Context, id uint64) (Message, error) {
 	row := q.db.QueryRowContext(ctx, getMessage, id)
 	var i Message
 	err := row.Scan(
@@ -91,7 +113,7 @@ func (q *Queries) GetMessage(ctx context.Context, id uint64) (*Message, error) {
 		&i.Content,
 		&i.Status,
 	)
-	return &i, err
+	return i, err
 }
 
 const getUserLatestSeq = `-- name: GetUserLatestSeq :one
@@ -113,9 +135,14 @@ WHERE user_id = ? AND seq = ?
 LIMIT 1
 `
 
+type GetUserMessageParams struct {
+	UserID uint64 `json:"user_id"`
+	Seq    uint64 `json:"seq"`
+}
+
 // 获取用户消息
-func (q *Queries) GetUserMessage(ctx context.Context, userID uint64, seq uint64) (*UserMessage, error) {
-	row := q.db.QueryRowContext(ctx, getUserMessage, userID, seq)
+func (q *Queries) GetUserMessage(ctx context.Context, arg GetUserMessageParams) (UserMessage, error) {
+	row := q.db.QueryRowContext(ctx, getUserMessage, arg.UserID, arg.Seq)
 	var i UserMessage
 	err := row.Scan(
 		&i.UserID,
@@ -124,7 +151,7 @@ func (q *Queries) GetUserMessage(ctx context.Context, userID uint64, seq uint64)
 		&i.UpdatedAt,
 		&i.MessageID,
 	)
-	return &i, err
+	return i, err
 }
 
 const getUserMessages = `-- name: GetUserMessages :many
@@ -136,27 +163,33 @@ ORDER BY um.seq ASC
 LIMIT ?
 `
 
+type GetUserMessagesParams struct {
+	UserID uint64 `json:"user_id"`
+	Seq    uint64 `json:"seq"`
+	Limit  int32  `json:"limit"`
+}
+
 type GetUserMessagesRow struct {
-	UserID           uint64    `db:"user_id" json:"user_id"`
-	Seq              uint64    `db:"seq" json:"seq"`
-	CreatedAt        time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt        time.Time `db:"updated_at" json:"updated_at"`
-	MessageID        uint64    `db:"message_id" json:"message_id"`
-	RequestID        int64     `db:"request_id" json:"request_id"`
-	Code             int32     `db:"code" json:"code"`
-	Content          []byte    `db:"content" json:"content"`
-	Status           int8      `db:"status" json:"status"`
-	MessageCreatedAt time.Time `db:"message_created_at" json:"message_created_at"`
+	UserID           uint64    `json:"user_id"`
+	Seq              uint64    `json:"seq"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+	MessageID        uint64    `json:"message_id"`
+	RequestID        int64     `json:"request_id"`
+	Code             int32     `json:"code"`
+	Content          []byte    `json:"content"`
+	Status           int8      `json:"status"`
+	MessageCreatedAt time.Time `json:"message_created_at"`
 }
 
 // 获取用户消息列表
-func (q *Queries) GetUserMessages(ctx context.Context, userID uint64, seq uint64, limit int32) ([]*GetUserMessagesRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUserMessages, userID, seq, limit)
+func (q *Queries) GetUserMessages(ctx context.Context, arg GetUserMessagesParams) ([]GetUserMessagesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getUserMessages, arg.UserID, arg.Seq, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*GetUserMessagesRow
+	items := []GetUserMessagesRow{}
 	for rows.Next() {
 		var i GetUserMessagesRow
 		if err := rows.Scan(
@@ -173,7 +206,7 @@ func (q *Queries) GetUserMessages(ctx context.Context, userID uint64, seq uint64
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, &i)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -190,8 +223,14 @@ SET updated_at = ?, status = ?
 WHERE id = ?
 `
 
+type UpdateMessageStatusParams struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	Status    int8      `json:"status"`
+	ID        uint64    `json:"id"`
+}
+
 // 更新消息状态（如撤回消息）
-func (q *Queries) UpdateMessageStatus(ctx context.Context, updatedAt time.Time, status int8, iD uint64) error {
-	_, err := q.db.ExecContext(ctx, updateMessageStatus, updatedAt, status, iD)
+func (q *Queries) UpdateMessageStatus(ctx context.Context, arg UpdateMessageStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateMessageStatus, arg.UpdatedAt, arg.Status, arg.ID)
 	return err
 }

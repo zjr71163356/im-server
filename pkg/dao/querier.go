@@ -7,122 +7,121 @@ package dao
 import (
 	"context"
 	"database/sql"
-	"time"
 )
 
 type Querier interface {
 	// 检查两个用户是否是好友
-	CheckFriendship(ctx context.Context, userID uint64, friendID uint64) (int64, error)
+	CheckFriendship(ctx context.Context, arg CheckFriendshipParams) (int64, error)
 	// 创建设备
-	CreateDevice(ctx context.Context, createdAt time.Time, updatedAt time.Time, userID uint64, type_ int8, brand string, model string, systemVersion string, sdkVersion string, status int8, connAddr string, clientAddr string) (sql.Result, error)
+	CreateDevice(ctx context.Context, arg CreateDeviceParams) (sql.Result, error)
 	// 创建好友关系
-	CreateFriend(ctx context.Context, userID uint64, friendID uint64, createdAt time.Time, updatedAt time.Time, remarks string, extra string, status int8) error
+	CreateFriend(ctx context.Context, arg CreateFriendParams) error
 	// 创建群组
-	CreateGroup(ctx context.Context, createdAt time.Time, updatedAt time.Time, name string, avatarUrl string, introduction string, userNum int32, extra string) (sql.Result, error)
+	CreateGroup(ctx context.Context, arg CreateGroupParams) (sql.Result, error)
 	// 添加群组成员
-	CreateGroupUser(ctx context.Context, groupID uint64, userID uint64, createdAt time.Time, updatedAt time.Time, memberType int8, remarks string, extra string, status int8) error
+	CreateGroupUser(ctx context.Context, arg CreateGroupUserParams) error
 	// 创建消息
-	CreateMessage(ctx context.Context, createdAt time.Time, updatedAt time.Time, requestID int64, code int32, content []byte, status int8) (sql.Result, error)
+	CreateMessage(ctx context.Context, arg CreateMessageParams) (sql.Result, error)
 	// 创建序列号记录
-	CreateSeq(ctx context.Context, createdAt time.Time, updatedAt time.Time, objectType int8, objectID uint64, seq uint64) error
+	CreateSeq(ctx context.Context, arg CreateSeqParams) error
 	// 创建用户
-	CreateUser(ctx context.Context, createdAt time.Time, updatedAt time.Time, username string, email string, phoneNumber string, nickname string, sex int8, avatarUrl string, extra string, hashedPassword string, salt string) (sql.Result, error)
+	CreateUserByUsername(ctx context.Context, arg CreateUserByUsernameParams) (sql.Result, error)
 	// 创建用户消息关联
-	CreateUserMessage(ctx context.Context, userID uint64, seq uint64, createdAt time.Time, updatedAt time.Time, messageID uint64) error
+	CreateUserMessage(ctx context.Context, arg CreateUserMessageParams) error
 	// 删除设备
 	DeleteDevice(ctx context.Context, id uint64) error
 	// 删除好友关系
-	DeleteFriend(ctx context.Context, userID uint64, friendID uint64) error
+	DeleteFriend(ctx context.Context, arg DeleteFriendParams) error
 	// 删除群组
 	DeleteGroup(ctx context.Context, id uint64) error
 	// 移除群组成员
-	DeleteGroupUser(ctx context.Context, groupID uint64, userID uint64) error
+	DeleteGroupUser(ctx context.Context, arg DeleteGroupUserParams) error
 	// 删除消息
 	DeleteMessage(ctx context.Context, id uint64) error
 	// 删除序列号记录
-	DeleteSeq(ctx context.Context, objectType int8, objectID uint64) error
+	DeleteSeq(ctx context.Context, arg DeleteSeqParams) error
 	// 删除用户
 	DeleteUser(ctx context.Context, id uint64) error
 	// 删除用户消息关联
-	DeleteUserMessage(ctx context.Context, userID uint64, seq uint64) error
+	DeleteUserMessage(ctx context.Context, arg DeleteUserMessageParams) error
 	// 根据设备ID获取设备信息
-	GetDevice(ctx context.Context, id uint64) (*Device, error)
+	GetDevice(ctx context.Context, id uint64) (Device, error)
 	// 根据用户ID和设备类型获取设备
-	GetDeviceByUserAndType(ctx context.Context, userID uint64, type_ int8) (*Device, error)
+	GetDeviceByUserAndType(ctx context.Context, arg GetDeviceByUserAndTypeParams) (Device, error)
 	// 获取好友关系
-	GetFriend(ctx context.Context, userID uint64, friendID uint64) (*Friend, error)
+	GetFriend(ctx context.Context, arg GetFriendParams) (Friend, error)
 	// 获取好友申请列表
-	GetFriendRequests(ctx context.Context, friendID uint64) ([]*Friend, error)
+	GetFriendRequests(ctx context.Context, friendID uint64) ([]Friend, error)
 	// 根据群组ID获取群组信息
-	GetGroup(ctx context.Context, id uint64) (*Group, error)
+	GetGroup(ctx context.Context, id uint64) (Group, error)
 	// 获取群组成员信息
-	GetGroupUser(ctx context.Context, groupID uint64, userID uint64) (*GroupUser, error)
+	GetGroupUser(ctx context.Context, arg GetGroupUserParams) (GroupUser, error)
 	// 获取群组所有成员
-	GetGroupUsers(ctx context.Context, groupID uint64) ([]*GroupUser, error)
+	GetGroupUsers(ctx context.Context, groupID uint64) ([]GroupUser, error)
 	// 根据消息ID获取消息
-	GetMessage(ctx context.Context, id uint64) (*Message, error)
+	GetMessage(ctx context.Context, id uint64) (Message, error)
 	// 获取在线设备列表
-	GetOnlineDevices(ctx context.Context) ([]*Device, error)
+	GetOnlineDevices(ctx context.Context) ([]Device, error)
 	// 获取或创建序列号（使用 INSERT ... ON DUPLICATE KEY UPDATE）
-	GetOrCreateSeq(ctx context.Context, createdAt time.Time, updatedAt time.Time, objectType int8, objectID uint64) error
+	GetOrCreateSeq(ctx context.Context, arg GetOrCreateSeqParams) error
 	// 获取序列号
-	GetSeq(ctx context.Context, objectType int8, objectID uint64) (*Seq, error)
+	GetSeq(ctx context.Context, arg GetSeqParams) (Seq, error)
 	// 根据用户ID获取用户信息
-	GetUser(ctx context.Context, id uint64) (*User, error)
+	GetUser(ctx context.Context, id uint64) (User, error)
 	// 根据邮箱获取用户信息
-	GetUserByEmail(ctx context.Context, email string) (*User, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 	// 根据邮箱获取用户认证信息
-	GetUserByEmailForAuth(ctx context.Context, email string) (*GetUserByEmailForAuthRow, error)
+	GetUserByEmailForAuth(ctx context.Context, email string) (GetUserByEmailForAuthRow, error)
 	// 根据手机号获取用户信息
-	GetUserByPhone(ctx context.Context, phoneNumber string) (*User, error)
+	GetUserByPhone(ctx context.Context, phoneNumber string) (User, error)
 	// 根据手机号获取用户认证信息
-	GetUserByPhoneForAuth(ctx context.Context, phoneNumber string) (*GetUserByPhoneForAuthRow, error)
+	GetUserByPhoneForAuth(ctx context.Context, phoneNumber string) (GetUserByPhoneForAuthRow, error)
 	// 根据用户名获取用户信息
-	GetUserByUsername(ctx context.Context, username string) (*User, error)
+	GetUserByUsername(ctx context.Context, username string) (User, error)
 	// 根据用户名获取用户认证信息
-	GetUserByUsernameForAuth(ctx context.Context, username string) (*GetUserByUsernameForAuthRow, error)
+	GetUserByUsernameForAuth(ctx context.Context, username string) (GetUserByUsernameForAuthRow, error)
 	// 获取用户的所有设备
-	GetUserDevices(ctx context.Context, userID uint64) ([]*Device, error)
+	GetUserDevices(ctx context.Context, userID uint64) ([]Device, error)
 	// 获取用户的所有好友
-	GetUserFriends(ctx context.Context, userID uint64) ([]*Friend, error)
+	GetUserFriends(ctx context.Context, userID uint64) ([]Friend, error)
 	// 获取用户参与的所有群组
-	GetUserGroups(ctx context.Context, userID uint64) ([]*GroupUser, error)
+	GetUserGroups(ctx context.Context, userID uint64) ([]GroupUser, error)
 	// 获取用户最新的消息序列号
 	GetUserLatestSeq(ctx context.Context, userID uint64) (interface{}, error)
 	// 获取用户消息
-	GetUserMessage(ctx context.Context, userID uint64, seq uint64) (*UserMessage, error)
+	GetUserMessage(ctx context.Context, arg GetUserMessageParams) (UserMessage, error)
 	// 获取用户消息列表
-	GetUserMessages(ctx context.Context, userID uint64, seq uint64, limit int32) ([]*GetUserMessagesRow, error)
+	GetUserMessages(ctx context.Context, arg GetUserMessagesParams) ([]GetUserMessagesRow, error)
 	// 递增序列号
-	IncrementSeq(ctx context.Context, updatedAt time.Time, objectType int8, objectID uint64) error
+	IncrementSeq(ctx context.Context, arg IncrementSeqParams) error
 	// 获取群组列表
-	ListGroups(ctx context.Context, limit int32, offset int32) ([]*Group, error)
+	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	// 获取用户列表
-	ListUsers(ctx context.Context, limit int32, offset int32) ([]*User, error)
+	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	// 设置设备离线
-	UpdateDeviceOffline(ctx context.Context, updatedAt time.Time, iD uint64) error
+	UpdateDeviceOffline(ctx context.Context, arg UpdateDeviceOfflineParams) error
 	// 更新设备在线状态
-	UpdateDeviceStatus(ctx context.Context, updatedAt time.Time, status int8, connAddr string, clientAddr string, iD uint64) error
+	UpdateDeviceStatus(ctx context.Context, arg UpdateDeviceStatusParams) error
 	// 更新好友备注
-	UpdateFriendRemarks(ctx context.Context, updatedAt time.Time, remarks string, userID uint64, friendID uint64) error
+	UpdateFriendRemarks(ctx context.Context, arg UpdateFriendRemarksParams) error
 	// 更新好友状态（同意/拒绝好友申请）
-	UpdateFriendStatus(ctx context.Context, updatedAt time.Time, status int8, userID uint64, friendID uint64) error
+	UpdateFriendStatus(ctx context.Context, arg UpdateFriendStatusParams) error
 	// 更新群组信息
-	UpdateGroup(ctx context.Context, updatedAt time.Time, name string, avatarUrl string, introduction string, extra string, iD uint64) error
+	UpdateGroup(ctx context.Context, arg UpdateGroupParams) error
 	// 更新群组人数
-	UpdateGroupUserNum(ctx context.Context, updatedAt time.Time, userNum int32, iD uint64) error
+	UpdateGroupUserNum(ctx context.Context, arg UpdateGroupUserNumParams) error
 	// 更新群组成员类型
-	UpdateGroupUserType(ctx context.Context, updatedAt time.Time, memberType int8, groupID uint64, userID uint64) error
+	UpdateGroupUserType(ctx context.Context, arg UpdateGroupUserTypeParams) error
 	// 更新消息状态（如撤回消息）
-	UpdateMessageStatus(ctx context.Context, updatedAt time.Time, status int8, iD uint64) error
+	UpdateMessageStatus(ctx context.Context, arg UpdateMessageStatusParams) error
 	// 更新序列号
-	UpdateSeq(ctx context.Context, updatedAt time.Time, seq uint64, objectType int8, objectID uint64) error
+	UpdateSeq(ctx context.Context, arg UpdateSeqParams) error
 	// 更新用户信息
-	UpdateUser(ctx context.Context, updatedAt time.Time, nickname string, sex int8, avatarUrl string, extra string, iD uint64) error
+	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 	// 更新用户头像
-	UpdateUserAvatar(ctx context.Context, updatedAt time.Time, avatarUrl string, iD uint64) error
+	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) error
 	// 更新用户密码
-	UpdateUserPassword(ctx context.Context, updatedAt time.Time, hashedPassword string, salt string, iD uint64) error
+	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 }
 
 var _ Querier = (*Queries)(nil)

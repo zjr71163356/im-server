@@ -20,18 +20,21 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AuthIntService_Auth_FullMethodName  = "/auth.AuthIntService/Auth"
-	AuthIntService_Login_FullMethodName = "/auth.AuthIntService/Login"
+	AuthIntService_Register_FullMethodName = "/auth.AuthIntService/Register"
+	AuthIntService_Login_FullMethodName    = "/auth.AuthIntService/Login"
+	AuthIntService_Auth_FullMethodName     = "/auth.AuthIntService/Auth"
 )
 
 // AuthIntServiceClient is the client API for AuthIntService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthIntServiceClient interface {
+	// 注册
+	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
+	// 登录
+	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	// 权限校验
 	Auth(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	// 用户登录
-	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 }
 
 type authIntServiceClient struct {
@@ -42,10 +45,10 @@ func NewAuthIntServiceClient(cc grpc.ClientConnInterface) AuthIntServiceClient {
 	return &authIntServiceClient{cc}
 }
 
-func (c *authIntServiceClient) Auth(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *authIntServiceClient) Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, AuthIntService_Auth_FullMethodName, in, out, cOpts...)
+	out := new(RegisterResponse)
+	err := c.cc.Invoke(ctx, AuthIntService_Register_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -62,14 +65,26 @@ func (c *authIntServiceClient) Login(ctx context.Context, in *LoginRequest, opts
 	return out, nil
 }
 
+func (c *authIntServiceClient) Auth(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, AuthIntService_Auth_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthIntServiceServer is the server API for AuthIntService service.
 // All implementations must embed UnimplementedAuthIntServiceServer
 // for forward compatibility.
 type AuthIntServiceServer interface {
+	// 注册
+	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
+	// 登录
+	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	// 权限校验
 	Auth(context.Context, *AuthRequest) (*emptypb.Empty, error)
-	// 用户登录
-	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	mustEmbedUnimplementedAuthIntServiceServer()
 }
 
@@ -80,11 +95,14 @@ type AuthIntServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthIntServiceServer struct{}
 
-func (UnimplementedAuthIntServiceServer) Auth(context.Context, *AuthRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Auth not implemented")
+func (UnimplementedAuthIntServiceServer) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
 func (UnimplementedAuthIntServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
+}
+func (UnimplementedAuthIntServiceServer) Auth(context.Context, *AuthRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Auth not implemented")
 }
 func (UnimplementedAuthIntServiceServer) mustEmbedUnimplementedAuthIntServiceServer() {}
 func (UnimplementedAuthIntServiceServer) testEmbeddedByValue()                        {}
@@ -107,20 +125,20 @@ func RegisterAuthIntServiceServer(s grpc.ServiceRegistrar, srv AuthIntServiceSer
 	s.RegisterService(&AuthIntService_ServiceDesc, srv)
 }
 
-func _AuthIntService_Auth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AuthRequest)
+func _AuthIntService_Register_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthIntServiceServer).Auth(ctx, in)
+		return srv.(AuthIntServiceServer).Register(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AuthIntService_Auth_FullMethodName,
+		FullMethod: AuthIntService_Register_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthIntServiceServer).Auth(ctx, req.(*AuthRequest))
+		return srv.(AuthIntServiceServer).Register(ctx, req.(*RegisterRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -143,6 +161,24 @@ func _AuthIntService_Login_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthIntService_Auth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthIntServiceServer).Auth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthIntService_Auth_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthIntServiceServer).Auth(ctx, req.(*AuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthIntService_ServiceDesc is the grpc.ServiceDesc for AuthIntService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -151,12 +187,16 @@ var AuthIntService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuthIntServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Auth",
-			Handler:    _AuthIntService_Auth_Handler,
+			MethodName: "Register",
+			Handler:    _AuthIntService_Register_Handler,
 		},
 		{
 			MethodName: "Login",
 			Handler:    _AuthIntService_Login_Handler,
+		},
+		{
+			MethodName: "Auth",
+			Handler:    _AuthIntService_Auth_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

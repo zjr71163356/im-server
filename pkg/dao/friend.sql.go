@@ -15,9 +15,14 @@ SELECT COUNT(*) as is_friend FROM ` + "`" + `friend` + "`" + `
 WHERE user_id = ? AND friend_id = ? AND status = 2
 `
 
+type CheckFriendshipParams struct {
+	UserID   uint64 `json:"user_id"`
+	FriendID uint64 `json:"friend_id"`
+}
+
 // 检查两个用户是否是好友
-func (q *Queries) CheckFriendship(ctx context.Context, userID uint64, friendID uint64) (int64, error) {
-	row := q.db.QueryRowContext(ctx, checkFriendship, userID, friendID)
+func (q *Queries) CheckFriendship(ctx context.Context, arg CheckFriendshipParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, checkFriendship, arg.UserID, arg.FriendID)
 	var is_friend int64
 	err := row.Scan(&is_friend)
 	return is_friend, err
@@ -31,16 +36,26 @@ INSERT INTO ` + "`" + `friend` + "`" + ` (
 )
 `
 
+type CreateFriendParams struct {
+	UserID    uint64    `json:"user_id"`
+	FriendID  uint64    `json:"friend_id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Remarks   string    `json:"remarks"`
+	Extra     string    `json:"extra"`
+	Status    int8      `json:"status"`
+}
+
 // 创建好友关系
-func (q *Queries) CreateFriend(ctx context.Context, userID uint64, friendID uint64, createdAt time.Time, updatedAt time.Time, remarks string, extra string, status int8) error {
+func (q *Queries) CreateFriend(ctx context.Context, arg CreateFriendParams) error {
 	_, err := q.db.ExecContext(ctx, createFriend,
-		userID,
-		friendID,
-		createdAt,
-		updatedAt,
-		remarks,
-		extra,
-		status,
+		arg.UserID,
+		arg.FriendID,
+		arg.CreatedAt,
+		arg.UpdatedAt,
+		arg.Remarks,
+		arg.Extra,
+		arg.Status,
 	)
 	return err
 }
@@ -50,9 +65,14 @@ DELETE FROM ` + "`" + `friend` + "`" + `
 WHERE user_id = ? AND friend_id = ?
 `
 
+type DeleteFriendParams struct {
+	UserID   uint64 `json:"user_id"`
+	FriendID uint64 `json:"friend_id"`
+}
+
 // 删除好友关系
-func (q *Queries) DeleteFriend(ctx context.Context, userID uint64, friendID uint64) error {
-	_, err := q.db.ExecContext(ctx, deleteFriend, userID, friendID)
+func (q *Queries) DeleteFriend(ctx context.Context, arg DeleteFriendParams) error {
+	_, err := q.db.ExecContext(ctx, deleteFriend, arg.UserID, arg.FriendID)
 	return err
 }
 
@@ -62,9 +82,14 @@ WHERE user_id = ? AND friend_id = ?
 LIMIT 1
 `
 
+type GetFriendParams struct {
+	UserID   uint64 `json:"user_id"`
+	FriendID uint64 `json:"friend_id"`
+}
+
 // 获取好友关系
-func (q *Queries) GetFriend(ctx context.Context, userID uint64, friendID uint64) (*Friend, error) {
-	row := q.db.QueryRowContext(ctx, getFriend, userID, friendID)
+func (q *Queries) GetFriend(ctx context.Context, arg GetFriendParams) (Friend, error) {
+	row := q.db.QueryRowContext(ctx, getFriend, arg.UserID, arg.FriendID)
 	var i Friend
 	err := row.Scan(
 		&i.UserID,
@@ -75,7 +100,7 @@ func (q *Queries) GetFriend(ctx context.Context, userID uint64, friendID uint64)
 		&i.Extra,
 		&i.Status,
 	)
-	return &i, err
+	return i, err
 }
 
 const getFriendRequests = `-- name: GetFriendRequests :many
@@ -85,13 +110,13 @@ ORDER BY created_at DESC
 `
 
 // 获取好友申请列表
-func (q *Queries) GetFriendRequests(ctx context.Context, friendID uint64) ([]*Friend, error) {
+func (q *Queries) GetFriendRequests(ctx context.Context, friendID uint64) ([]Friend, error) {
 	rows, err := q.db.QueryContext(ctx, getFriendRequests, friendID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Friend
+	items := []Friend{}
 	for rows.Next() {
 		var i Friend
 		if err := rows.Scan(
@@ -105,7 +130,7 @@ func (q *Queries) GetFriendRequests(ctx context.Context, friendID uint64) ([]*Fr
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, &i)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -123,13 +148,13 @@ ORDER BY created_at DESC
 `
 
 // 获取用户的所有好友
-func (q *Queries) GetUserFriends(ctx context.Context, userID uint64) ([]*Friend, error) {
+func (q *Queries) GetUserFriends(ctx context.Context, userID uint64) ([]Friend, error) {
 	rows, err := q.db.QueryContext(ctx, getUserFriends, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []*Friend
+	items := []Friend{}
 	for rows.Next() {
 		var i Friend
 		if err := rows.Scan(
@@ -143,7 +168,7 @@ func (q *Queries) GetUserFriends(ctx context.Context, userID uint64) ([]*Friend,
 		); err != nil {
 			return nil, err
 		}
-		items = append(items, &i)
+		items = append(items, i)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err
@@ -160,13 +185,20 @@ SET updated_at = ?, remarks = ?
 WHERE user_id = ? AND friend_id = ?
 `
 
+type UpdateFriendRemarksParams struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	Remarks   string    `json:"remarks"`
+	UserID    uint64    `json:"user_id"`
+	FriendID  uint64    `json:"friend_id"`
+}
+
 // 更新好友备注
-func (q *Queries) UpdateFriendRemarks(ctx context.Context, updatedAt time.Time, remarks string, userID uint64, friendID uint64) error {
+func (q *Queries) UpdateFriendRemarks(ctx context.Context, arg UpdateFriendRemarksParams) error {
 	_, err := q.db.ExecContext(ctx, updateFriendRemarks,
-		updatedAt,
-		remarks,
-		userID,
-		friendID,
+		arg.UpdatedAt,
+		arg.Remarks,
+		arg.UserID,
+		arg.FriendID,
 	)
 	return err
 }
@@ -177,13 +209,20 @@ SET updated_at = ?, status = ?
 WHERE user_id = ? AND friend_id = ?
 `
 
+type UpdateFriendStatusParams struct {
+	UpdatedAt time.Time `json:"updated_at"`
+	Status    int8      `json:"status"`
+	UserID    uint64    `json:"user_id"`
+	FriendID  uint64    `json:"friend_id"`
+}
+
 // 更新好友状态（同意/拒绝好友申请）
-func (q *Queries) UpdateFriendStatus(ctx context.Context, updatedAt time.Time, status int8, userID uint64, friendID uint64) error {
+func (q *Queries) UpdateFriendStatus(ctx context.Context, arg UpdateFriendStatusParams) error {
 	_, err := q.db.ExecContext(ctx, updateFriendStatus,
-		updatedAt,
-		status,
-		userID,
-		friendID,
+		arg.UpdatedAt,
+		arg.Status,
+		arg.UserID,
+		arg.FriendID,
 	)
 	return err
 }
