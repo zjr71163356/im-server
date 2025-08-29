@@ -8,6 +8,14 @@ func init() {
 	Config = NewConfiguration()
 }
 
+// LoadConfig 加载配置文件
+func LoadConfig(path string) (*Configuration, error) {
+	// 这里可以后续扩展为从文件加载配置
+	// 目前返回默认配置
+	config := NewConfiguration()
+	return &config, nil
+}
+
 func NewConfiguration() Configuration {
 	return Configuration{
 		Database:   NewDatabaseConfig(),
@@ -34,10 +42,11 @@ func NewServiceConfig() ServiceConfig {
 			TCPAddr:   ":8001",
 			WSAddr:    ":8002",
 		},
-		Logic: LogicEndpoints{RPCAddr: ":8010"},
-		Auth:  AuthEndpoints{RPCAddr: ":8020"},
-		User:  UserEndpoints{RPCAddr: ":8030"},
-		File:  FileEndpoints{HTTPAddr: ":8040"},
+		Logic:   LogicEndpoints{RPCAddr: ":8010"},
+		Auth:    AuthEndpoints{RPCAddr: ":8020"},
+		User:    UserEndpoints{RPCAddr: ":8030"},
+		File:    FileEndpoints{HTTPAddr: ":8040"},
+		Gateway: GatewayEndpoints{Port: 8080},
 	}
 }
 
@@ -79,6 +88,7 @@ type ServiceConfig struct {
 	Auth    AuthEndpoints
 	User    UserEndpoints
 	File    FileEndpoints
+	Gateway GatewayEndpoints
 }
 
 // ConnectEndpoints 封装了Connect服务的所有监听端点
@@ -117,4 +127,9 @@ type GRPCClientConfig struct {
 // AuthEndpoints 封装了Auth服务的监听端点
 type AuthEndpoints struct {
 	RPCAddr string // gRPC服务监听地址
+}
+
+// GatewayEndpoints 封装了Gateway服务的监听端点
+type GatewayEndpoints struct {
+	Port int // HTTP服务监听端口
 }

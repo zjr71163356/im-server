@@ -1,7 +1,12 @@
-# 查找项目中所有的 .proto 文件
-PROTO_FILES := $(shell find . -name "*.proto")
+# 查找项目中需要编译的 .proto 文件（排除vendor目录）
+PROTO_FILES := $(shell find pkg/protocol/proto -name "*.proto")
 DATABASE_URL := "mysql://root:azsx0123456@tcp(localhost:3307)/imserver?multiStatements=true"
 DAO_PATH := "pkg/dao"
+
+
+# 将 Go 的 bin 目录添加到 PATH
+GOPATH := $(shell go env GOPATH)
+export PATH := $(GOPATH)/bin:$(PATH)
 # 运行docker命令启动mysql
 startdb:
 	@echo "Starting MySQL Docker container..."
@@ -28,10 +33,13 @@ migrate-create:
 proto:
 	@echo "Removing existing generated protobuf files..."
 	@find . -type f -name "*.pb.go" -print -exec rm -f {} \;
+	@find . -type f -name "*.pb.gw.go" -print -exec rm -f {} \;
 	@echo "Generating Go code from .proto files..."
 	@protoc --proto_path=. \
+		--proto_path=pkg/vendor \
 		--go_out=. \
 		--go-grpc_out=. \
+		--grpc-gateway_out=. \
 		$(PROTO_FILES)
 	@echo "Protobuf code generation complete."
 
