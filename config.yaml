@@ -1,0 +1,22 @@
+database:
+  mysql:
+    dsn: "root:azsx0123456@tcp(localhost:3307)/imserver?multiStatements=true&parseTime=true"
+  redis:
+    host: "localhost:6379"
+    password: ""
+
+services:
+  gateway:
+    port: 8080
+  auth:
+    rpc_addr: ":50051"
+    local_addr: "localhost:50051"
+  user:
+    rpc_addr: ":50052"
+    local_addr: "localhost:50052"
+  logic:
+    rpc_addr: ":50053"
+    local_addr: "localhost:50053"
+  connect:
+    rpc_addr: ":50054"
+    local_addr: "localhost:50054"

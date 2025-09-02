@@ -8,6 +8,7 @@ package dao
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 )
 
@@ -48,7 +49,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uint64) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, hashed_password, salt, username, email, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra FROM ` + "`" + `user` + "`" + ` 
+SELECT id, username, hashed_password, nickname, sex, avatar_url, email, phone_number, status, extra, created_at, updated_at FROM ` + "`" + `user` + "`" + ` 
 WHERE id = ? LIMIT 1
 `
 
@@ -58,151 +59,112 @@ func (q *Queries) GetUser(ctx context.Context, id uint64) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.HashedPassword,
-		&i.Salt,
 		&i.Username,
-		&i.Email,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.PhoneNumber,
+		&i.HashedPassword,
 		&i.Nickname,
 		&i.Sex,
 		&i.AvatarUrl,
+		&i.Email,
+		&i.PhoneNumber,
+		&i.Status,
 		&i.Extra,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, hashed_password, salt, username, email, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra FROM ` + "`" + `user` + "`" + ` 
+SELECT id, username, hashed_password, nickname, sex, avatar_url, email, phone_number, status, extra, created_at, updated_at FROM ` + "`" + `user` + "`" + ` 
 WHERE email = ? LIMIT 1
 `
 
-// 根据邮箱获取用户信息
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+func (q *Queries) GetUserByEmail(ctx context.Context, email sql.NullString) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.HashedPassword,
-		&i.Salt,
 		&i.Username,
-		&i.Email,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.PhoneNumber,
+		&i.HashedPassword,
 		&i.Nickname,
 		&i.Sex,
 		&i.AvatarUrl,
+		&i.Email,
+		&i.PhoneNumber,
+		&i.Status,
 		&i.Extra,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getUserByEmailForAuth = `-- name: GetUserByEmailForAuth :one
-SELECT id, email, hashed_password, salt FROM ` + "`" + `user` + "`" + ` 
+SELECT id, email, hashed_password FROM ` + "`" + `user` + "`" + ` 
 WHERE email = ? LIMIT 1
 `
 
 type GetUserByEmailForAuthRow struct {
-	ID             uint64 `json:"id"`
-	Email          string `json:"email"`
-	HashedPassword string `json:"hashed_password"`
-	Salt           string `json:"salt"`
+	ID             uint64         `json:"id"`
+	Email          sql.NullString `json:"email"`
+	HashedPassword string         `json:"hashed_password"`
 }
 
 // 根据邮箱获取用户认证信息
-func (q *Queries) GetUserByEmailForAuth(ctx context.Context, email string) (GetUserByEmailForAuthRow, error) {
+func (q *Queries) GetUserByEmailForAuth(ctx context.Context, email sql.NullString) (GetUserByEmailForAuthRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByEmailForAuth, email)
 	var i GetUserByEmailForAuthRow
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.HashedPassword,
-		&i.Salt,
-	)
+	err := row.Scan(&i.ID, &i.Email, &i.HashedPassword)
 	return i, err
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, hashed_password, salt, username, email, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra FROM ` + "`" + `user` + "`" + ` 
+SELECT id, username, hashed_password, nickname, sex, avatar_url, email, phone_number, status, extra, created_at, updated_at FROM ` + "`" + `user` + "`" + ` 
 WHERE phone_number = ? LIMIT 1
 `
 
 // 根据手机号获取用户信息
-func (q *Queries) GetUserByPhone(ctx context.Context, phoneNumber string) (User, error) {
+func (q *Queries) GetUserByPhone(ctx context.Context, phoneNumber sql.NullString) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUserByPhone, phoneNumber)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.HashedPassword,
-		&i.Salt,
 		&i.Username,
-		&i.Email,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.PhoneNumber,
+		&i.HashedPassword,
 		&i.Nickname,
 		&i.Sex,
 		&i.AvatarUrl,
+		&i.Email,
+		&i.PhoneNumber,
+		&i.Status,
 		&i.Extra,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
 const getUserByPhoneForAuth = `-- name: GetUserByPhoneForAuth :one
-SELECT id, phone_number, hashed_password, salt FROM ` + "`" + `user` + "`" + ` 
+SELECT id, phone_number, hashed_password FROM ` + "`" + `user` + "`" + ` 
 WHERE phone_number = ? LIMIT 1
 `
 
 type GetUserByPhoneForAuthRow struct {
-	ID             uint64 `json:"id"`
-	PhoneNumber    string `json:"phone_number"`
-	HashedPassword string `json:"hashed_password"`
-	Salt           string `json:"salt"`
+	ID             uint64         `json:"id"`
+	PhoneNumber    sql.NullString `json:"phone_number"`
+	HashedPassword string         `json:"hashed_password"`
 }
 
 // 根据手机号获取用户认证信息
-func (q *Queries) GetUserByPhoneForAuth(ctx context.Context, phoneNumber string) (GetUserByPhoneForAuthRow, error) {
+func (q *Queries) GetUserByPhoneForAuth(ctx context.Context, phoneNumber sql.NullString) (GetUserByPhoneForAuthRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByPhoneForAuth, phoneNumber)
 	var i GetUserByPhoneForAuthRow
-	err := row.Scan(
-		&i.ID,
-		&i.PhoneNumber,
-		&i.HashedPassword,
-		&i.Salt,
-	)
-	return i, err
-}
-
-const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, hashed_password, salt, username, email, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra FROM ` + "`" + `user` + "`" + ` 
-WHERE username = ? LIMIT 1
-`
-
-// 根据用户名获取用户信息
-func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.HashedPassword,
-		&i.Salt,
-		&i.Username,
-		&i.Email,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-		&i.PhoneNumber,
-		&i.Nickname,
-		&i.Sex,
-		&i.AvatarUrl,
-		&i.Extra,
-	)
+	err := row.Scan(&i.ID, &i.PhoneNumber, &i.HashedPassword)
 	return i, err
 }
 
 const getUserByUsernameForAuth = `-- name: GetUserByUsernameForAuth :one
-SELECT id, username, hashed_password, salt FROM ` + "`" + `user` + "`" + ` 
+SELECT id, username, hashed_password FROM ` + "`" + `user` + "`" + ` 
 WHERE username = ? LIMIT 1
 `
 
@@ -210,24 +172,18 @@ type GetUserByUsernameForAuthRow struct {
 	ID             uint64 `json:"id"`
 	Username       string `json:"username"`
 	HashedPassword string `json:"hashed_password"`
-	Salt           string `json:"salt"`
 }
 
 // 根据用户名获取用户认证信息
 func (q *Queries) GetUserByUsernameForAuth(ctx context.Context, username string) (GetUserByUsernameForAuthRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByUsernameForAuth, username)
 	var i GetUserByUsernameForAuthRow
-	err := row.Scan(
-		&i.ID,
-		&i.Username,
-		&i.HashedPassword,
-		&i.Salt,
-	)
+	err := row.Scan(&i.ID, &i.Username, &i.HashedPassword)
 	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, hashed_password, salt, username, email, created_at, updated_at, phone_number, nickname, sex, avatar_url, extra FROM ` + "`" + `user` + "`" + ` 
+SELECT id, username, hashed_password, nickname, sex, avatar_url, email, phone_number, status, extra, created_at, updated_at FROM ` + "`" + `user` + "`" + ` 
 ORDER BY created_at DESC 
 LIMIT ? OFFSET ?
 `
@@ -249,17 +205,17 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 		var i User
 		if err := rows.Scan(
 			&i.ID,
-			&i.HashedPassword,
-			&i.Salt,
 			&i.Username,
-			&i.Email,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.PhoneNumber,
+			&i.HashedPassword,
 			&i.Nickname,
 			&i.Sex,
 			&i.AvatarUrl,
+			&i.Email,
+			&i.PhoneNumber,
+			&i.Status,
 			&i.Extra,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -281,12 +237,12 @@ WHERE id = ?
 `
 
 type UpdateUserParams struct {
-	UpdatedAt time.Time `json:"updated_at"`
-	Nickname  string    `json:"nickname"`
-	Sex       int8      `json:"sex"`
-	AvatarUrl string    `json:"avatar_url"`
-	Extra     string    `json:"extra"`
-	ID        uint64    `json:"id"`
+	UpdatedAt time.Time       `json:"updated_at"`
+	Nickname  string          `json:"nickname"`
+	Sex       int8            `json:"sex"`
+	AvatarUrl string          `json:"avatar_url"`
+	Extra     json.RawMessage `json:"extra"`
+	ID        uint64          `json:"id"`
 }
 
 // 更新用户信息
@@ -322,24 +278,30 @@ func (q *Queries) UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarPara
 
 const updateUserPassword = `-- name: UpdateUserPassword :exec
 UPDATE ` + "`" + `user` + "`" + ` 
-SET updated_at = ?, hashed_password = ?, salt = ?
+SET updated_at = ?, hashed_password = ?
 WHERE id = ?
 `
 
 type UpdateUserPasswordParams struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 	HashedPassword string    `json:"hashed_password"`
-	Salt           string    `json:"salt"`
 	ID             uint64    `json:"id"`
 }
 
 // 更新用户密码
 func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
-	_, err := q.db.ExecContext(ctx, updateUserPassword,
-		arg.UpdatedAt,
-		arg.HashedPassword,
-		arg.Salt,
-		arg.ID,
-	)
+	_, err := q.db.ExecContext(ctx, updateUserPassword, arg.UpdatedAt, arg.HashedPassword, arg.ID)
 	return err
+}
+
+const userExistsByUsername = `-- name: UserExistsByUsername :one
+SELECT EXISTS(SELECT 1 FROM user WHERE username = ? LIMIT 1)
+`
+
+// 检查用户名是否存在
+func (q *Queries) UserExistsByUsername(ctx context.Context, username string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, userExistsByUsername, username)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }

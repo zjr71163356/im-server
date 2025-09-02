@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -78,18 +77,16 @@ func (s *AuthIntService) Auth(ctx context.Context, req *authpb.AuthRequest) (*em
 // Register 用户注册
 func (s *AuthIntService) Register(ctx context.Context, req *authpb.RegisterRequest) (*authpb.RegisterResponse, error) {
 	// 检查用户是否存在
-	_, err := s.queries.GetUserByUsername(ctx, req.Username)
-	if err == nil {
+	exists, err := s.queries.UserExistsByUsername(ctx, req.Username)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, " 检查用户是否存在失败: %v", err)
+	}
+	if exists {
 		// 如果 err 是 nil，说明用户已存在
 		return &authpb.RegisterResponse{
 			Message: "用户已存在",
 			Code:    1, // 建议使用非零状态码表示失败
 		}, nil
-	}
-
-	// 如果错误不是 "未找到记录"，则是一个真正的数据库错误
-	if !errors.Is(err, sql.ErrNoRows) {
-		return nil, status.Errorf(codes.Internal, "查询用户失败: %v", err)
 	}
 
 	hashedPassword, err := hashPassword(req.Password)
@@ -166,8 +163,8 @@ func (s *AuthIntService) setAuthDevice(ctx context.Context, userID, deviceID uin
 }
 
 // validateUserCredentials 验证用户凭据
-func (s *AuthIntService) validateUserCredentials(ctx context.Context, username, password string) (*dao.User, error) {
-	user, err := s.queries.GetUserByUsername(ctx, username)
+func (s *AuthIntService) validateUserCredentials(ctx context.Context, username, password string) (*dao.GetUserByUsernameForAuthRow, error) {
+	user, err := s.queries.GetUserByUsernameForAuth(ctx, username)
 	if err != nil {
 		return nil, err
 	}

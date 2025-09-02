@@ -459,7 +459,7 @@ func (mr *MockQuerierMockRecorder) GetUser(ctx, id interface{}) *gomock.Call {
 }
 
 // GetUserByEmail mocks base method.
-func (m *MockQuerier) GetUserByEmail(ctx context.Context, email string) (dao.User, error) {
+func (m *MockQuerier) GetUserByEmail(ctx context.Context, email sql.NullString) (dao.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByEmail", ctx, email)
 	ret0, _ := ret[0].(dao.User)
@@ -474,7 +474,7 @@ func (mr *MockQuerierMockRecorder) GetUserByEmail(ctx, email interface{}) *gomoc
 }
 
 // GetUserByEmailForAuth mocks base method.
-func (m *MockQuerier) GetUserByEmailForAuth(ctx context.Context, email string) (dao.GetUserByEmailForAuthRow, error) {
+func (m *MockQuerier) GetUserByEmailForAuth(ctx context.Context, email sql.NullString) (dao.GetUserByEmailForAuthRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByEmailForAuth", ctx, email)
 	ret0, _ := ret[0].(dao.GetUserByEmailForAuthRow)
@@ -489,7 +489,7 @@ func (mr *MockQuerierMockRecorder) GetUserByEmailForAuth(ctx, email interface{})
 }
 
 // GetUserByPhone mocks base method.
-func (m *MockQuerier) GetUserByPhone(ctx context.Context, phoneNumber string) (dao.User, error) {
+func (m *MockQuerier) GetUserByPhone(ctx context.Context, phoneNumber sql.NullString) (dao.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByPhone", ctx, phoneNumber)
 	ret0, _ := ret[0].(dao.User)
@@ -504,7 +504,7 @@ func (mr *MockQuerierMockRecorder) GetUserByPhone(ctx, phoneNumber interface{}) 
 }
 
 // GetUserByPhoneForAuth mocks base method.
-func (m *MockQuerier) GetUserByPhoneForAuth(ctx context.Context, phoneNumber string) (dao.GetUserByPhoneForAuthRow, error) {
+func (m *MockQuerier) GetUserByPhoneForAuth(ctx context.Context, phoneNumber sql.NullString) (dao.GetUserByPhoneForAuthRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByPhoneForAuth", ctx, phoneNumber)
 	ret0, _ := ret[0].(dao.GetUserByPhoneForAuthRow)
@@ -516,21 +516,6 @@ func (m *MockQuerier) GetUserByPhoneForAuth(ctx context.Context, phoneNumber str
 func (mr *MockQuerierMockRecorder) GetUserByPhoneForAuth(ctx, phoneNumber interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByPhoneForAuth", reflect.TypeOf((*MockQuerier)(nil).GetUserByPhoneForAuth), ctx, phoneNumber)
-}
-
-// GetUserByUsername mocks base method.
-func (m *MockQuerier) GetUserByUsername(ctx context.Context, username string) (dao.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserByUsername", ctx, username)
-	ret0, _ := ret[0].(dao.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserByUsername indicates an expected call of GetUserByUsername.
-func (mr *MockQuerierMockRecorder) GetUserByUsername(ctx, username interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUsername", reflect.TypeOf((*MockQuerier)(nil).GetUserByUsername), ctx, username)
 }
 
 // GetUserByUsernameForAuth mocks base method.
@@ -848,4 +833,19 @@ func (m *MockQuerier) UpdateUserPassword(ctx context.Context, arg dao.UpdateUser
 func (mr *MockQuerierMockRecorder) UpdateUserPassword(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserPassword", reflect.TypeOf((*MockQuerier)(nil).UpdateUserPassword), ctx, arg)
+}
+
+// UserExistsByUsername mocks base method.
+func (m *MockQuerier) UserExistsByUsername(ctx context.Context, username string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UserExistsByUsername", ctx, username)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UserExistsByUsername indicates an expected call of UserExistsByUsername.
+func (mr *MockQuerierMockRecorder) UserExistsByUsername(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UserExistsByUsername", reflect.TypeOf((*MockQuerier)(nil).UserExistsByUsername), ctx, username)
 }

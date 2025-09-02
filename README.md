@@ -8,9 +8,14 @@
 ### 功能需求
 
 1. 登录与注册
-   预期是实现登录的 HTTP api，但通过 gRPC Server 实现的登录服务，所以需要实现网关 gateway 将 HTTP 请求转为 gRPC 请求，gRPC 请求再转为 gRPC 响应
-   - HTTP 请求 → API 网关路由 → 认证服务验证 → 令牌生成 → 返回响应。
-
+   预期是实现登录的 HTTP api，但通过 gRPC Server 实现的登录服务，所以需要实现网关 gateway 将 HTTP 请求转为 gRPC 请求，gRPC 请求再转为 gRPC 响应(HTTP 请求 → API 网关路由 → 认证服务验证 → 令牌生成 → 返回)响应。
+   - 测试登录与注册功能
+     - (mock DB 和 Redis版)
+      - 初版 √
+      - 完成测试
+     - HTTP curl版
+   - 编写用于转发HTTP请求到gRPC后端的gateway
+   
 ## 笔记部分
 
 1. 完成了 ER 图设计思路的部分总结
@@ -54,7 +59,35 @@ db/
 - 变更迁移脚本后同时更新 `sqlc.yaml`（如需包含新文件），并执行相应的 migrate / sqlc 命令以保持本地与 CI 的一致性。
 - 在 PR 中同时提交 migration、queries 与生成代码或提供生成步骤说明，便于代码审查与 CI 校验。
 
+
+##  工作流
+修改migrations中文件，用于修改数据库的表结构---使用makefile中的migrate-up指令通过migrate工具迁移---修改queries中.sql文件用于设计dao层的操作数据库的函数---使用makefile中的mockdb指令,mock出模拟数据库的dao层函数
+### 数据库开发工作流
+
+当需要修改数据库相关的业务逻辑时，请遵循以下标准流程。这个流程确保了数据库表结构、Go数据访问层代码和（可选的）测试 mock 代码保持同步。
+
+1.  **第一步：修改数据库表结构**
+    - **操作**：在 `db/migrations/` 目录下创建或修改迁移文件 (`*.up.sql` 和 `*.down.sql`)。
+    - **目的**：定义新的表、添加/修改列或索引。
+
+2.  **第二步：应用数据库迁移**
+    - **操作**：在终端运行 `make migrate-up` 命令。
+    - **目的**：使用 `golang-migrate` 工具将你在上一步的表结构变更应用到数据库中。
+
+3.  **第三步：定义或更新数据访问查询**
+    - **操作**：在 `db/queries/` 目录下创建或修改 `.sql` 文件。
+    - **目的**：使用 `sqlc` 的注释语法编写或更新 SQL 查询（`SELECT`, `INSERT`, `UPDATE` 等）。这些查询将用于生成类型安全的 Go 函数。
+
+4.  **第四步：生成 Go 数据访问层 (DAO) 代码**
+    - **操作**：在终端运行 `make sqlc-generate` 命令（或直接运行 `sqlc generate`）。
+    - **目的**：`sqlc` 工具会读取 `db/queries/` 下的 SQL 文件，并自动生成或更新 `pkg/dao/` 目录下的 Go 代码，供业务逻辑层调用。
+
+### api服务开发工作流
+- 每次更新完api.go后按照api更新的部分更新api_test.go的对应部分
+
+
 ## 存储相关代码部分
+
 
 ### 数据库
 

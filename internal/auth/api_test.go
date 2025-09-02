@@ -5,8 +5,11 @@ package auth
 import (
 	"context"
 	"database/sql"
+
 	"encoding/json"
+	"errors"
 	"fmt"
+	"im-server/pkg/dao"
 	"strconv"
 	"testing"
 	"time"
@@ -18,7 +21,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"im-server/pkg/dao"
 	mock_dao "im-server/pkg/mocks"
 	authpb "im-server/pkg/protocol/pb/authpb"
 )
@@ -49,9 +51,9 @@ func TestRegister(t *testing.T) {
 		}
 
 		queries.EXPECT().
-			GetUserByUsername(gomock.Any(), req.Username).
+			UserExistsByUsername(gomock.Any(), req.Username).
 			Times(1).
-			Return(dao.User{}, sql.ErrNoRows)
+			Return(false, nil)
 
 		queries.EXPECT().
 			CreateUserByUsername(gomock.Any(), gomock.Any()).
@@ -71,16 +73,16 @@ func TestRegister(t *testing.T) {
 		defer ctrl.Finish()
 
 		queries := mock_dao.NewMockQuerier(ctrl)
-		rdb, mockRdb := redismock.NewClientMock()
+		rdb, _ := redismock.NewClientMock()
 		authService := NewAuthIntService(queries, rdb)
 
 		req := &authpb.RegisterRequest{Username: "existinguser"}
 
-		// 预期 GetUserByUsername 会被调用，并返回一个存在的用户
+		// 预期 UserExistsByUsername 会被调用，并返回 true
 		queries.EXPECT().
-			GetUserByUsername(gomock.Any(), req.Username).
+			UserExistsByUsername(gomock.Any(), req.Username).
 			Times(1).
-			Return(dao.User{ID: 2, Username: "existinguser"}, nil)
+			Return(true, nil)
 
 		// --- 调用函数 ---
 		res, err := authService.Register(context.Background(), req)
@@ -89,9 +91,6 @@ func TestRegister(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, res)
 		require.Equal(t, "用户已存在", res.Message)
-
-		// 验证 Redis 的预期
-		require.NoError(t, mockRdb.ExpectationsWereMet())
 	})
 }
 
@@ -167,6 +166,41 @@ func TestAuth(t *testing.T) {
 		require.NoError(t, mockRdb.ExpectationsWereMet())
 	})
 
+	t.Run("TokenExpired", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		queries := mock_dao.NewMockQuerier(ctrl)
+		rdb, mockRdb := redismock.NewClientMock()
+		authService := NewAuthIntService(queries, rdb)
+
+		req := &authpb.AuthRequest{
+			UserId:   1,
+			DeviceId: 100,
+			Token:    "valid-token",
+		}
+
+		// Redis 中存储的是一个已过期的 token
+		expectedDevice := AuthDevice{
+			DeviceID:       req.DeviceId,
+			Token:          "valid-token",
+			TokenExpiresAt: time.Now().Add(-time.Hour).Unix(), // 1小时前过期
+		}
+		expectedBytes, _ := json.Marshal(expectedDevice)
+		expectedKey := fmt.Sprintf(AuthKey, req.UserId)
+		expectedField := strconv.FormatUint(req.DeviceId, 10)
+
+		mockRdb.ExpectHGet(expectedKey, expectedField).SetVal(string(expectedBytes))
+
+		_, err := authService.Auth(context.Background(), req)
+
+		require.Error(t, err)
+		st, _ := status.FromError(err)
+		require.Equal(t, codes.Unauthenticated, st.Code())
+		require.Contains(t, st.Message(), "token已过期")
+		require.NoError(t, mockRdb.ExpectationsWereMet())
+	})
+
 	t.Run("RedisError", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
@@ -192,6 +226,157 @@ func TestAuth(t *testing.T) {
 		require.Error(t, err)
 		st, _ := status.FromError(err)
 		require.Equal(t, codes.Unauthenticated, st.Code())
+		require.NoError(t, mockRdb.ExpectationsWereMet())
+	})
+}
+
+func TestLogin(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		queries := mock_dao.NewMockQuerier(ctrl)
+		rdb, mockRdb := redismock.NewClientMock()
+		authService := NewAuthIntService(queries, rdb)
+
+		req := &authpb.LoginRequest{
+			Username: "testuser",
+			Password: "password",
+			DeviceId: 101,
+		}
+
+		// Mock user data from DB
+		hashedPassword, err := hashPassword(req.Password)
+		require.NoError(t, err)
+		expectedUser := dao.GetUserByUsernameForAuthRow{
+			ID:             1,
+			HashedPassword: hashedPassword,
+		}
+
+		// Mock validateUserCredentials call
+		queries.EXPECT().
+			GetUserByUsernameForAuth(gomock.Any(), req.Username).
+			Times(1).
+			Return(expectedUser, nil)
+
+		// Mock setAuthDevice call (redis HSet)
+		expectedKey := fmt.Sprintf(AuthKey, expectedUser.ID)
+		expectedField := strconv.FormatUint(req.DeviceId, 10)
+		
+		// We use a custom matcher because the token and expiry are random
+		mockRdb.ExpectHSet(expectedKey, expectedField, gomock.Any()).SetVal(1)
+
+		res, err := authService.Login(context.Background(), req)
+
+		require.NoError(t, err)
+		require.NotNil(t, res)
+		require.Equal(t, "登录成功", res.Message)
+		require.Equal(t, expectedUser.ID, res.UserId)
+		require.NotEmpty(t, res.Token)
+		require.NoError(t, mockRdb.ExpectationsWereMet())
+	})
+
+	t.Run("InvalidCredentials", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		queries := mock_dao.NewMockQuerier(ctrl)
+		rdb, _ := redismock.NewClientMock()
+		authService := NewAuthIntService(queries, rdb)
+
+		req := &authpb.LoginRequest{
+			Username: "testuser",
+			Password: "wrongpassword",
+			DeviceId: 101,
+		}
+
+		// Mock user data from DB with a different password
+		hashedPassword, err := hashPassword("correctpassword")
+		require.NoError(t, err)
+		expectedUser := dao.GetUserByUsernameForAuthRow{
+			ID:             1,
+			HashedPassword: hashedPassword,
+		}
+
+		queries.EXPECT().
+			GetUserByUsernameForAuth(gomock.Any(), req.Username).
+			Times(1).
+			Return(expectedUser, nil)
+
+		_, err = authService.Login(context.Background(), req)
+
+		require.Error(t, err)
+		st, ok := status.FromError(err)
+		require.True(t, ok)
+		require.Equal(t, codes.Unauthenticated, st.Code())
+		require.Contains(t, st.Message(), "用户名或密码错误")
+	})
+
+	t.Run("UserNotFound", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		queries := mock_dao.NewMockQuerier(ctrl)
+		rdb, _ := redismock.NewClientMock()
+		authService := NewAuthIntService(queries, rdb)
+
+		req := &authpb.LoginRequest{
+			Username: "nonexistentuser",
+			Password: "password",
+			DeviceId: 101,
+		}
+
+		queries.EXPECT().
+			GetUserByUsernameForAuth(gomock.Any(), req.Username).
+			Times(1).
+			Return(dao.GetUserByUsernameForAuthRow{}, sql.ErrNoRows)
+
+		_, err := authService.Login(context.Background(), req)
+
+		require.Error(t, err)
+		st, ok := status.FromError(err)
+		require.True(t, ok)
+		require.Equal(t, codes.Unauthenticated, st.Code())
+		require.Contains(t, st.Message(), "用户名或密码错误")
+	})
+
+	t.Run("RedisError", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		queries := mock_dao.NewMockQuerier(ctrl)
+		rdb, mockRdb := redismock.NewClientMock()
+		authService := NewAuthIntService(queries, rdb)
+
+		req := &authpb.LoginRequest{
+			Username: "testuser",
+			Password: "password",
+			DeviceId: 101,
+		}
+
+		hashedPassword, err := hashPassword(req.Password)
+		require.NoError(t, err)
+		expectedUser := dao.GetUserByUsernameForAuthRow{
+			ID:             1,
+			HashedPassword: hashedPassword,
+		}
+
+		queries.EXPECT().
+			GetUserByUsernameForAuth(gomock.Any(), req.Username).
+			Times(1).
+			Return(expectedUser, nil)
+
+		expectedKey := fmt.Sprintf(AuthKey, expectedUser.ID)
+		expectedField := strconv.FormatUint(req.DeviceId, 10)
+		mockRdb.ExpectHSet(expectedKey, expectedField, gomock.Any()).SetErr(errors.New("redis error"))
+
+		_, err = authService.Login(context.Background(), req)
+
+		require.Error(t, err)
+		st, ok := status.FromError(err)
+		require.True(t, ok)
+		require.Equal(t, codes.Internal, st.Code())
+		require.Contains(t, st.Message(), "存储认证信息失败")
 		require.NoError(t, mockRdb.ExpectationsWereMet())
 	})
 }

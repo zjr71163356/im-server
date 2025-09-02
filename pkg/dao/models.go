@@ -5,6 +5,8 @@
 package dao
 
 import (
+	"database/sql"
+	"encoding/json"
 	"time"
 )
 
@@ -128,32 +130,32 @@ type Seq struct {
 	Seq uint64 `json:"seq"`
 }
 
-// 用户
+// 用户表
 type User struct {
 	// 自增主键
 	ID uint64 `json:"id"`
+	// 用户名，唯一
+	Username string `json:"username"`
 	// 哈希后的密码
 	HashedPassword string `json:"hashed_password"`
-	// 密码盐值
-	Salt string `json:"salt"`
-	// 用户名
-	Username string `json:"username"`
-	// 邮箱
-	Email string `json:"email"`
-	// 创建时间
-	CreatedAt time.Time `json:"created_at"`
-	// 更新时间
-	UpdatedAt time.Time `json:"updated_at"`
-	// 手机号
-	PhoneNumber string `json:"phone_number"`
 	// 昵称
 	Nickname string `json:"nickname"`
 	// 性别，0:未知；1:男；2:女
 	Sex int8 `json:"sex"`
 	// 用户头像链接
 	AvatarUrl string `json:"avatar_url"`
-	// 附加属性
-	Extra string `json:"extra"`
+	// 邮箱，唯一
+	Email sql.NullString `json:"email"`
+	// 手机号，唯一
+	PhoneNumber sql.NullString `json:"phone_number"`
+	// 用户状态，1:正常；2:禁用；3:已注销(逻辑删除)
+	Status int8 `json:"status"`
+	// 附加属性，存储非结构化数据
+	Extra json.RawMessage `json:"extra"`
+	// 创建时间
+	CreatedAt time.Time `json:"created_at"`
+	// 更新时间
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // 用户消息

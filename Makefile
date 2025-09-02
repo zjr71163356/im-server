@@ -57,9 +57,10 @@ sqlc-generate:
 	@echo "SQLC code generation complete."
 
 # 完整的数据库更新流程：迁移 + 生成代码
-db-update: migrate-up sqlc-generate
+db-update: migrate-up sqlc-generate  mockdb
 	@echo "Database schema updated and Go code regenerated."
-
+dao-update: sqlc-generate mockdb
+	@echo "DAO code regenerated."
 # 验证数据库连接
 db-check:
 	@echo "Checking database connection..."
