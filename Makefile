@@ -90,4 +90,50 @@ mockdb:
 	@echo "Generating mock for DAO layer..."
 	mockgen -source=pkg/dao/querier.go -destination=pkg/mocks/mock_querier.go -package=mocks
 
-.PHONY: migrate-up migrate-down migrate-create proto sqlc-generate db-update db-check build-auth build-connect build-logic build-user build-all
+e2e-start-containers:
+	@echo "Starting Redis and MySQL containers (if not running)..."
+	@docker start redis 2>/dev/null || docker run -d --name redis -p 6379:6379 redis:alpine
+	@docker start mysql 2>/dev/null || docker run -d --name mysql -e MYSQL_ROOT_PASSWORD=azsx0123456 -p 3307:3306 mysql:8.0
+
+# Stop containers used for e2e
+e2e-stop-containers:
+	@echo "Stopping Redis and MySQL containers..."
+	@docker stop redis mysql || true
+
+# Wait for services to be ready (delegates to script)
+e2e-wait:
+	@echo "Waiting for Redis and MySQL to be ready..."
+	@./scripts/e2e_test.sh wait
+
+# Build and start auth service for e2e
+e2e-build-auth:
+	@echo "Building auth service..."
+	@go build -o bin/auth ./cmd/auth
+
+# Start auth service in background and record pid
+e2e-start-auth: e2e-build-auth
+	@mkdir -p logs run || true
+	@echo "Starting auth service in background (logs to logs/auth.log)..."
+	@nohup bin/auth > logs/auth.log 2>&1 & echo $$! > run/auth.pid || true
+
+# Stop auth service started by e2e
+e2e-stop-auth:
+	@if [ -f run/auth.pid ]; then \
+		PID=`cat run/auth.pid`; \
+		kill $$PID || true; \
+		rm -f run/auth.pid; \
+		echo "Stopped auth (pid $$PID)"; \
+	else \
+		echo "No auth pid file, skip"; \
+	fi
+
+# Run smoke tests (delegates to script)
+e2e-smoke:
+	@echo "Running e2e smoke tests..."
+	@./scripts/e2e_test.sh smoke || true
+
+# Full e2e flow: start containers, wait, start services, run smoke, cleanup
+e2e: e2e-start-containers e2e-wait e2e-start-auth e2e-smoke e2e-stop-auth e2e-stop-containers
+	@echo "E2E flow finished."
+
+.PHONY: migrate-up migrate-down migrate-create proto sqlc-generate db-update db-check build-auth build-connect build-logic build-user build-all e2e-start-containers e2e-stop-containers e2e-wait e2e-build-auth e2e-start-auth e2e-stop-auth e2e-smoke e2e

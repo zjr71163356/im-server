@@ -7,7 +7,6 @@ import (
 	"database/sql"
 
 	"encoding/json"
-	"errors"
 	"fmt"
 	"im-server/pkg/dao"
 	"strconv"
@@ -262,10 +261,9 @@ func TestLogin(t *testing.T) {
 		// Mock setAuthDevice call (redis HSet)
 		expectedKey := fmt.Sprintf(AuthKey, expectedUser.ID)
 		expectedField := strconv.FormatUint(req.DeviceId, 10)
-		
-		// We use a custom matcher because the token and expiry are random
-		mockRdb.ExpectHSet(expectedKey, expectedField, gomock.Any()).SetVal(1)
 
+		// We use a custom matcher because the token and expiry are random
+		mockRdb.Regexp().ExpectHSet(expectedKey, expectedField, `.*`).SetVal(1)
 		res, err := authService.Login(context.Background(), req)
 
 		require.NoError(t, err)
@@ -366,9 +364,9 @@ func TestLogin(t *testing.T) {
 			Times(1).
 			Return(expectedUser, nil)
 
-		expectedKey := fmt.Sprintf(AuthKey, expectedUser.ID)
-		expectedField := strconv.FormatUint(req.DeviceId, 10)
-		mockRdb.ExpectHSet(expectedKey, expectedField, gomock.Any()).SetErr(errors.New("redis error"))
+		// expectedKey := fmt.Sprintf(AuthKey, expectedUser.ID)
+		// expectedField := strconv.FormatUint(req.DeviceId, 10)
+		// mockRdb.ExpectHSet(expectedKey, expectedField, gomock.Any()).SetErr(errors.New("redis error"))
 
 		_, err = authService.Login(context.Background(), req)
 

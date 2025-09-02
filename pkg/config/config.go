@@ -16,7 +16,7 @@ var (
 func init() {
 	// 注意：为了简单起见，这里硬编码了配置文件路径。
 	// 在生产环境中，最好通过命令行标志或环境变量来传递路径。
-	err := loadConfigFromFile("config.yaml")
+	err := loadConfigFromFile("/home/tyrfly/im-server/config.yaml")
 	if err != nil {
 		// 配置是程序运行的基础，如果加载失败，则直接 panic
 		panic(fmt.Sprintf("加载配置失败: %v", err))

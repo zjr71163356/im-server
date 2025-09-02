@@ -159,7 +159,10 @@ func (s *AuthIntService) setAuthDevice(ctx context.Context, userID, deviceID uin
 
 	key := fmt.Sprintf(AuthKey, userID)
 	_, err = s.rdb.HSet(ctx, key, strconv.FormatUint(deviceID, 10), bytes).Result()
-	return err
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // validateUserCredentials 验证用户凭据
