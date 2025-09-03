@@ -9,11 +9,12 @@
 
 1. 登录与注册
    预期是实现登录的 HTTP api，但通过 gRPC Server 实现的登录服务，所以需要实现网关 gateway 将 HTTP 请求转为 gRPC 请求，gRPC 请求再转为 gRPC 响应(HTTP 请求 → API 网关路由 → 认证服务验证 → 令牌生成 → 返回)响应。
-   - 测试登录与注册功能
-     - (使用 mock DB 和 Redismock 测试) √
-     - HTTP curl 版
-   - 编写用于转发 HTTP 请求到 gRPC 后端的 gateway
-
+   - 测试登录与注册功能 √
+     - 使用 mock DB 和 Redismock 测试 √
+     - HTTP curl 版 编写sh脚本实现启动redis、mysql，构建启动服务，发送http请求√
+     - 前端UI测试版
+   - 编写用于转发 HTTP 请求到 gRPC 后端的 gateway √
+2. 
 ## 笔记部分
 
 1. 完成了 ER 图设计思路的部分总结
