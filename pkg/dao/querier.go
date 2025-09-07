@@ -10,12 +10,20 @@ import (
 )
 
 type Querier interface {
+	// 同意好友申请
+	AcceptFriendRequest(ctx context.Context, arg AcceptFriendRequestParams) error
+	// 屏蔽好友
+	BlockFriend(ctx context.Context, arg BlockFriendParams) error
+	// 检查是否已存在好友申请
+	CheckExistingRequest(ctx context.Context, arg CheckExistingRequestParams) (int64, error)
 	// 检查两个用户是否是好友
 	CheckFriendship(ctx context.Context, arg CheckFriendshipParams) (int64, error)
 	// 创建设备
 	CreateDevice(ctx context.Context, arg CreateDeviceParams) (sql.Result, error)
 	// 创建好友关系
 	CreateFriend(ctx context.Context, arg CreateFriendParams) error
+	// 创建好友申请
+	CreateFriendRequest(ctx context.Context, arg CreateFriendRequestParams) error
 	// 创建群组
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (sql.Result, error)
 	// 添加群组成员
@@ -32,6 +40,8 @@ type Querier interface {
 	DeleteDevice(ctx context.Context, id uint64) error
 	// 删除好友关系
 	DeleteFriend(ctx context.Context, arg DeleteFriendParams) error
+	// 删除好友申请
+	DeleteFriendRequest(ctx context.Context, id uint64) error
 	// 删除群组
 	DeleteGroup(ctx context.Context, id uint64) error
 	// 移除群组成员
@@ -44,14 +54,18 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id uint64) error
 	// 删除用户消息关联
 	DeleteUserMessage(ctx context.Context, arg DeleteUserMessageParams) error
+	// 获取被屏蔽的好友
+	GetBlockedFriends(ctx context.Context, userID uint64) ([]Friend, error)
 	// 根据设备ID获取设备信息
 	GetDevice(ctx context.Context, id uint64) (Device, error)
 	// 根据用户ID和设备类型获取设备
 	GetDeviceByUserAndType(ctx context.Context, arg GetDeviceByUserAndTypeParams) (Device, error)
 	// 获取好友关系
 	GetFriend(ctx context.Context, arg GetFriendParams) (Friend, error)
-	// 获取好友申请列表
-	GetFriendRequests(ctx context.Context, friendID uint64) ([]Friend, error)
+	// 获取指定的好友申请
+	GetFriendRequest(ctx context.Context, id uint64) (FriendRequest, error)
+	// 根据申请人和接收人获取好友申请
+	GetFriendRequestByUsers(ctx context.Context, arg GetFriendRequestByUsersParams) (FriendRequest, error)
 	// 根据群组ID获取群组信息
 	GetGroup(ctx context.Context, id uint64) (Group, error)
 	// 获取群组成员信息
@@ -64,6 +78,12 @@ type Querier interface {
 	GetOnlineDevices(ctx context.Context) ([]Device, error)
 	// 获取或创建序列号（使用 INSERT ... ON DUPLICATE KEY UPDATE）
 	GetOrCreateSeq(ctx context.Context, arg GetOrCreateSeqParams) error
+	// 获取待处理的好友申请
+	GetPendingFriendRequests(ctx context.Context, recipientID uint64) ([]FriendRequest, error)
+	// 获取收到的好友申请列表
+	GetReceivedFriendRequests(ctx context.Context, arg GetReceivedFriendRequestsParams) ([]FriendRequest, error)
+	// 获取发送的好友申请列表
+	GetSentFriendRequests(ctx context.Context, arg GetSentFriendRequestsParams) ([]FriendRequest, error)
 	// 获取序列号
 	GetSeq(ctx context.Context, arg GetSeqParams) (Seq, error)
 	// 根据用户ID获取用户信息
@@ -81,6 +101,8 @@ type Querier interface {
 	GetUserDevices(ctx context.Context, userID uint64) ([]Device, error)
 	// 获取用户的所有好友
 	GetUserFriends(ctx context.Context, userID uint64) ([]Friend, error)
+	// 按分类获取用户的好友
+	GetUserFriendsByCategory(ctx context.Context, arg GetUserFriendsByCategoryParams) ([]Friend, error)
 	// 获取用户参与的所有群组
 	GetUserGroups(ctx context.Context, userID uint64) ([]GroupUser, error)
 	// 获取用户最新的消息序列号
@@ -89,20 +111,28 @@ type Querier interface {
 	GetUserMessage(ctx context.Context, arg GetUserMessageParams) (UserMessage, error)
 	// 获取用户消息列表
 	GetUserMessages(ctx context.Context, arg GetUserMessagesParams) ([]GetUserMessagesRow, error)
+	// 忽略好友申请
+	IgnoreFriendRequest(ctx context.Context, arg IgnoreFriendRequestParams) error
 	// 递增序列号
 	IncrementSeq(ctx context.Context, arg IncrementSeqParams) error
 	// 获取群组列表
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	// 获取用户列表
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	// 拒绝好友申请
+	RejectFriendRequest(ctx context.Context, arg RejectFriendRequestParams) error
+	// 取消屏蔽好友
+	UnblockFriend(ctx context.Context, arg UnblockFriendParams) error
 	// 设置设备离线
 	UpdateDeviceOffline(ctx context.Context, arg UpdateDeviceOfflineParams) error
 	// 更新设备在线状态
 	UpdateDeviceStatus(ctx context.Context, arg UpdateDeviceStatusParams) error
+	// 更新好友分类
+	UpdateFriendCategory(ctx context.Context, arg UpdateFriendCategoryParams) error
 	// 更新好友备注
-	UpdateFriendRemarks(ctx context.Context, arg UpdateFriendRemarksParams) error
-	// 更新好友状态（同意/拒绝好友申请）
-	UpdateFriendStatus(ctx context.Context, arg UpdateFriendStatusParams) error
+	UpdateFriendRemark(ctx context.Context, arg UpdateFriendRemarkParams) error
+	// 更新好友申请状态
+	UpdateFriendRequestStatus(ctx context.Context, arg UpdateFriendRequestStatusParams) error
 	// 更新群组信息
 	UpdateGroup(ctx context.Context, arg UpdateGroupParams) error
 	// 更新群组人数

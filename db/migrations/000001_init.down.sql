@@ -5,6 +5,7 @@
 DROP TABLE IF EXISTS `user_message`;
 DROP TABLE IF EXISTS `group_user`;
 DROP TABLE IF EXISTS `friend`;
+DROP TABLE IF EXISTS `friend_request`;
 
 -- 然后删除核心业务表
 DROP TABLE IF EXISTS `message`;
