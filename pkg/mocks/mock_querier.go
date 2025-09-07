@@ -36,6 +36,20 @@ func (m *MockQuerier) EXPECT() *MockQuerierMockRecorder {
 	return m.recorder
 }
 
+// BlockFriend mocks base method.
+func (m *MockQuerier) BlockFriend(ctx context.Context, arg dao.BlockFriendParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BlockFriend", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BlockFriend indicates an expected call of BlockFriend.
+func (mr *MockQuerierMockRecorder) BlockFriend(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BlockFriend", reflect.TypeOf((*MockQuerier)(nil).BlockFriend), ctx, arg)
+}
+
 // CheckFriendship mocks base method.
 func (m *MockQuerier) CheckFriendship(ctx context.Context, arg dao.CheckFriendshipParams) (int64, error) {
 	m.ctrl.T.Helper()
@@ -78,6 +92,20 @@ func (m *MockQuerier) CreateFriend(ctx context.Context, arg dao.CreateFriendPara
 func (mr *MockQuerierMockRecorder) CreateFriend(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFriend", reflect.TypeOf((*MockQuerier)(nil).CreateFriend), ctx, arg)
+}
+
+// CreateFriendRequest mocks base method.
+func (m *MockQuerier) CreateFriendRequest(ctx context.Context, arg dao.CreateFriendRequestParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFriendRequest", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CreateFriendRequest indicates an expected call of CreateFriendRequest.
+func (mr *MockQuerierMockRecorder) CreateFriendRequest(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFriendRequest", reflect.TypeOf((*MockQuerier)(nil).CreateFriendRequest), ctx, arg)
 }
 
 // CreateGroup mocks base method.
@@ -324,19 +352,34 @@ func (mr *MockQuerierMockRecorder) GetFriend(ctx, arg interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFriend", reflect.TypeOf((*MockQuerier)(nil).GetFriend), ctx, arg)
 }
 
-// GetFriendRequests mocks base method.
-func (m *MockQuerier) GetFriendRequests(ctx context.Context, friendID uint64) ([]dao.Friend, error) {
+// GetFriendRequest mocks base method.
+func (m *MockQuerier) GetFriendRequest(ctx context.Context, id uint64) (dao.FriendRequest, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFriendRequests", ctx, friendID)
-	ret0, _ := ret[0].([]dao.Friend)
+	ret := m.ctrl.Call(m, "GetFriendRequest", ctx, id)
+	ret0, _ := ret[0].(dao.FriendRequest)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetFriendRequests indicates an expected call of GetFriendRequests.
-func (mr *MockQuerierMockRecorder) GetFriendRequests(ctx, friendID interface{}) *gomock.Call {
+// GetFriendRequest indicates an expected call of GetFriendRequest.
+func (mr *MockQuerierMockRecorder) GetFriendRequest(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFriendRequests", reflect.TypeOf((*MockQuerier)(nil).GetFriendRequests), ctx, friendID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFriendRequest", reflect.TypeOf((*MockQuerier)(nil).GetFriendRequest), ctx, id)
+}
+
+// GetFriendRequestByUsers mocks base method.
+func (m *MockQuerier) GetFriendRequestByUsers(ctx context.Context, arg dao.GetFriendRequestByUsersParams) (dao.FriendRequest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFriendRequestByUsers", ctx, arg)
+	ret0, _ := ret[0].(dao.FriendRequest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFriendRequestByUsers indicates an expected call of GetFriendRequestByUsers.
+func (mr *MockQuerierMockRecorder) GetFriendRequestByUsers(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFriendRequestByUsers", reflect.TypeOf((*MockQuerier)(nil).GetFriendRequestByUsers), ctx, arg)
 }
 
 // GetGroup mocks base method.
@@ -426,6 +469,36 @@ func (m *MockQuerier) GetOrCreateSeq(ctx context.Context, arg dao.GetOrCreateSeq
 func (mr *MockQuerierMockRecorder) GetOrCreateSeq(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrCreateSeq", reflect.TypeOf((*MockQuerier)(nil).GetOrCreateSeq), ctx, arg)
+}
+
+// GetPendingFriendRequests mocks base method.
+func (m *MockQuerier) GetPendingFriendRequests(ctx context.Context, recipientID uint64) ([]dao.FriendRequest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPendingFriendRequests", ctx, recipientID)
+	ret0, _ := ret[0].([]dao.FriendRequest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPendingFriendRequests indicates an expected call of GetPendingFriendRequests.
+func (mr *MockQuerierMockRecorder) GetPendingFriendRequests(ctx, recipientID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingFriendRequests", reflect.TypeOf((*MockQuerier)(nil).GetPendingFriendRequests), ctx, recipientID)
+}
+
+// GetSentFriendRequests mocks base method.
+func (m *MockQuerier) GetSentFriendRequests(ctx context.Context, requesterID uint64) ([]dao.FriendRequest, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSentFriendRequests", ctx, requesterID)
+	ret0, _ := ret[0].([]dao.FriendRequest)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSentFriendRequests indicates an expected call of GetSentFriendRequests.
+func (mr *MockQuerierMockRecorder) GetSentFriendRequests(ctx, requesterID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSentFriendRequests", reflect.TypeOf((*MockQuerier)(nil).GetSentFriendRequests), ctx, requesterID)
 }
 
 // GetSeq mocks base method.
@@ -563,6 +636,21 @@ func (mr *MockQuerierMockRecorder) GetUserFriends(ctx, userID interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserFriends", reflect.TypeOf((*MockQuerier)(nil).GetUserFriends), ctx, userID)
 }
 
+// GetUserFriendsByCategory mocks base method.
+func (m *MockQuerier) GetUserFriendsByCategory(ctx context.Context, arg dao.GetUserFriendsByCategoryParams) ([]dao.Friend, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserFriendsByCategory", ctx, arg)
+	ret0, _ := ret[0].([]dao.Friend)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserFriendsByCategory indicates an expected call of GetUserFriendsByCategory.
+func (mr *MockQuerierMockRecorder) GetUserFriendsByCategory(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserFriendsByCategory", reflect.TypeOf((*MockQuerier)(nil).GetUserFriendsByCategory), ctx, arg)
+}
+
 // GetUserGroups mocks base method.
 func (m *MockQuerier) GetUserGroups(ctx context.Context, userID uint64) ([]dao.GroupUser, error) {
 	m.ctrl.T.Helper()
@@ -667,6 +755,20 @@ func (mr *MockQuerierMockRecorder) ListUsers(ctx, arg interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockQuerier)(nil).ListUsers), ctx, arg)
 }
 
+// UnblockFriend mocks base method.
+func (m *MockQuerier) UnblockFriend(ctx context.Context, arg dao.UnblockFriendParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UnblockFriend", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UnblockFriend indicates an expected call of UnblockFriend.
+func (mr *MockQuerierMockRecorder) UnblockFriend(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UnblockFriend", reflect.TypeOf((*MockQuerier)(nil).UnblockFriend), ctx, arg)
+}
+
 // UpdateDeviceOffline mocks base method.
 func (m *MockQuerier) UpdateDeviceOffline(ctx context.Context, arg dao.UpdateDeviceOfflineParams) error {
 	m.ctrl.T.Helper()
@@ -695,32 +797,46 @@ func (mr *MockQuerierMockRecorder) UpdateDeviceStatus(ctx, arg interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateDeviceStatus", reflect.TypeOf((*MockQuerier)(nil).UpdateDeviceStatus), ctx, arg)
 }
 
-// UpdateFriendRemarks mocks base method.
-func (m *MockQuerier) UpdateFriendRemarks(ctx context.Context, arg dao.UpdateFriendRemarksParams) error {
+// UpdateFriendCategory mocks base method.
+func (m *MockQuerier) UpdateFriendCategory(ctx context.Context, arg dao.UpdateFriendCategoryParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateFriendRemarks", ctx, arg)
+	ret := m.ctrl.Call(m, "UpdateFriendCategory", ctx, arg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateFriendRemarks indicates an expected call of UpdateFriendRemarks.
-func (mr *MockQuerierMockRecorder) UpdateFriendRemarks(ctx, arg interface{}) *gomock.Call {
+// UpdateFriendCategory indicates an expected call of UpdateFriendCategory.
+func (mr *MockQuerierMockRecorder) UpdateFriendCategory(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFriendRemarks", reflect.TypeOf((*MockQuerier)(nil).UpdateFriendRemarks), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFriendCategory", reflect.TypeOf((*MockQuerier)(nil).UpdateFriendCategory), ctx, arg)
 }
 
-// UpdateFriendStatus mocks base method.
-func (m *MockQuerier) UpdateFriendStatus(ctx context.Context, arg dao.UpdateFriendStatusParams) error {
+// UpdateFriendRemark mocks base method.
+func (m *MockQuerier) UpdateFriendRemark(ctx context.Context, arg dao.UpdateFriendRemarkParams) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateFriendStatus", ctx, arg)
+	ret := m.ctrl.Call(m, "UpdateFriendRemark", ctx, arg)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// UpdateFriendStatus indicates an expected call of UpdateFriendStatus.
-func (mr *MockQuerierMockRecorder) UpdateFriendStatus(ctx, arg interface{}) *gomock.Call {
+// UpdateFriendRemark indicates an expected call of UpdateFriendRemark.
+func (mr *MockQuerierMockRecorder) UpdateFriendRemark(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFriendStatus", reflect.TypeOf((*MockQuerier)(nil).UpdateFriendStatus), ctx, arg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFriendRemark", reflect.TypeOf((*MockQuerier)(nil).UpdateFriendRemark), ctx, arg)
+}
+
+// UpdateFriendRequestStatus mocks base method.
+func (m *MockQuerier) UpdateFriendRequestStatus(ctx context.Context, arg dao.UpdateFriendRequestStatusParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFriendRequestStatus", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateFriendRequestStatus indicates an expected call of UpdateFriendRequestStatus.
+func (mr *MockQuerierMockRecorder) UpdateFriendRequestStatus(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFriendRequestStatus", reflect.TypeOf((*MockQuerier)(nil).UpdateFriendRequestStatus), ctx, arg)
 }
 
 // UpdateGroup mocks base method.
