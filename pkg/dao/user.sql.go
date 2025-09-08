@@ -119,28 +119,21 @@ func (q *Queries) GetUserByEmailForAuth(ctx context.Context, email sql.NullStrin
 }
 
 const getUserByPhone = `-- name: GetUserByPhone :one
-SELECT id, username, hashed_password, nickname, sex, avatar_url, email, phone_number, status, extra, created_at, updated_at FROM ` + "`" + `user` + "`" + ` 
+SELECT id, username, avatar_url  FROM ` + "`" + `user` + "`" + ` 
 WHERE phone_number = ? LIMIT 1
 `
 
+type GetUserByPhoneRow struct {
+	ID        uint64 `json:"id"`
+	Username  string `json:"username"`
+	AvatarUrl string `json:"avatar_url"`
+}
+
 // 根据手机号获取用户信息
-func (q *Queries) GetUserByPhone(ctx context.Context, phoneNumber sql.NullString) (User, error) {
+func (q *Queries) GetUserByPhone(ctx context.Context, phoneNumber sql.NullString) (GetUserByPhoneRow, error) {
 	row := q.db.QueryRowContext(ctx, getUserByPhone, phoneNumber)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Username,
-		&i.HashedPassword,
-		&i.Nickname,
-		&i.Sex,
-		&i.AvatarUrl,
-		&i.Email,
-		&i.PhoneNumber,
-		&i.Status,
-		&i.Extra,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
+	var i GetUserByPhoneRow
+	err := row.Scan(&i.ID, &i.Username, &i.AvatarUrl)
 	return i, err
 }
 
@@ -182,6 +175,25 @@ func (q *Queries) GetUserByUsernameForAuth(ctx context.Context, username string)
 	return i, err
 }
 
+const getUserByUsernameForSearch = `-- name: GetUserByUsernameForSearch :one
+SELECT id, username, avatar_url FROM ` + "`" + `user` + "`" + ` 
+WHERE username = ? LIMIT 1
+`
+
+type GetUserByUsernameForSearchRow struct {
+	ID        uint64 `json:"id"`
+	Username  string `json:"username"`
+	AvatarUrl string `json:"avatar_url"`
+}
+
+// 根据用户名获取用户认证信息
+func (q *Queries) GetUserByUsernameForSearch(ctx context.Context, username string) (GetUserByUsernameForSearchRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsernameForSearch, username)
+	var i GetUserByUsernameForSearchRow
+	err := row.Scan(&i.ID, &i.Username, &i.AvatarUrl)
+	return i, err
+}
+
 const listUsers = `-- name: ListUsers :many
 SELECT id, username, hashed_password, nickname, sex, avatar_url, email, phone_number, status, extra, created_at, updated_at FROM ` + "`" + `user` + "`" + ` 
 ORDER BY created_at DESC 
@@ -217,6 +229,49 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsersByNickname = `-- name: ListUsersByNickname :many
+SELECT id, username, avatar_url FROM ` + "`" + `user` + "`" + `
+WHERE nickname LIKE CONCAT('%', ?, '%')
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?
+`
+
+type ListUsersByNicknameParams struct {
+	CONCAT interface{} `json:"CONCAT"`
+	Limit  int32       `json:"limit"`
+	Offset int32       `json:"offset"`
+}
+
+type ListUsersByNicknameRow struct {
+	ID        uint64 `json:"id"`
+	Username  string `json:"username"`
+	AvatarUrl string `json:"avatar_url"`
+}
+
+// 根据昵称获取用户信息（模糊匹配，支持分页）
+func (q *Queries) ListUsersByNickname(ctx context.Context, arg ListUsersByNicknameParams) ([]ListUsersByNicknameRow, error) {
+	rows, err := q.db.QueryContext(ctx, listUsersByNickname, arg.CONCAT, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListUsersByNicknameRow{}
+	for rows.Next() {
+		var i ListUsersByNicknameRow
+		if err := rows.Scan(&i.ID, &i.Username, &i.AvatarUrl); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

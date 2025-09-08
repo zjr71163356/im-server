@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package user;
+option go_package = "pkg/protocol/pb/userpb";
+
+import "google/protobuf/empty.proto";
+
+// 用户搜索服务
+service UserSearchService {
+  // 搜索用户
+  rpc SearchUser (SearchUserRequest) returns (SearchUserResponse);
+}
+
+// 搜索用户请求
+message SearchUserRequest {
+  string keyword = 1; // 搜索关键字，可以是用户名或手机号
+  uint32 page = 2; // 分页页码，默认从 1 开始
+  uint32 page_size = 3; // 每页返回的用户数量，默认值为 10
+}
+
+// 搜索用户响应
+message SearchUserResponse {
+ repeated UserInfo users = 1; // 搜索结果中的用户列表
+  uint32 total = 2; // 搜索结果的总用户数
+}
+
+// 用户信息
+message UserInfo {
+  uint64 user_id = 1; // 用户 ID
+  string username = 2; // 用户名
+  string avatar_url = 3; // 用户头像 URL
+}

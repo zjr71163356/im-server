@@ -17,8 +17,16 @@ WHERE id = ? LIMIT 1;
 
 -- name: GetUserByPhone :one
 -- 根据手机号获取用户信息
-SELECT * FROM `user` 
+SELECT id, username, avatar_url  FROM `user` 
 WHERE phone_number = ? LIMIT 1;
+
+
+-- name: ListUsersByNickname :many
+-- 根据昵称获取用户信息（模糊匹配，支持分页）
+SELECT id, username, avatar_url FROM `user`
+WHERE nickname LIKE CONCAT('%', ?, '%')
+ORDER BY created_at DESC
+LIMIT ? OFFSET ?;
 
 -- name: UpdateUser :exec
 -- 更新用户信息
@@ -65,7 +73,10 @@ WHERE email = ? LIMIT 1;
 SELECT id, username, hashed_password FROM `user` 
 WHERE username = ? LIMIT 1;
 
-
+-- name: GetUserByUsernameForSearch :one
+-- 根据用户名获取用户认证信息
+SELECT id, username, avatar_url FROM `user` 
+WHERE username = ? LIMIT 1;
 
 -- name: GetUserByEmailForAuth :one
 -- 根据邮箱获取用户认证信息

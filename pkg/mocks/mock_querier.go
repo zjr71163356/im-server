@@ -635,10 +635,10 @@ func (mr *MockQuerierMockRecorder) GetUserByEmailForAuth(ctx, email interface{})
 }
 
 // GetUserByPhone mocks base method.
-func (m *MockQuerier) GetUserByPhone(ctx context.Context, phoneNumber sql.NullString) (dao.User, error) {
+func (m *MockQuerier) GetUserByPhone(ctx context.Context, phoneNumber sql.NullString) (dao.GetUserByPhoneRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetUserByPhone", ctx, phoneNumber)
-	ret0, _ := ret[0].(dao.User)
+	ret0, _ := ret[0].(dao.GetUserByPhoneRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -677,6 +677,21 @@ func (m *MockQuerier) GetUserByUsernameForAuth(ctx context.Context, username str
 func (mr *MockQuerierMockRecorder) GetUserByUsernameForAuth(ctx, username interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUsernameForAuth", reflect.TypeOf((*MockQuerier)(nil).GetUserByUsernameForAuth), ctx, username)
+}
+
+// GetUserByUsernameForSearch mocks base method.
+func (m *MockQuerier) GetUserByUsernameForSearch(ctx context.Context, username string) (dao.GetUserByUsernameForSearchRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserByUsernameForSearch", ctx, username)
+	ret0, _ := ret[0].(dao.GetUserByUsernameForSearchRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUserByUsernameForSearch indicates an expected call of GetUserByUsernameForSearch.
+func (mr *MockQuerierMockRecorder) GetUserByUsernameForSearch(ctx, username interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserByUsernameForSearch", reflect.TypeOf((*MockQuerier)(nil).GetUserByUsernameForSearch), ctx, username)
 }
 
 // GetUserDevices mocks base method.

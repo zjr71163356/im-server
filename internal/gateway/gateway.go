@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"im-server/internal/auth"
+	"im-server/internal/user"
 	"im-server/pkg/dao"
 	authpb "im-server/pkg/protocol/pb/authpb"
 
@@ -18,7 +19,7 @@ import (
 type GatewayServer struct {
 	authService *auth.AuthIntService
 	// 这里可以添加其他服务的客户端
-	// userService   *user.UserIntService
+	userService *user.UserExtService
 	// logicService  *logic.LogicIntService
 	// connectService *connect.ConnectExtService
 }
@@ -74,6 +75,7 @@ func (g *GatewayServer) registerUserRoutes(api *mux.Router) {
 	// 这里可以添加用户相关的路由
 	user.HandleFunc("/profile", g.handleGetProfile).Methods("GET")
 	user.HandleFunc("/profile", g.handleUpdateProfile).Methods("PUT")
+	user.HandleFunc("/search", g.handleSearchUser).Methods("GET")
 	// user.HandleFunc("/friends", g.handleGetFriends).Methods("GET")
 	// user.HandleFunc("/friends", g.handleAddFriend).Methods("POST")
 }
@@ -273,6 +275,10 @@ func (g *GatewayServer) handleAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	g.sendJSONResponse(w, http.StatusOK, response)
+}
+
+func (g *GatewayServer) handleSearchUser(w http.ResponseWriter, r *http.Request) {
+
 }
 
 // User 服务处理器（占位符）

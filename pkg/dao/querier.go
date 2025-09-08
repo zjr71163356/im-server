@@ -92,11 +92,13 @@ type Querier interface {
 	// 根据邮箱获取用户认证信息
 	GetUserByEmailForAuth(ctx context.Context, email sql.NullString) (GetUserByEmailForAuthRow, error)
 	// 根据手机号获取用户信息
-	GetUserByPhone(ctx context.Context, phoneNumber sql.NullString) (User, error)
+	GetUserByPhone(ctx context.Context, phoneNumber sql.NullString) (GetUserByPhoneRow, error)
 	// 根据手机号获取用户认证信息
 	GetUserByPhoneForAuth(ctx context.Context, phoneNumber sql.NullString) (GetUserByPhoneForAuthRow, error)
 	// 根据用户名获取用户认证信息
 	GetUserByUsernameForAuth(ctx context.Context, username string) (GetUserByUsernameForAuthRow, error)
+	// 根据用户名获取用户认证信息
+	GetUserByUsernameForSearch(ctx context.Context, username string) (GetUserByUsernameForSearchRow, error)
 	// 获取用户的所有设备
 	GetUserDevices(ctx context.Context, userID uint64) ([]Device, error)
 	// 获取用户的所有好友
@@ -119,6 +121,8 @@ type Querier interface {
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	// 获取用户列表
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
+	// 根据昵称获取用户信息（模糊匹配，支持分页）
+	ListUsersByNickname(ctx context.Context, arg ListUsersByNicknameParams) ([]ListUsersByNicknameRow, error)
 	// 拒绝好友申请
 	RejectFriendRequest(ctx context.Context, arg RejectFriendRequestParams) error
 	// 取消屏蔽好友
