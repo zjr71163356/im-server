@@ -5,7 +5,7 @@ import (
 	"context"
 	"im-server/pkg/config"
 	"im-server/pkg/protocol/pb/connectpb"
-	"im-server/pkg/protocol/pb/logicpb"
+	"im-server/pkg/protocol/pb/devicepb"
 	"im-server/pkg/rpc"
 	"log/slog"
 	"net"
@@ -103,7 +103,7 @@ func (c *Conn) SignIn(packet *connectpb.Packet) {
 	//TODO
 	//使用gRPC进行远程调用函数验证登录context
 	//需要验证传入的信息是否与数据库中的符合，必然涉及repo的开发，目前先不加(7.21)
-	_, err = rpc.GetDeviceIntServiceClient().ConnSignIn(context.TODO(), &logicpb.ConnSignInRequest{
+	_, err = rpc.GetDeviceIntServiceClient().ConnSignIn(context.TODO(), &devicepb.ConnSignInRequest{
 		DeviceId:   signInputReq.DeviceId,
 		UserId:     signInputReq.UserId,
 		Token:      signInputReq.Token,
@@ -206,7 +206,7 @@ func (c *Conn) Close() {
 
 	//TO DO
 	// gPRC远程调用函数，使得设备离线
-	_, err := rpc.GetDeviceIntServiceClient().Offline(context.TODO(), &logicpb.OfflineRequest{
+	_, err := rpc.GetDeviceIntServiceClient().Offline(context.TODO(), &devicepb.OfflineRequest{
 		UserId:     c.Session.UserID,
 		DeviceId:   c.Session.DeviceID,
 		ClientAddr: c.Transport.RemoteAddr().String(),

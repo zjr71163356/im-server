@@ -3,27 +3,27 @@ package rpc
 import (
 	"im-server/pkg/config"
 	"im-server/pkg/protocol/pb/authpb"
-	"im-server/pkg/protocol/pb/logicpb"
+	"im-server/pkg/protocol/pb/devicepb"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 var (
-	deviceIntClient logicpb.DeviceIntServiceClient
+	deviceIntClient devicepb.DeviceIntServiceClient
 	authIntClient   authpb.AuthIntServiceClient
 )
 
-func SetDeviceIntServiceClient(client logicpb.DeviceIntServiceClient) {
+func SetDeviceIntServiceClient(client devicepb.DeviceIntServiceClient) {
 	deviceIntClient = client
 }
 
-func GetDeviceIntServiceClient() logicpb.DeviceIntServiceClient {
+func GetDeviceIntServiceClient() devicepb.DeviceIntServiceClient {
 
 	if deviceIntClient == nil {
 		// grpc.NewClient 需要 Go 1.59+，参数与 Dial 类似
 		conn := newGrpcClient(config.Config.GRPCClient.DeviceTargetAddr)
-		deviceIntClient = logicpb.NewDeviceIntServiceClient(conn)
+		deviceIntClient = devicepb.NewDeviceIntServiceClient(conn)
 
 	}
 

@@ -55,7 +55,7 @@ func LoadConfig(path string) (*Configuration, error) {
 func generateGRPCClientConfig(services ServiceConfig) GRPCClientConfig {
 	return GRPCClientConfig{
 		ConnectTargetAddr: fmt.Sprintf("addrs:///%s", services.Connect.LocalAddr),
-		DeviceTargetAddr:  fmt.Sprintf("addrs:///%s", services.Logic.LocalAddr), // 假设 Device 服务与 Logic 服务在同一地址
+		DeviceTargetAddr:  fmt.Sprintf("addrs:///%s", services.Device.LocalAddr), // Device 服务地址
 		AuthTargetAddr:    fmt.Sprintf("addrs:///%s", services.Auth.LocalAddr),
 	}
 }
@@ -87,7 +87,7 @@ type RedisConfig struct {
 // ServiceConfig 封装了所有服务监听地址的配置
 type ServiceConfig struct {
 	Connect ConnectEndpoints `yaml:"connect"`
-	Logic   LogicEndpoints   `yaml:"logic"`
+	Device  DeviceEndpoints  `yaml:"device"`
 	Auth    AuthEndpoints    `yaml:"auth"`
 	User    UserEndpoints    `yaml:"user"`
 	File    FileEndpoints    `yaml:"file"`
@@ -102,8 +102,8 @@ type ConnectEndpoints struct {
 	WSAddr    string `yaml:"ws_addr"`    // WebSocket长连接监听地址
 }
 
-// LogicEndpoints 封装了Logic服务的监听端点
-type LogicEndpoints struct {
+// DeviceEndpoints 封装了Device服务的监听端点
+type DeviceEndpoints struct {
 	LocalAddr string `yaml:"local_addr"`
 	RPCAddr   string `yaml:"rpc_addr"`
 }

@@ -75,15 +75,15 @@ build-connect:
 	@echo "Building connect service..."
 	go build -o bin/connect ./cmd/connect
 
-build-logic:
-	@echo "Building logic service..."
-	go build -o bin/logic ./cmd/logic
+build-device:
+	@echo "Building device service..."
+	go build -o bin/device ./cmd/device
 
 build-user:
 	@echo "Building user service..."
 	go build -o bin/user ./cmd/user
 
-build-all: build-auth build-connect build-logic build-user
+build-all: build-auth build-connect build-device build-user
 	@echo "All services built successfully."
 
 mockdb:
@@ -136,4 +136,4 @@ e2e-smoke:
 e2e: e2e-start-containers e2e-wait e2e-start-auth e2e-smoke e2e-stop-auth e2e-stop-containers
 	@echo "E2E flow finished."
 
-.PHONY: migrate-up migrate-down migrate-create proto sqlc-generate db-update db-check build-auth build-connect build-logic build-user build-all e2e-start-containers e2e-stop-containers e2e-wait e2e-build-auth e2e-start-auth e2e-stop-auth e2e-smoke e2e
+.PHONY: migrate-up migrate-down migrate-create proto sqlc-generate db-update db-check build-auth build-connect build-device build-user build-all e2e-start-containers e2e-stop-containers e2e-wait e2e-build-auth e2e-start-auth e2e-stop-auth e2e-smoke e2e

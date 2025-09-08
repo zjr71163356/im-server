@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v3.21.12
-// source: pkg/protocol/proto/logic/device.int.proto
+// source: pkg/protocol/proto/device/device.int.proto
 
-package logicpb
+package devicepb
 
 import (
 	context "context"
@@ -20,8 +20,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	DeviceIntService_ConnSignIn_FullMethodName = "/logic.DeviceIntService/ConnSignIn"
-	DeviceIntService_Offline_FullMethodName    = "/logic.DeviceIntService/Offline"
+	DeviceIntService_ConnSignIn_FullMethodName = "/device.DeviceIntService/ConnSignIn"
+	DeviceIntService_Offline_FullMethodName    = "/device.DeviceIntService/Offline"
 )
 
 // DeviceIntServiceClient is the client API for DeviceIntService service.
@@ -147,7 +147,7 @@ func _DeviceIntService_Offline_Handler(srv interface{}, ctx context.Context, dec
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var DeviceIntService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "logic.DeviceIntService",
+	ServiceName: "device.DeviceIntService",
 	HandlerType: (*DeviceIntServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -160,5 +160,5 @@ var DeviceIntService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pkg/protocol/proto/logic/device.int.proto",
+	Metadata: "pkg/protocol/proto/device/device.int.proto",
 }

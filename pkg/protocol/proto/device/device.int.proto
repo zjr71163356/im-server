@@ -1,6 +1,6 @@
 syntax = "proto3";
-package logic;
-option go_package = "pkg/protocol/pb/logicpb";
+package device;
+option go_package = "pkg/protocol/pb/devicepb";
 
 import "google/protobuf/empty.proto";
 

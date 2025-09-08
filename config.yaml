@@ -14,7 +14,7 @@ services:
   user:
     rpc_addr: ":50052"
     local_addr: "localhost:50052"
-  logic:
+  device:
     rpc_addr: ":50053"
     local_addr: "localhost:50053"
   connect:

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"im-server/pkg/dao"
 	"im-server/pkg/protocol/pb/authpb"
-	"im-server/pkg/protocol/pb/logicpb"
+	"im-server/pkg/protocol/pb/devicepb"
 	"im-server/pkg/rpc"
 
 	"google.golang.org/grpc/codes"
@@ -19,7 +19,7 @@ import (
 // 这里的逻辑可以包括设备登录、状态更新等功能。
 
 type DeviceIntService struct {
-	logicpb.UnsafeDeviceIntServiceServer
+	devicepb.UnsafeDeviceIntServiceServer
 	queries *dao.Queries
 }
 
@@ -31,7 +31,7 @@ func NewDeviceIntService(queries *dao.Queries) *DeviceIntService {
 //在DeviceIntService结构体中添加queries字段
 //通过函数的receiver访问queries再访问数据库函数
 
-func (s *DeviceIntService) ConnSignIn(ctx context.Context, req *logicpb.ConnSignInRequest) (*emptypb.Empty, error) {
+func (s *DeviceIntService) ConnSignIn(ctx context.Context, req *devicepb.ConnSignInRequest) (*emptypb.Empty, error) {
 	_, err := rpc.GetAuthIntServiceClient().Auth(ctx, &authpb.AuthRequest{
 		UserId:   req.UserId,
 		DeviceId: req.DeviceId,
@@ -53,6 +53,6 @@ func (s *DeviceIntService) ConnSignIn(ctx context.Context, req *logicpb.ConnSign
 	return new(emptypb.Empty), nil
 }
 
-func (s *DeviceIntService) Offline(ctx context.Context, req *logicpb.OfflineRequest) (*emptypb.Empty, error) {
+func (s *DeviceIntService) Offline(ctx context.Context, req *devicepb.OfflineRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Offline not implemented")
 }

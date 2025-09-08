@@ -2,9 +2,9 @@
 // versions:
 // 	protoc-gen-go v1.36.8
 // 	protoc        v3.21.12
-// source: pkg/protocol/proto/logic/device.int.proto
+// source: pkg/protocol/proto/device/device.int.proto
 
-package logicpb
+package devicepb
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -35,7 +35,7 @@ type ConnSignInRequest struct {
 
 func (x *ConnSignInRequest) Reset() {
 	*x = ConnSignInRequest{}
-	mi := &file_pkg_protocol_proto_logic_device_int_proto_msgTypes[0]
+	mi := &file_pkg_protocol_proto_device_device_int_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -47,7 +47,7 @@ func (x *ConnSignInRequest) String() string {
 func (*ConnSignInRequest) ProtoMessage() {}
 
 func (x *ConnSignInRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_protocol_proto_logic_device_int_proto_msgTypes[0]
+	mi := &file_pkg_protocol_proto_device_device_int_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -60,7 +60,7 @@ func (x *ConnSignInRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConnSignInRequest.ProtoReflect.Descriptor instead.
 func (*ConnSignInRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_protocol_proto_logic_device_int_proto_rawDescGZIP(), []int{0}
+	return file_pkg_protocol_proto_device_device_int_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *ConnSignInRequest) GetDeviceId() uint64 {
@@ -109,7 +109,7 @@ type OfflineRequest struct {
 
 func (x *OfflineRequest) Reset() {
 	*x = OfflineRequest{}
-	mi := &file_pkg_protocol_proto_logic_device_int_proto_msgTypes[1]
+	mi := &file_pkg_protocol_proto_device_device_int_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -121,7 +121,7 @@ func (x *OfflineRequest) String() string {
 func (*OfflineRequest) ProtoMessage() {}
 
 func (x *OfflineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_pkg_protocol_proto_logic_device_int_proto_msgTypes[1]
+	mi := &file_pkg_protocol_proto_device_device_int_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -134,7 +134,7 @@ func (x *OfflineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OfflineRequest.ProtoReflect.Descriptor instead.
 func (*OfflineRequest) Descriptor() ([]byte, []int) {
-	return file_pkg_protocol_proto_logic_device_int_proto_rawDescGZIP(), []int{1}
+	return file_pkg_protocol_proto_device_device_int_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *OfflineRequest) GetUserId() uint64 {
@@ -158,11 +158,11 @@ func (x *OfflineRequest) GetClientAddr() string {
 	return ""
 }
 
-var File_pkg_protocol_proto_logic_device_int_proto protoreflect.FileDescriptor
+var File_pkg_protocol_proto_device_device_int_proto protoreflect.FileDescriptor
 
-const file_pkg_protocol_proto_logic_device_int_proto_rawDesc = "" +
+const file_pkg_protocol_proto_device_device_int_proto_rawDesc = "" +
 	"\n" +
-	")pkg/protocol/proto/logic/device.int.proto\x12\x05logic\x1a\x1bgoogle/protobuf/empty.proto\"\x9d\x01\n" +
+	"*pkg/protocol/proto/device/device.int.proto\x12\x06device\x1a\x1bgoogle/protobuf/empty.proto\"\x9d\x01\n" +
 	"\x11ConnSignInRequest\x12\x1b\n" +
 	"\tdevice_id\x18\x01 \x01(\x04R\bdeviceId\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\x04R\x06userId\x12\x14\n" +
@@ -174,35 +174,35 @@ const file_pkg_protocol_proto_logic_device_int_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x1b\n" +
 	"\tdevice_id\x18\x02 \x01(\x04R\bdeviceId\x12\x1f\n" +
 	"\vclient_addr\x18\x03 \x01(\tR\n" +
-	"clientAddr2\x8c\x01\n" +
-	"\x10DeviceIntService\x12>\n" +
+	"clientAddr2\x8e\x01\n" +
+	"\x10DeviceIntService\x12?\n" +
 	"\n" +
-	"ConnSignIn\x12\x18.logic.ConnSignInRequest\x1a\x16.google.protobuf.Empty\x128\n" +
-	"\aOffline\x12\x15.logic.OfflineRequest\x1a\x16.google.protobuf.EmptyB\x19Z\x17pkg/protocol/pb/logicpbb\x06proto3"
+	"ConnSignIn\x12\x19.device.ConnSignInRequest\x1a\x16.google.protobuf.Empty\x129\n" +
+	"\aOffline\x12\x16.device.OfflineRequest\x1a\x16.google.protobuf.EmptyB\x1aZ\x18pkg/protocol/pb/devicepbb\x06proto3"
 
 var (
-	file_pkg_protocol_proto_logic_device_int_proto_rawDescOnce sync.Once
-	file_pkg_protocol_proto_logic_device_int_proto_rawDescData []byte
+	file_pkg_protocol_proto_device_device_int_proto_rawDescOnce sync.Once
+	file_pkg_protocol_proto_device_device_int_proto_rawDescData []byte
 )
 
-func file_pkg_protocol_proto_logic_device_int_proto_rawDescGZIP() []byte {
-	file_pkg_protocol_proto_logic_device_int_proto_rawDescOnce.Do(func() {
-		file_pkg_protocol_proto_logic_device_int_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_pkg_protocol_proto_logic_device_int_proto_rawDesc), len(file_pkg_protocol_proto_logic_device_int_proto_rawDesc)))
+func file_pkg_protocol_proto_device_device_int_proto_rawDescGZIP() []byte {
+	file_pkg_protocol_proto_device_device_int_proto_rawDescOnce.Do(func() {
+		file_pkg_protocol_proto_device_device_int_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_pkg_protocol_proto_device_device_int_proto_rawDesc), len(file_pkg_protocol_proto_device_device_int_proto_rawDesc)))
 	})
-	return file_pkg_protocol_proto_logic_device_int_proto_rawDescData
+	return file_pkg_protocol_proto_device_device_int_proto_rawDescData
 }
 
-var file_pkg_protocol_proto_logic_device_int_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_pkg_protocol_proto_logic_device_int_proto_goTypes = []any{
-	(*ConnSignInRequest)(nil), // 0: logic.ConnSignInRequest
-	(*OfflineRequest)(nil),    // 1: logic.OfflineRequest
+var file_pkg_protocol_proto_device_device_int_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_pkg_protocol_proto_device_device_int_proto_goTypes = []any{
+	(*ConnSignInRequest)(nil), // 0: device.ConnSignInRequest
+	(*OfflineRequest)(nil),    // 1: device.OfflineRequest
 	(*emptypb.Empty)(nil),     // 2: google.protobuf.Empty
 }
-var file_pkg_protocol_proto_logic_device_int_proto_depIdxs = []int32{
-	0, // 0: logic.DeviceIntService.ConnSignIn:input_type -> logic.ConnSignInRequest
-	1, // 1: logic.DeviceIntService.Offline:input_type -> logic.OfflineRequest
-	2, // 2: logic.DeviceIntService.ConnSignIn:output_type -> google.protobuf.Empty
-	2, // 3: logic.DeviceIntService.Offline:output_type -> google.protobuf.Empty
+var file_pkg_protocol_proto_device_device_int_proto_depIdxs = []int32{
+	0, // 0: device.DeviceIntService.ConnSignIn:input_type -> device.ConnSignInRequest
+	1, // 1: device.DeviceIntService.Offline:input_type -> device.OfflineRequest
+	2, // 2: device.DeviceIntService.ConnSignIn:output_type -> google.protobuf.Empty
+	2, // 3: device.DeviceIntService.Offline:output_type -> google.protobuf.Empty
 	2, // [2:4] is the sub-list for method output_type
 	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -210,26 +210,26 @@ var file_pkg_protocol_proto_logic_device_int_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_pkg_protocol_proto_logic_device_int_proto_init() }
-func file_pkg_protocol_proto_logic_device_int_proto_init() {
-	if File_pkg_protocol_proto_logic_device_int_proto != nil {
+func init() { file_pkg_protocol_proto_device_device_int_proto_init() }
+func file_pkg_protocol_proto_device_device_int_proto_init() {
+	if File_pkg_protocol_proto_device_device_int_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_protocol_proto_logic_device_int_proto_rawDesc), len(file_pkg_protocol_proto_logic_device_int_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_protocol_proto_device_device_int_proto_rawDesc), len(file_pkg_protocol_proto_device_device_int_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_pkg_protocol_proto_logic_device_int_proto_goTypes,
-		DependencyIndexes: file_pkg_protocol_proto_logic_device_int_proto_depIdxs,
-		MessageInfos:      file_pkg_protocol_proto_logic_device_int_proto_msgTypes,
+		GoTypes:           file_pkg_protocol_proto_device_device_int_proto_goTypes,
+		DependencyIndexes: file_pkg_protocol_proto_device_device_int_proto_depIdxs,
+		MessageInfos:      file_pkg_protocol_proto_device_device_int_proto_msgTypes,
 	}.Build()
-	File_pkg_protocol_proto_logic_device_int_proto = out.File
-	file_pkg_protocol_proto_logic_device_int_proto_goTypes = nil
-	file_pkg_protocol_proto_logic_device_int_proto_depIdxs = nil
+	File_pkg_protocol_proto_device_device_int_proto = out.File
+	file_pkg_protocol_proto_device_device_int_proto_goTypes = nil
+	file_pkg_protocol_proto_device_device_int_proto_depIdxs = nil
 }

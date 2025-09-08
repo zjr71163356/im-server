@@ -23,13 +23,13 @@ if [ -f "user.pid" ]; then
     rm -f user.pid
 fi
 
-if [ -f "logic.pid" ]; then
-    LOGIC_PID=$(cat logic.pid)
-    if kill -0 $LOGIC_PID 2>/dev/null; then
-        echo "停止逻辑服务 (PID: $LOGIC_PID)..."
-        kill $LOGIC_PID
+if [ -f "device.pid" ]; then
+    DEVICE_PID=$(cat device.pid)
+    if kill -0 $DEVICE_PID 2>/dev/null; then
+        echo "停止设备服务 (PID: $DEVICE_PID)..."
+        kill $DEVICE_PID
     fi
-    rm -f logic.pid
+    rm -f device.pid
 fi
 
 if [ -f "connect.pid" ]; then
