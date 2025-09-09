@@ -857,6 +857,21 @@ func (mr *MockQuerierMockRecorder) ListUsers(ctx, arg interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsers", reflect.TypeOf((*MockQuerier)(nil).ListUsers), ctx, arg)
 }
 
+// ListUsersByNickname mocks base method.
+func (m *MockQuerier) ListUsersByNickname(ctx context.Context, arg dao.ListUsersByNicknameParams) ([]dao.ListUsersByNicknameRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListUsersByNickname", ctx, arg)
+	ret0, _ := ret[0].([]dao.ListUsersByNicknameRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListUsersByNickname indicates an expected call of ListUsersByNickname.
+func (mr *MockQuerierMockRecorder) ListUsersByNickname(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByNickname", reflect.TypeOf((*MockQuerier)(nil).ListUsersByNickname), ctx, arg)
+}
+
 // RejectFriendRequest mocks base method.
 func (m *MockQuerier) RejectFriendRequest(ctx context.Context, arg dao.RejectFriendRequestParams) error {
 	m.ctrl.T.Helper()

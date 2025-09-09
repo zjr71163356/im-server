@@ -24,7 +24,7 @@ WHERE phone_number = ? LIMIT 1;
 -- name: ListUsersByNickname :many
 -- 根据昵称获取用户信息（模糊匹配，支持分页）
 SELECT id, username, avatar_url FROM `user`
-WHERE nickname LIKE CONCAT('%', ?, '%')
+WHERE nickname LIKE ?
 ORDER BY created_at DESC
 LIMIT ? OFFSET ?;
 

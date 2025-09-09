@@ -27,9 +27,11 @@ type GatewayServer struct {
 // NewGatewayServer 创建新的 Gateway 服务器
 func NewGatewayServer(queries dao.Querier, rdb redis.Cmdable) *GatewayServer {
 	authService := auth.NewAuthIntService(queries, rdb)
+	userService := user.NewUserService(queries)
 
 	return &GatewayServer{
 		authService: authService,
+		userService: userService,
 		// 这里可以初始化其他服务的客户端
 	}
 }

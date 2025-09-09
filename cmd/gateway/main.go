@@ -10,7 +10,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 
-	"im-server/internal/gateway"
+	"im-server/gateway"
 	"im-server/pkg/config"
 	"im-server/pkg/dao"
 )

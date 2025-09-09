@@ -244,15 +244,15 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]User, e
 
 const listUsersByNickname = `-- name: ListUsersByNickname :many
 SELECT id, username, avatar_url FROM ` + "`" + `user` + "`" + `
-WHERE nickname LIKE CONCAT('%', ?, '%')
+WHERE nickname LIKE ?
 ORDER BY created_at DESC
 LIMIT ? OFFSET ?
 `
 
 type ListUsersByNicknameParams struct {
-	CONCAT interface{} `json:"CONCAT"`
-	Limit  int32       `json:"limit"`
-	Offset int32       `json:"offset"`
+	Nickname string `json:"nickname"`
+	Limit    int32  `json:"limit"`
+	Offset   int32  `json:"offset"`
 }
 
 type ListUsersByNicknameRow struct {
@@ -263,7 +263,7 @@ type ListUsersByNicknameRow struct {
 
 // 根据昵称获取用户信息（模糊匹配，支持分页）
 func (q *Queries) ListUsersByNickname(ctx context.Context, arg ListUsersByNicknameParams) ([]ListUsersByNicknameRow, error) {
-	rows, err := q.db.QueryContext(ctx, listUsersByNickname, arg.CONCAT, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, listUsersByNickname, arg.Nickname, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

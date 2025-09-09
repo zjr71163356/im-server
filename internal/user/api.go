@@ -11,11 +11,11 @@ import (
 // UserService 用户服务
 type UserExtService struct {
 	userpb.UnsafeUserSearchServiceServer
-	queries *dao.Queries
+	queries dao.Querier
 }
 
 // NewUserService 创建一个新的 UserService 实例
-func NewUserService(queries *dao.Queries) *UserExtService {
+func NewUserService(queries dao.Querier) *UserExtService {
 	return &UserExtService{queries: queries}
 }
 func rowToPB(r interface{}) *userpb.UserInfo {
@@ -46,11 +46,38 @@ func (s *UserExtService) SearchUser(ctx context.Context, req *userpb.SearchUserR
 	}
 	req.Keyword = strings.TrimSpace(req.Keyword)
 
-	s.queries.ListUsersByNickname(ctx, dao.ListUsersByNicknameParams{
+	// 分页参数默认与边界校验
+	page := int(req.Page)
+	if page < 1 {
+		page = 1
+	}
+	pageSize := int(req.PageSize)
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+	offset := pageSize * (page - 1)
+
+	// 1) 按昵称模糊查询（分页）
+	nickNameRows, err := s.queries.ListUsersByNickname(ctx, dao.ListUsersByNicknameParams{
 		Nickname: req.Keyword,
-		Limit:    int32(req.PageSize),
-		Offset:   int32(req.PageSize * (req.Page - 1)),
+		Limit:    int32(pageSize),
+		Offset:   int32(offset),
 	})
+	if err == nil {
+		users := make([]*userpb.UserInfo, 0, len(nickNameRows))
+		for _, r := range nickNameRows {
+			users = append(users, &userpb.UserInfo{
+				UserId:    r.ID,
+				Username:  r.Username,
+				AvatarUrl: r.AvatarUrl,
+			})
+		}
+		return &userpb.SearchUserResponse{Users: users, Total: uint32(len(users))}, nil
+	}
+
+	if err != sql.ErrNoRows {
+		return nil, err
+	}
 	// 精确按用户名查找（可改为模糊 LIKE）
 	nameRow, err := s.queries.GetUserByUsernameForSearch(ctx, req.Keyword)
 	if err == nil {
