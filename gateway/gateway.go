@@ -10,6 +10,7 @@ import (
 	"im-server/internal/user"
 	"im-server/pkg/dao"
 	authpb "im-server/pkg/protocol/pb/authpb"
+	"im-server/pkg/protocol/pb/userpb"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
@@ -280,7 +281,39 @@ func (g *GatewayServer) handleAuth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *GatewayServer) handleSearchUser(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Keyword  string `json:"keyword"`
+		Page     int32  `json:"page"`
+		PageSize int32  `json:"page_size"`
+	}
+	
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		g.sendError(w, http.StatusBadRequest, "Invalid JSON")
+		return
+	}
+	
+	// 调用 gRPC 服务
+	grpcReq := &userpb.SearchUserRequest{
+		Keyword:  req.Keyword,
+		Page:     uint32(req.Page),
+		PageSize: uint32(req.PageSize),
+	}
 
+	grpcResp, err := g.userService.SearchUser(context.Background(), grpcReq)
+	if err != nil {
+		g.sendError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	response := APIResponse{
+		Code:    200,
+		Message: "搜索成功",
+		Data: map[string]interface{}{
+			"users": grpcResp.Users,
+		},
+	}
+
+	g.sendJSONResponse(w, http.StatusOK, response)
 }
 
 // User 服务处理器（占位符）
