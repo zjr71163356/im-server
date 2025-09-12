@@ -84,7 +84,7 @@ type Packet struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Command       Command                `protobuf:"varint,1,opt,name=command,proto3,enum=connect.Command" json:"command,omitempty"` // 指令 说明了用于通信的数据包对应的服务类型
 	RequestId     int64                  `protobuf:"varint,2,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"` // 请求id 用于解决异步请求时server端和客户端的请求响应匹配问题
-	Code          int32                  `protobuf:"varint,3,opt,name=code,proto3" json:"code,omitempty"`                            // 错误码
+	Code          uint32                 `protobuf:"varint,3,opt,name=code,proto3" json:"code,omitempty"`                            // 错误码
 	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`                       // 错误信息
 	Data          []byte                 `protobuf:"bytes,5,opt,name=data,proto3" json:"data,omitempty"`                             // 数据
 	unknownFields protoimpl.UnknownFields
@@ -135,7 +135,7 @@ func (x *Packet) GetRequestId() int64 {
 	return 0
 }
 
-func (x *Packet) GetCode() int32 {
+func (x *Packet) GetCode() uint32 {
 	if x != nil {
 		return x.Code
 	}
@@ -226,7 +226,7 @@ const file_pkg_protocol_proto_connect_connect_ext_proto_rawDesc = "" +
 	"\acommand\x18\x01 \x01(\x0e2\x10.connect.CommandR\acommand\x12\x1d\n" +
 	"\n" +
 	"request_id\x18\x02 \x01(\x03R\trequestId\x12\x12\n" +
-	"\x04code\x18\x03 \x01(\x05R\x04code\x12\x18\n" +
+	"\x04code\x18\x03 \x01(\rR\x04code\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12\x12\n" +
 	"\x04data\x18\x05 \x01(\fR\x04data\"Y\n" +
 	"\vSignInInput\x12\x1b\n" +

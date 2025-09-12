@@ -17,7 +17,7 @@ enum Command {
 message Packet {
   Command command = 1; // 指令 说明了用于通信的数据包对应的服务类型
   int64 request_id = 2; // 请求id 用于解决异步请求时server端和客户端的请求响应匹配问题
-  int32 code = 3; // 错误码 
+  uint32 code = 3; // 错误码 
   string message = 4; // 错误信息 
   bytes data = 5; // 数据 
 }

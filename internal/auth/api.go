@@ -84,8 +84,8 @@ func (s *AuthIntService) Register(ctx context.Context, req *authpb.RegisterReque
 	if exists {
 		// 如果 err 是 nil，说明用户已存在
 		return &authpb.RegisterResponse{
-			Message: "用户已存在",
-			Code:    1, // 建议使用非零状态码表示失败
+			Message: "用户已存在2",
+			Code:    uint32(codes.InvalidArgument), // 建议使用非零状态码表示失败
 		}, nil
 	}
 

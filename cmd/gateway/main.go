@@ -1,18 +1,13 @@
 package main
 
 import (
-	"database/sql"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/go-redis/redis/v8"
-	_ "github.com/go-sql-driver/mysql"
-
 	"im-server/gateway"
 	"im-server/pkg/config"
-	"im-server/pkg/dao"
 )
 
 func main() {
@@ -24,30 +19,25 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Connect to database using DSN
-	db, err := sql.Open("mysql", cfg.Database.MySQL.DSN)
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+	// 创建 grpc-gateway 服务器
+	gatewayServer := gateway.NewGatewayServer(cfg)
+
+	// 注册所有服务的 HTTP 处理器
+	if err := gatewayServer.RegisterHandlers(); err != nil {
+		log.Fatalf("Failed to register handlers: %v", err)
 	}
-	defer db.Close()
-
-	queries := dao.New(db)
-
-	// Connect to Redis
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     cfg.Database.Redis.Host,
-		Password: cfg.Database.Redis.Password,
-		DB:       0, // use default DB
-	})
-
-	gatewayServer := gateway.NewGatewayServer(queries, rdb)
-	router := gatewayServer.RegisterRoutes()
 
 	port := cfg.Services.Gateway.Port
 	if port == 0 {
 		port = 8080
 	}
 
-	log.Printf("Starting gateway server on port %d", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), router))
+	log.Printf("Starting grpc-gateway server on port %d", port)
+	log.Printf("Registered endpoints:")
+	log.Printf("  POST /api/v1/auth/register - User registration")
+	log.Printf("  POST /api/v1/auth/login - User login")
+	log.Printf("  POST /api/v1/auth/verify - Token verification")
+	log.Printf("  POST /api/v1/user/search - User search")
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), gatewayServer))
 }

@@ -79,7 +79,7 @@ type RegisterResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        uint64                 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"` // 注册成功后返回的用户ID
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`              // 注册结果信息（如错误原因或成功提示）
-	Code          int32                  `protobuf:"varint,3,opt,name=code,proto3" json:"code,omitempty"`                   // 注册结果代码（如0表示成功，非0表示失败）
+	Code          uint32                 `protobuf:"varint,3,opt,name=code,proto3" json:"code,omitempty"`                   // 注册结果代码（如0表示成功，非0表示失败）
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -128,7 +128,7 @@ func (x *RegisterResponse) GetMessage() string {
 	return ""
 }
 
-func (x *RegisterResponse) GetCode() int32 {
+func (x *RegisterResponse) GetCode() uint32 {
 	if x != nil {
 		return x.Code
 	}
@@ -426,7 +426,7 @@ const file_pkg_protocol_proto_auth_auth_int_proto_rawDesc = "" +
 	"\x10RegisterResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x12\n" +
-	"\x04code\x18\x03 \x01(\x05R\x04code\"Y\n" +
+	"\x04code\x18\x03 \x01(\rR\x04code\"Y\n" +
 	"\vAuthRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x1b\n" +
 	"\tdevice_id\x18\x02 \x01(\x04R\bdeviceId\x12\x14\n" +

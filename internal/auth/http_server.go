@@ -52,7 +52,7 @@ type RegisterRequest struct {
 type RegisterResponse struct {
 	UserID  uint64 `json:"user_id"`
 	Message string `json:"message"`
-	Code    int32  `json:"code"`
+	Code    uint32  `json:"code"`
 }
 
 // LoginRequest HTTP 登录请求

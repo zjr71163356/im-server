@@ -10,7 +10,7 @@ import (
 
 // UserService 用户服务
 type UserExtService struct {
-	userpb.UnsafeUserSearchServiceServer
+	userpb.UnsafeUserExtServiceServer
 	queries dao.Querier
 }
 

@@ -19,107 +19,107 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserSearchService_SearchUser_FullMethodName = "/user.UserSearchService/SearchUser"
+	UserExtService_SearchUser_FullMethodName = "/user.UserExtService/SearchUser"
 )
 
-// UserSearchServiceClient is the client API for UserSearchService service.
+// UserExtServiceClient is the client API for UserExtService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// 用户搜索服务
-type UserSearchServiceClient interface {
+// 用户服务
+type UserExtServiceClient interface {
 	// 搜索用户
 	SearchUser(ctx context.Context, in *SearchUserRequest, opts ...grpc.CallOption) (*SearchUserResponse, error)
 }
 
-type userSearchServiceClient struct {
+type userExtServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewUserSearchServiceClient(cc grpc.ClientConnInterface) UserSearchServiceClient {
-	return &userSearchServiceClient{cc}
+func NewUserExtServiceClient(cc grpc.ClientConnInterface) UserExtServiceClient {
+	return &userExtServiceClient{cc}
 }
 
-func (c *userSearchServiceClient) SearchUser(ctx context.Context, in *SearchUserRequest, opts ...grpc.CallOption) (*SearchUserResponse, error) {
+func (c *userExtServiceClient) SearchUser(ctx context.Context, in *SearchUserRequest, opts ...grpc.CallOption) (*SearchUserResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(SearchUserResponse)
-	err := c.cc.Invoke(ctx, UserSearchService_SearchUser_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, UserExtService_SearchUser_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// UserSearchServiceServer is the server API for UserSearchService service.
-// All implementations must embed UnimplementedUserSearchServiceServer
+// UserExtServiceServer is the server API for UserExtService service.
+// All implementations must embed UnimplementedUserExtServiceServer
 // for forward compatibility.
 //
-// 用户搜索服务
-type UserSearchServiceServer interface {
+// 用户服务
+type UserExtServiceServer interface {
 	// 搜索用户
 	SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error)
-	mustEmbedUnimplementedUserSearchServiceServer()
+	mustEmbedUnimplementedUserExtServiceServer()
 }
 
-// UnimplementedUserSearchServiceServer must be embedded to have
+// UnimplementedUserExtServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedUserSearchServiceServer struct{}
+type UnimplementedUserExtServiceServer struct{}
 
-func (UnimplementedUserSearchServiceServer) SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error) {
+func (UnimplementedUserExtServiceServer) SearchUser(context.Context, *SearchUserRequest) (*SearchUserResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SearchUser not implemented")
 }
-func (UnimplementedUserSearchServiceServer) mustEmbedUnimplementedUserSearchServiceServer() {}
-func (UnimplementedUserSearchServiceServer) testEmbeddedByValue()                           {}
+func (UnimplementedUserExtServiceServer) mustEmbedUnimplementedUserExtServiceServer() {}
+func (UnimplementedUserExtServiceServer) testEmbeddedByValue()                        {}
 
-// UnsafeUserSearchServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to UserSearchServiceServer will
+// UnsafeUserExtServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to UserExtServiceServer will
 // result in compilation errors.
-type UnsafeUserSearchServiceServer interface {
-	mustEmbedUnimplementedUserSearchServiceServer()
+type UnsafeUserExtServiceServer interface {
+	mustEmbedUnimplementedUserExtServiceServer()
 }
 
-func RegisterUserSearchServiceServer(s grpc.ServiceRegistrar, srv UserSearchServiceServer) {
-	// If the following call pancis, it indicates UnimplementedUserSearchServiceServer was
+func RegisterUserExtServiceServer(s grpc.ServiceRegistrar, srv UserExtServiceServer) {
+	// If the following call pancis, it indicates UnimplementedUserExtServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&UserSearchService_ServiceDesc, srv)
+	s.RegisterService(&UserExtService_ServiceDesc, srv)
 }
 
-func _UserSearchService_SearchUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _UserExtService_SearchUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(SearchUserRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserSearchServiceServer).SearchUser(ctx, in)
+		return srv.(UserExtServiceServer).SearchUser(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: UserSearchService_SearchUser_FullMethodName,
+		FullMethod: UserExtService_SearchUser_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserSearchServiceServer).SearchUser(ctx, req.(*SearchUserRequest))
+		return srv.(UserExtServiceServer).SearchUser(ctx, req.(*SearchUserRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// UserSearchService_ServiceDesc is the grpc.ServiceDesc for UserSearchService service.
+// UserExtService_ServiceDesc is the grpc.ServiceDesc for UserExtService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var UserSearchService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "user.UserSearchService",
-	HandlerType: (*UserSearchServiceServer)(nil),
+var UserExtService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "user.UserExtService",
+	HandlerType: (*UserExtServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "SearchUser",
-			Handler:    _UserSearchService_SearchUser_Handler,
+			Handler:    _UserExtService_SearchUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

@@ -1,4 +1,5 @@
 syntax = "proto3";
+
 package device;
 option go_package = "pkg/protocol/pb/devicepb";
 

@@ -4,11 +4,17 @@ package user;
 option go_package = "pkg/protocol/pb/userpb";
 
 import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
 
-// 用户搜索服务
-service UserSearchService {
+// 用户服务
+service UserExtService {
   // 搜索用户
-  rpc SearchUser (SearchUserRequest) returns (SearchUserResponse);
+  rpc SearchUser (SearchUserRequest) returns (SearchUserResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/user/search"
+      body: "*"
+    };
+  }
 }
 
 // 搜索用户请求

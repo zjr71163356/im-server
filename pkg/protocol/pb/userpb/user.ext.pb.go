@@ -7,6 +7,7 @@
 package userpb
 
 import (
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	_ "google.golang.org/protobuf/types/known/emptypb"
@@ -201,7 +202,7 @@ var File_pkg_protocol_proto_user_user_ext_proto protoreflect.FileDescriptor
 
 const file_pkg_protocol_proto_user_user_ext_proto_rawDesc = "" +
 	"\n" +
-	"&pkg/protocol/proto/user/user.ext.proto\x12\x04user\x1a\x1bgoogle/protobuf/empty.proto\"^\n" +
+	"&pkg/protocol/proto/user/user.ext.proto\x12\x04user\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\"^\n" +
 	"\x11SearchUserRequest\x12\x18\n" +
 	"\akeyword\x18\x01 \x01(\tR\akeyword\x12\x12\n" +
 	"\x04page\x18\x02 \x01(\rR\x04page\x12\x1b\n" +
@@ -213,10 +214,10 @@ const file_pkg_protocol_proto_user_user_ext_proto_rawDesc = "" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x1a\n" +
 	"\busername\x18\x02 \x01(\tR\busername\x12\x1d\n" +
 	"\n" +
-	"avatar_url\x18\x03 \x01(\tR\tavatarUrl2T\n" +
-	"\x11UserSearchService\x12?\n" +
+	"avatar_url\x18\x03 \x01(\tR\tavatarUrl2q\n" +
+	"\x0eUserExtService\x12_\n" +
 	"\n" +
-	"SearchUser\x12\x17.user.SearchUserRequest\x1a\x18.user.SearchUserResponseB\x18Z\x16pkg/protocol/pb/userpbb\x06proto3"
+	"SearchUser\x12\x17.user.SearchUserRequest\x1a\x18.user.SearchUserResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/v1/user/searchB\x18Z\x16pkg/protocol/pb/userpbb\x06proto3"
 
 var (
 	file_pkg_protocol_proto_user_user_ext_proto_rawDescOnce sync.Once
@@ -238,8 +239,8 @@ var file_pkg_protocol_proto_user_user_ext_proto_goTypes = []any{
 }
 var file_pkg_protocol_proto_user_user_ext_proto_depIdxs = []int32{
 	2, // 0: user.SearchUserResponse.users:type_name -> user.UserInfo
-	0, // 1: user.UserSearchService.SearchUser:input_type -> user.SearchUserRequest
-	1, // 2: user.UserSearchService.SearchUser:output_type -> user.SearchUserResponse
+	0, // 1: user.UserExtService.SearchUser:input_type -> user.SearchUserRequest
+	1, // 2: user.UserExtService.SearchUser:output_type -> user.SearchUserResponse
 	2, // [2:3] is the sub-list for method output_type
 	1, // [1:2] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name

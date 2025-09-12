@@ -6,10 +6,12 @@ This project is a high-performance, distributed IM (Instant Messaging) server, d
 
 ## Architecture & Major Components
 
-- **Gateway Layer**: Manages WebSocket/TCP long connections, user authentication, heartbeats, and connection binding. See `internal/connect/` and `StartWSServer` in `cmd/main.go`.
-- **IM Core Service**: Handles message routing, storage, and forwarding. Message processing logic is in `internal/connect/conn.go` (`Conn`, `HandleMessage`, `SignIn`, etc.).
+- **Gateway Layer**: Uses grpc-gateway for HTTP to gRPC conversion, providing REST API endpoints. See `gateway/grpc_gateway.go` and `cmd/gateway/main.go`.
+- **Auth Service**: Handles user registration, login, and token verification. gRPC service with HTTP endpoints via grpc-gateway.
+- **User Service**: Manages user search and profile operations. gRPC service with HTTP endpoints via grpc-gateway.
+- **Connect Service**: Manages WebSocket/TCP long connections, user authentication, heartbeats, and connection binding. See `internal/connect/`.
+- **Device Service**: Handles device management and connection status. Pure gRPC service without HTTP endpoints.
 - **Message Queue**: Kafka/NATS/NSQ is used for decoupling message delivery and persistence (see `DESIGN.md`).
-- **User System**: Auth, session, and friend management. User/device info is in MySQL, with SQLC-generated code in `pkg/dao/`.
 - **Storage**: MongoDB for message bodies, Redis for online state and offline messages, MySQL for user/device/friend/group data.
 - **Push Service**: For offline push (APNs/FCM), see design notes in `DESIGN.md`.
 
@@ -19,11 +21,12 @@ This project is a high-performance, distributed IM (Instant Messaging) server, d
 
 ## Developer Workflows
 
-- **Build**: Standard Go build. Entrypoint: `cmd/main.go`.
-- **Proto Generation**: Run `make proto` to generate Go code from all `.proto` files. Output is controlled by each proto's `option go_package`.
+- **Build**: Standard Go build. Entrypoints: `cmd/auth/main.go`, `cmd/user/main.go`, `cmd/gateway/main.go`, etc.
+- **Proto Generation**: Run `make proto` to generate Go code from all `.proto` files. Includes grpc-gateway HTTP handlers.
 - **DB Migration**: Use `make migrate-up` and `make migrate-down` (see `Makefile`).
 - **SQLC**: SQL queries in `db/queries/`, generate Go code with `make sqlc-generate` or `sqlc generate`.
-- **Testing**: (Add test conventions here if present.)
+- **Testing**: Use `scripts/test_api.sh` for comprehensive API testing of auth and user services.
+- **grpc-gateway**: HTTP API server runs on port 8080, provides REST endpoints for auth and user services.
 
 ## Project Conventions & Patterns
 
@@ -42,13 +45,18 @@ This project is a high-performance, distributed IM (Instant Messaging) server, d
 
 ## Key Files & Directories
 
-- `cmd/main.go`: Entrypoint, server startup.
-- `internal/connect/`: Gateway logic, connection/session/message handling.
-- `pkg/protocol/proto/`: Protobuf definitions.
+- `cmd/auth/main.go`: Auth service entrypoint.
+- `cmd/user/main.go`: User service entrypoint.
+- `cmd/gateway/main.go`: Gateway service entrypoint (grpc-gateway).
+- `gateway/grpc_gateway.go`: grpc-gateway server implementation.
+- `internal/auth/`: Auth service logic and HTTP handlers.
+- `internal/user/`: User service logic and handlers.
+- `internal/connect/`: Connection/session/message handling.
+- `pkg/protocol/proto/`: Protobuf definitions with grpc-gateway annotations.
 - `pkg/protocol/pb/`: Generated Go code from proto.
 - `db/queries/`: SQLC query files.
 - `pkg/dao/`: SQLC-generated DB access code (models, queries, and interfaces).
-- `internal/repo/`: Alternative location for SQLC-generated code.
+- `scripts/`: Test scripts and utilities.
 - `pkg/config/config.go`: Central config structs.
 - `Makefile`: Build, proto, and migration commands.
 - `DESIGN.md`: High-level architecture, rationale, and workflow notes.

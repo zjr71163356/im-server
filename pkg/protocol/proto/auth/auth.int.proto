@@ -37,7 +37,7 @@ message RegisterRequest {
 message RegisterResponse {
   uint64 user_id = 1; // 注册成功后返回的用户ID
   string message = 2; // 注册结果信息（如错误原因或成功提示）
-  int32 code = 3; // 注册结果代码（如0表示成功，非0表示失败）
+  uint32 code = 3; // 注册结果代码（如0表示成功，非0表示失败）
 }
 
 message AuthRequest {

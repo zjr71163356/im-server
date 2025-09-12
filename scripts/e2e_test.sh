@@ -73,6 +73,17 @@ http_login() {
   curl -s -X POST -H 'Content-Type: application/json' -d "{\"username\":\"${user}\",\"password\":\"${pass}\",\"device_id\":101}" http://127.0.0.1:8080/api/v1/auth/login | jq || true
 }
 
+run_comprehensive_tests() {
+  echo "Running comprehensive API tests..."
+  if command -v "$ROOT_DIR/scripts/test_api.sh" >/dev/null 2>&1; then
+    "$ROOT_DIR/scripts/test_api.sh"
+  else
+    echo "test_api.sh not found, running basic tests..."
+    http_register "e2e_user" "password"
+    http_login "e2e_user" "password"
+  fi
+}
+
 run_flow() {
   start_containers
   # give containers time to start
@@ -86,9 +97,8 @@ run_flow() {
     exit 1
   fi
 
-  # run http tests
-  http_register "e2e_user" "password"
-  http_login "e2e_user" "password"
+  # run comprehensive api tests
+  run_comprehensive_tests
 
   # cleanup
   stop_services
@@ -108,12 +118,16 @@ case "$cmd" in
   stop-services)
     stop_services
     ;;
+  run-tests)
+    run_comprehensive_tests
+    ;;
   run)
     run_flow
     ;;
   *)
-    echo "Usage: $0 {start-containers|stop-containers|start-services|stop-services|run}"
-    echo "  run - start containers, build & start auth+gateway, wait for gateway, run HTTP register/login tests, then cleanup"
+    echo "Usage: $0 {start-containers|stop-containers|start-services|stop-services|run-tests|run}"
+    echo "  run - start containers, build & start auth+gateway, wait for gateway, run comprehensive API tests, then cleanup"
+    echo "  run-tests - run comprehensive API tests (assumes services are already running)"
     exit 2
     ;;
 esac
