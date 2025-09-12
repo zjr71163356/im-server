@@ -18,6 +18,28 @@ stop_containers() {
   docker stop redis mysql >/dev/null 2>&1 || true
 }
 
+# 新增：一个更强大的辅助函数，用于杀死占用指定端口的进程
+kill_process_on_port() {
+  local port=$1
+  local service_name=$2
+  echo "Checking for any process using port ${port} (${service_name})..."
+  # 使用 lsof 查找 PID。-t 选项只输出 PID。
+  # || true 是为了在没有进程找到时防止脚本因 set -e 而退出
+  local pid
+  pid=$(lsof -t -i:"${port}" 2>/dev/null || true)
+
+  if [ -n "$pid" ]; then
+    echo "Found lingering ${service_name} process (pid: ${pid}) on port ${port}. Terminating..."
+    # 强制杀死，因为这很可能是一个僵尸进程
+    kill -9 "${pid}" 2>/dev/null || true
+    # 等待一小段时间确保进程已退出
+    sleep 0.5
+    echo "Process ${pid} terminated."
+  else
+    echo "Port ${port} is clear."
+  fi
+}
+
 build_and_start_services() {
   echo "Building auth and gateway services..."
   mkdir -p bin logs run || true
@@ -31,20 +53,44 @@ build_and_start_services() {
 }
 
 stop_services() {
-  echo "Stopping auth and gateway services (if started by this script)..."
-  if [ -f run/auth.pid ]; then
-    PID=$(cat run/auth.pid)
-    kill "$PID" || true
-    rm -f run/auth.pid
-    echo "Stopped auth (pid $PID)"
-  fi
-  if [ -f run/gateway.pid ]; then
-    PID=$(cat run/gateway.pid)
-    kill "$PID" || true
-    rm -f run/gateway.pid
-    echo "Stopped gateway (pid $PID)"
-  fi
+  echo "Stopping services managed by PID files..."
+  for service in auth gateway; do
+    local pid_file="run/${service}.pid"
+    if [ ! -f "$pid_file" ]; then
+      continue
+    fi
+
+    local pid
+    pid=$(cat "$pid_file" 2>/dev/null || true)
+    rm -f "$pid_file"
+
+    if [ -z "$pid" ]; then
+      echo "PID file for $service was empty. Cleaned up."
+      continue
+    fi
+
+    if ps -p "$pid" > /dev/null; then
+      echo "Stopping $service (pid: $pid)..."
+      kill "$pid" 2>/dev/null || true
+      sleep 0.5
+      if ps -p "$pid" > /dev/null; then
+        kill -9 "$pid" 2>/dev/null || true
+      fi
+      echo "$service (pid: $pid) stopped."
+    else
+      echo "Process for $service (pid: $pid) not found. PID file was stale."
+    fi
+  done
+
+  # 双重保险：按端口号强制清理
+  echo "Performing aggressive cleanup by port..."
+  kill_process_on_port 50051 "auth"
+  kill_process_on_port 50052 "user" # 假设 user 服务也可能在运行
+  kill_process_on_port 8080 "gateway"
+
+  echo "Service cleanup complete."
 }
+
 
 wait_for_gateway() {
   echo "Waiting for gateway HTTP /health on http://127.0.0.1:8080/health..."
@@ -85,6 +131,12 @@ run_comprehensive_tests() {
 }
 
 run_flow() {
+  # 关键改动：在所有操作开始前，先执行一次彻底的清理
+  echo "--- Running Pre-flight Cleanup ---"
+  stop_services
+  stop_containers
+  echo "--- Pre-flight Cleanup Complete ---"
+
   start_containers
   # give containers time to start
   sleep 2

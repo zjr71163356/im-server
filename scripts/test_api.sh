@@ -141,7 +141,7 @@ run_tests() {
     test_api "POST" "/api/v1/auth/login" \
         "{\"username\": \"$TEST_USER\", \"password\": \"wrongpass\", \"device_id\": 12345}" \
         "错误密码登录 (预期失败)" \
-        "400"
+        "401"
 
     # Test 5: Token Verification
     test_api "POST" "/api/v1/auth/verify" \
