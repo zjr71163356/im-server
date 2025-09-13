@@ -6,6 +6,9 @@ import (
 	"im-server/pkg/dao"
 	"im-server/pkg/protocol/pb/userpb"
 	"strings"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // UserService 用户服务
@@ -63,7 +66,12 @@ func (s *UserExtService) SearchUser(ctx context.Context, req *userpb.SearchUserR
 		Limit:    int32(pageSize),
 		Offset:   int32(offset),
 	})
-	if err == nil {
+
+	if err != nil && err != sql.ErrNoRows {
+		return nil, status.Errorf(codes.Internal, "按昵称搜索用户失败: %v", err)
+	}
+
+	if err == nil && nickNameRows != nil && len(nickNameRows) > 0 {
 		users := make([]*userpb.UserInfo, 0, len(nickNameRows))
 		for _, r := range nickNameRows {
 			users = append(users, &userpb.UserInfo{
@@ -75,9 +83,6 @@ func (s *UserExtService) SearchUser(ctx context.Context, req *userpb.SearchUserR
 		return &userpb.SearchUserResponse{Users: users, Total: uint32(len(users))}, nil
 	}
 
-	if err != sql.ErrNoRows {
-		return nil, err
-	}
 	// 精确按用户名查找（可改为模糊 LIKE）
 	nameRow, err := s.queries.GetUserByUsernameForSearch(ctx, req.Keyword)
 	if err == nil {
@@ -87,7 +92,7 @@ func (s *UserExtService) SearchUser(ctx context.Context, req *userpb.SearchUserR
 		}, nil
 	}
 	if err != sql.ErrNoRows {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "按昵称搜索用户失败: %v", err)
 	}
 
 	// 回退按手机号查找

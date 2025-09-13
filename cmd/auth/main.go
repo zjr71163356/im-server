@@ -10,6 +10,7 @@ import (
 	"im-server/pkg/dao"
 	"im-server/pkg/protocol/pb/authpb"
 	Redis "im-server/pkg/redis"
+	"im-server/pkg/rpc"
 
 	_ "github.com/go-sql-driver/mysql"
 	"google.golang.org/grpc"
@@ -35,7 +36,10 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	grpcServer := grpc.NewServer()
+	// 使用公共校验拦截器
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(rpc.ValidationUnaryInterceptor()),
+	)
 	authpb.RegisterAuthIntServiceServer(grpcServer, authService)
 
 	log.Printf("Auth service is running on %s", config.Config.Services.Auth.RPCAddr)

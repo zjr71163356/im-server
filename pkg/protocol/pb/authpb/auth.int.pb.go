@@ -7,6 +7,7 @@
 package authpb
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -419,22 +420,26 @@ var File_pkg_protocol_proto_auth_auth_int_proto protoreflect.FileDescriptor
 
 const file_pkg_protocol_proto_auth_auth_int_proto_rawDesc = "" +
 	"\n" +
-	"&pkg/protocol/proto/auth/auth.int.proto\x12\x04auth\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\"S\n" +
-	"\x0fRegisterRequest\x12\x1f\n" +
-	"\busername\x18\x01 \x01(\tB\x03\xe0A\x02R\busername\x12\x1f\n" +
-	"\bpassword\x18\x02 \x01(\tB\x03\xe0A\x02R\bpassword\"Y\n" +
+	"&pkg/protocol/proto/auth/auth.int.proto\x12\x04auth\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x17validate/validate.proto\"f\n" +
+	"\x0fRegisterRequest\x12(\n" +
+	"\busername\x18\x01 \x01(\tB\f\xe0A\x02\xfaB\x06r\x04\x10\x01\x18@R\busername\x12)\n" +
+	"\bpassword\x18\x02 \x01(\tB\r\xe0A\x02\xfaB\ar\x05\x10\x06\x18\x80\x01R\bpassword\"Y\n" +
 	"\x10RegisterResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x12\n" +
-	"\x04code\x18\x03 \x01(\rR\x04code\"h\n" +
-	"\vAuthRequest\x12\x1c\n" +
-	"\auser_id\x18\x01 \x01(\x04B\x03\xe0A\x02R\x06userId\x12 \n" +
-	"\tdevice_id\x18\x02 \x01(\x04B\x03\xe0A\x02R\bdeviceId\x12\x19\n" +
-	"\x05token\x18\x03 \x01(\tB\x03\xe0A\x02R\x05token\"r\n" +
-	"\fLoginRequest\x12\x1f\n" +
-	"\busername\x18\x01 \x01(\tB\x03\xe0A\x02R\busername\x12\x1f\n" +
-	"\bpassword\x18\x02 \x01(\tB\x03\xe0A\x02R\bpassword\x12 \n" +
-	"\tdevice_id\x18\x03 \x01(\x04B\x03\xe0A\x02R\bdeviceId\"\xae\x01\n" +
+	"\x04code\x18\x03 \x01(\rR\x04code\"}\n" +
+	"\vAuthRequest\x12#\n" +
+	"\auser_id\x18\x01 \x01(\x04B\n" +
+	"\xe0A\x02\xfaB\x042\x02(\x01R\x06userId\x12'\n" +
+	"\tdevice_id\x18\x02 \x01(\x04B\n" +
+	"\xe0A\x02\xfaB\x042\x02(\x01R\bdeviceId\x12 \n" +
+	"\x05token\x18\x03 \x01(\tB\n" +
+	"\xe0A\x02\xfaB\x04r\x02\x10\bR\x05token\"\x8c\x01\n" +
+	"\fLoginRequest\x12(\n" +
+	"\busername\x18\x01 \x01(\tB\f\xe0A\x02\xfaB\x06r\x04\x10\x01\x18@R\busername\x12)\n" +
+	"\bpassword\x18\x02 \x01(\tB\r\xe0A\x02\xfaB\ar\x05\x10\x06\x18\x80\x01R\bpassword\x12'\n" +
+	"\tdevice_id\x18\x03 \x01(\x04B\n" +
+	"\xe0A\x02\xfaB\x042\x02(\x01R\bdeviceId\"\xae\x01\n" +
 	"\rLoginResponse\x12\x1c\n" +
 	"\auser_id\x18\x01 \x01(\x04B\x03\xe0A\x02R\x06userId\x12\x19\n" +
 	"\x05token\x18\x02 \x01(\tB\x03\xe0A\x02R\x05token\x12\x1d\n" +

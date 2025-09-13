@@ -5,6 +5,7 @@ option go_package = "pkg/protocol/pb/authpb";
 import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
+import "validate/validate.proto";
 
 service AuthIntService {
   // 注册
@@ -31,8 +32,8 @@ service AuthIntService {
 }
 
 message RegisterRequest {
-  string username = 1 [(google.api.field_behavior) = REQUIRED]; // 用户名
-  string password = 2 [(google.api.field_behavior) = REQUIRED]; // 密码
+  string username = 1 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {string: {min_len: 1, max_len: 64}}]; // 用户名
+  string password = 2 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {string: {min_len: 6, max_len: 128}}]; // 密码
 }
 
 message RegisterResponse {
@@ -42,15 +43,15 @@ message RegisterResponse {
 }
 
 message AuthRequest {
-  uint64 user_id = 1 [(google.api.field_behavior) = REQUIRED];
-  uint64 device_id = 2 [(google.api.field_behavior) = REQUIRED];
-  string token = 3 [(google.api.field_behavior) = REQUIRED];
+  uint64 user_id = 1 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {uint64: {gte: 1}}];
+  uint64 device_id = 2 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {uint64: {gte: 1}}];
+  string token = 3 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {string: {min_len: 8}}];
 }
 
 message LoginRequest {
-  string username = 1 [(google.api.field_behavior) = REQUIRED]; // 用户名、邮箱或手机号
-  string password = 2 [(google.api.field_behavior) = REQUIRED]; // 用户密码
-  uint64 device_id = 3 [(google.api.field_behavior) = REQUIRED]; // 设备ID
+  string username = 1 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {string: {min_len: 1, max_len: 64}}]; // 用户名、邮箱或手机号
+  string password = 2 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {string: {min_len: 6, max_len: 128}}]; // 用户密码
+  uint64 device_id = 3 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {uint64: {gte: 1}}]; // 设备ID
 }
 
 message LoginResponse {

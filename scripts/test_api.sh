@@ -228,14 +228,17 @@ group_auth_verify() {
 group_user_search() {
     print_header "[Group] USER - Search"
     test_api "POST" "/api/v1/user/search" \
-        "{\"keyword\": \"test\", \"page\": 1, \"page_size\": 10}" \
-        "用户搜索" "200"
+        "{\"keyword\": \"$TEST_USER\", \"page\": 1, \"page_size\": 10}" \
+        "用户搜索 (使用刚注册用户名)" "200"
     test_api "POST" "/api/v1/user/search" \
         "{\"keyword\": \"\", \"page\": 1, \"page_size\": 5}" \
         "空关键字搜索" "200"
     test_api "POST" "/api/v1/user/search" \
-        "{\"keyword\": \"user\", \"page\": 2, \"page_size\": 20}" \
-        "用户搜索 (分页测试)" "200"
+        "{\"keyword\": \"$TEST_USER\", \"page\": 2, \"page_size\": 20}" \
+        "用户搜索 (分页测试，使用刚注册用户名)" "200"
+    test_api "POST" "/api/v1/user/search" \
+        "{\"keyword\": \"not_exist_user_$(date +%s)\", \"page\": 1, \"page_size\": 5}" \
+        "用户搜索 (不存在的用户名，预期空结果)" "200"
 }
 
 # --------------------

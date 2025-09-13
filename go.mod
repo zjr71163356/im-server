@@ -3,11 +3,11 @@ module im-server
 go 1.24.4
 
 require (
+	github.com/envoyproxy/protoc-gen-validate v1.2.1
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/go-redis/redismock/v8 v8.11.5
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang/mock v1.6.0
-	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2
 	github.com/stretchr/testify v1.11.1

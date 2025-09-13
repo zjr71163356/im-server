@@ -5,7 +5,8 @@ import (
 	"im-server/internal/user"
 	"im-server/pkg/config"
 	"im-server/pkg/dao"
-	"im-server/pkg/protocol/pb/userpb"
+	"im-server/pkg/grpc/interceptor"
+	userpb "im-server/pkg/protocol/pb/userpb"
 	"log/slog"
 	"net"
 
@@ -23,7 +24,10 @@ func main() {
 
 	queries := dao.New(db)
 
-	server := grpc.NewServer()
+	// 使用带拦截器的 gRPC 服务器
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptor.ValidationUnaryInterceptor()),
+	)
 
 	// 注册用户服务（不包括认证功能）
 	userpb.RegisterUserExtServiceServer(server, user.NewUserService(queries))
