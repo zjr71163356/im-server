@@ -10,7 +10,6 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -202,7 +201,7 @@ var File_pkg_protocol_proto_user_user_ext_proto protoreflect.FileDescriptor
 
 const file_pkg_protocol_proto_user_user_ext_proto_rawDesc = "" +
 	"\n" +
-	"&pkg/protocol/proto/user/user.ext.proto\x12\x04user\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\"^\n" +
+	"&pkg/protocol/proto/user/user.ext.proto\x12\x04user\x1a\x1cgoogle/api/annotations.proto\"^\n" +
 	"\x11SearchUserRequest\x12\x18\n" +
 	"\akeyword\x18\x01 \x01(\tR\akeyword\x12\x12\n" +
 	"\x04page\x18\x02 \x01(\rR\x04page\x12\x1b\n" +

@@ -419,32 +419,32 @@ var File_pkg_protocol_proto_auth_auth_int_proto protoreflect.FileDescriptor
 
 const file_pkg_protocol_proto_auth_auth_int_proto_rawDesc = "" +
 	"\n" +
-	"&pkg/protocol/proto/auth/auth.int.proto\x12\x04auth\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\"I\n" +
-	"\x0fRegisterRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"Y\n" +
+	"&pkg/protocol/proto/auth/auth.int.proto\x12\x04auth\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\"S\n" +
+	"\x0fRegisterRequest\x12\x1f\n" +
+	"\busername\x18\x01 \x01(\tB\x03\xe0A\x02R\busername\x12\x1f\n" +
+	"\bpassword\x18\x02 \x01(\tB\x03\xe0A\x02R\bpassword\"Y\n" +
 	"\x10RegisterResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x12\n" +
-	"\x04code\x18\x03 \x01(\rR\x04code\"Y\n" +
-	"\vAuthRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x1b\n" +
-	"\tdevice_id\x18\x02 \x01(\x04R\bdeviceId\x12\x14\n" +
-	"\x05token\x18\x03 \x01(\tR\x05token\"c\n" +
-	"\fLoginRequest\x12\x1a\n" +
-	"\busername\x18\x01 \x01(\tR\busername\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\x12\x1b\n" +
-	"\tdevice_id\x18\x03 \x01(\x04R\bdeviceId\"\xa4\x01\n" +
-	"\rLoginResponse\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x14\n" +
-	"\x05token\x18\x02 \x01(\tR\x05token\x12\x1d\n" +
+	"\x04code\x18\x03 \x01(\rR\x04code\"h\n" +
+	"\vAuthRequest\x12\x1c\n" +
+	"\auser_id\x18\x01 \x01(\x04B\x03\xe0A\x02R\x06userId\x12 \n" +
+	"\tdevice_id\x18\x02 \x01(\x04B\x03\xe0A\x02R\bdeviceId\x12\x19\n" +
+	"\x05token\x18\x03 \x01(\tB\x03\xe0A\x02R\x05token\"r\n" +
+	"\fLoginRequest\x12\x1f\n" +
+	"\busername\x18\x01 \x01(\tB\x03\xe0A\x02R\busername\x12\x1f\n" +
+	"\bpassword\x18\x02 \x01(\tB\x03\xe0A\x02R\bpassword\x12 \n" +
+	"\tdevice_id\x18\x03 \x01(\x04B\x03\xe0A\x02R\bdeviceId\"\xae\x01\n" +
+	"\rLoginResponse\x12\x1c\n" +
+	"\auser_id\x18\x01 \x01(\x04B\x03\xe0A\x02R\x06userId\x12\x19\n" +
+	"\x05token\x18\x02 \x01(\tB\x03\xe0A\x02R\x05token\x12\x1d\n" +
 	"\n" +
 	"expires_at\x18\x03 \x01(\x03R\texpiresAt\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12+\n" +
-	"\tuser_info\x18\x05 \x01(\v2\x0e.auth.UserInfoR\buserInfo\"\xaa\x01\n" +
-	"\bUserInfo\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x14\n" +
+	"\tuser_info\x18\x05 \x01(\v2\x0e.auth.UserInfoR\buserInfo\"\xb4\x01\n" +
+	"\bUserInfo\x12\x13\n" +
+	"\x02id\x18\x01 \x01(\x04B\x03\xe0A\x02R\x02id\x12\x1f\n" +
+	"\busername\x18\x02 \x01(\tB\x03\xe0A\x02R\busername\x12\x14\n" +
 	"\x05email\x18\x03 \x01(\tR\x05email\x12!\n" +
 	"\fphone_number\x18\x04 \x01(\tR\vphoneNumber\x12\x1a\n" +
 	"\bnickname\x18\x05 \x01(\tR\bnickname\x12\x1d\n" +

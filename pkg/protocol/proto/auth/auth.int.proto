@@ -4,6 +4,7 @@ option go_package = "pkg/protocol/pb/authpb";
 
 import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
 
 service AuthIntService {
   // 注册
@@ -30,8 +31,8 @@ service AuthIntService {
 }
 
 message RegisterRequest {
-  string username = 1; // 用户名
-  string password = 2; // 密码
+  string username = 1 [(google.api.field_behavior) = REQUIRED]; // 用户名
+  string password = 2 [(google.api.field_behavior) = REQUIRED]; // 密码
 }
 
 message RegisterResponse {
@@ -41,28 +42,28 @@ message RegisterResponse {
 }
 
 message AuthRequest {
-  uint64 user_id = 1;
-  uint64 device_id = 2;
-  string token = 3;
+  uint64 user_id = 1 [(google.api.field_behavior) = REQUIRED];
+  uint64 device_id = 2 [(google.api.field_behavior) = REQUIRED];
+  string token = 3 [(google.api.field_behavior) = REQUIRED];
 }
 
 message LoginRequest {
-  string username = 1; // 用户名、邮箱或手机号
-  string password = 2; // 用户密码
-  uint64 device_id = 3; // 设备ID
+  string username = 1 [(google.api.field_behavior) = REQUIRED]; // 用户名、邮箱或手机号
+  string password = 2 [(google.api.field_behavior) = REQUIRED]; // 用户密码
+  uint64 device_id = 3 [(google.api.field_behavior) = REQUIRED]; // 设备ID
 }
 
 message LoginResponse {
-  uint64 user_id = 1; // 用户ID
-  string token = 2; // 登录成功后返回的JWT或其他令牌
+  uint64 user_id = 1 [(google.api.field_behavior) = REQUIRED]; // 用户ID
+  string token = 2 [(google.api.field_behavior) = REQUIRED]; // 登录成功后返回的JWT或其他令牌
   int64 expires_at = 3; // 令牌过期时间（Unix时间戳）
   string message = 4; // 登录结果信息（如错误原因或成功提示）
   UserInfo user_info = 5; // 用户基本信息
 }
 
 message UserInfo {
-  uint64 id = 1;
-  string username = 2;
+  uint64 id = 1 [(google.api.field_behavior) = REQUIRED];
+  string username = 2 [(google.api.field_behavior) = REQUIRED];
   string email = 3;
   string phone_number = 4;
   string nickname = 5;

@@ -7,6 +7,28 @@ cd "$ROOT_DIR"
 cmd="${1:-}" || true
 shift || true
 
+# 可选输出控制：默认静默，使用 -v/--verbose 打开详细输出，--log-file 指定日志文件
+VERBOSE=0
+LOG_FILE="${LOG_FILE:-logs/e2e_test.log}"
+# 解析附加参数（例如：./scripts/e2e_test.sh run -v --log-file logs/custom.log）
+while ((${#:-0})); do
+  case "${1:-}" in
+    -v|--verbose)
+      VERBOSE=1; shift || true ;;
+    -q|--quiet)
+      VERBOSE=0; shift || true ;;
+    --log-file)
+      LOG_FILE="${2:-$LOG_FILE}"; shift 2 || true ;;
+    *)
+      # 其他参数忽略
+      shift || true ;;
+  esac
+  (( ${#:-0} > 0 )) || break
+done
+
+# 确保日志目录存在
+mkdir -p "$(dirname "$LOG_FILE")" || true
+
 start_containers() {
   echo "Starting Redis and MySQL containers (if not running)..."
   docker start redis 2>/dev/null || docker run -d --name redis -p 6379:6379 redis:alpine
@@ -44,12 +66,16 @@ build_and_start_services() {
   echo "Building auth and gateway services..."
   mkdir -p bin logs run || true
   go build -o bin/auth ./cmd/auth
+  go build -o bin/user ./cmd/user
   go build -o bin/gateway ./cmd/gateway
 
   echo "Starting auth service in background..."
   nohup bin/auth > logs/auth.log 2>&1 & echo $! > run/auth.pid
   echo "Starting gateway service in background..."
   nohup bin/gateway > logs/gateway.log 2>&1 & echo $! > run/gateway.pid
+  echo "Starting user service in background..."
+  nohup bin/user > logs/user.log 2>&1 & echo $! > run/user.pid
+
 }
 
 stop_services() {
@@ -131,44 +157,66 @@ run_comprehensive_tests() {
 }
 
 run_flow() {
-  # 关键改动：在所有操作开始前，先执行一次彻底的清理
-  echo "--- Running Pre-flight Cleanup ---"
-  stop_services
-  stop_containers
-  echo "--- Pre-flight Cleanup Complete ---"
-
-  start_containers
-  # give containers time to start
-  sleep 2
-  build_and_start_services
-  # wait for gateway
-  if ! wait_for_gateway; then
-    echo "Gateway not ready, aborting" >&2
+  if [ "$VERBOSE" -eq 1 ]; then
+    echo "--- Running Pre-flight Cleanup ---"
     stop_services
     stop_containers
-    exit 1
+    echo "--- Pre-flight Cleanup Complete ---"
+
+    start_containers
+    sleep 2
+    build_and_start_services
+
+    if ! wait_for_gateway; then
+      echo "Gateway not ready, aborting" >&2
+      stop_services
+      stop_containers
+      exit 1
+    fi
+
+    run_comprehensive_tests
+
+    stop_services
+    stop_containers
+  else
+    # 静默模式：将详细输出写入日志文件
+    echo "[e2e] $(date '+%F %T') Starting run flow (quiet). Logs -> $LOG_FILE"
+    echo "--- Running Pre-flight Cleanup ---" >>"$LOG_FILE"
+    stop_services >>"$LOG_FILE" 2>&1
+    stop_containers >>"$LOG_FILE" 2>&1
+    echo "--- Pre-flight Cleanup Complete ---" >>"$LOG_FILE"
+
+    start_containers >>"$LOG_FILE" 2>&1
+    sleep 2
+    build_and_start_services >>"$LOG_FILE" 2>&1
+
+    if ! wait_for_gateway >>"$LOG_FILE" 2>&1; then
+      echo "Gateway not ready, aborting (see $LOG_FILE)" >&2
+      stop_services >>"$LOG_FILE" 2>&1 || true
+      stop_containers >>"$LOG_FILE" 2>&1 || true
+      exit 1
+    fi
+
+    # 测试输出通常需要在终端查看，这里保持在终端显示
+    run_comprehensive_tests
+
+    stop_services >>"$LOG_FILE" 2>&1 || true
+    stop_containers >>"$LOG_FILE" 2>&1 || true
   fi
-
-  # run comprehensive api tests
-  run_comprehensive_tests
-
-  # cleanup
-  stop_services
-  stop_containers
 }
 
 case "$cmd" in
   start-containers)
-    start_containers
+    if [ "$VERBOSE" -eq 1 ]; then start_containers; else start_containers >>"$LOG_FILE" 2>&1; fi
     ;;
   stop-containers)
-    stop_containers
+    if [ "$VERBOSE" -eq 1 ]; then stop_containers; else stop_containers >>"$LOG_FILE" 2>&1; fi
     ;;
   start-services)
-    build_and_start_services
+    if [ "$VERBOSE" -eq 1 ]; then build_and_start_services; else build_and_start_services >>"$LOG_FILE" 2>&1; fi
     ;;
   stop-services)
-    stop_services
+    if [ "$VERBOSE" -eq 1 ]; then stop_services; else stop_services >>"$LOG_FILE" 2>&1; fi
     ;;
   run-tests)
     run_comprehensive_tests
@@ -177,9 +225,10 @@ case "$cmd" in
     run_flow
     ;;
   *)
-    echo "Usage: $0 {start-containers|stop-containers|start-services|stop-services|run-tests|run}"
+    echo "Usage: $0 {start-containers|stop-containers|start-services|stop-services|run-tests|run} [ -v|--verbose | -q|--quiet ] [ --log-file <path> ]"
     echo "  run - start containers, build & start auth+gateway, wait for gateway, run comprehensive API tests, then cleanup"
     echo "  run-tests - run comprehensive API tests (assumes services are already running)"
+    echo "  -v/--verbose to print detailed logs to terminal; default is quiet (logs to $LOG_FILE)"
     exit 2
     ;;
 esac

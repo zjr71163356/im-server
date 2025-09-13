@@ -58,7 +58,7 @@ func (s *AuthIntService) Auth(ctx context.Context, req *authpb.AuthRequest) (*em
 	// 从Redis获取设备认证信息
 	authDevice, err := s.getAuthDevice(ctx, req.UserId, req.DeviceId)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "认证失败: %v", err)
+		return nil, status.Errorf(codes.Unauthenticated, "获取设备认证信息失败: %v", err)
 	}
 
 	// 验证token

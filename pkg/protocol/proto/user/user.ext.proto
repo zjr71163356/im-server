@@ -3,7 +3,7 @@ syntax = "proto3";
 package user;
 option go_package = "pkg/protocol/pb/userpb";
 
-import "google/protobuf/empty.proto";
+
 import "google/api/annotations.proto";
 
 // 用户服务
