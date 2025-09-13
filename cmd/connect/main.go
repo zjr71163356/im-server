@@ -3,7 +3,7 @@ package main
 import (
 	"im-server/internal/connect"
 	"im-server/pkg/config"
-	"im-server/pkg/grpc/interceptor"
+	"im-server/pkg/rpc"
 	"log/slog"
 	"net"
 
@@ -15,7 +15,7 @@ func main() {
 		connect.StartWSServer(config.Config.Services.Connect.WSAddr)
 	}()
 	server := grpc.NewServer(
-		grpc.UnaryInterceptor(interceptor.ValidationUnaryInterceptor()),
+		grpc.UnaryInterceptor(rpc.ValidationUnaryInterceptor()),
 	)
 	// pb.RegisterConnectServiceServer(server, &connect.ConnectService{})
 	listener, err := net.Listen("tcp", config.Config.Services.Connect.RPCAddr)

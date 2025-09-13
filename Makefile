@@ -40,6 +40,7 @@ proto:
 		--go_out=. \
 		--go-grpc_out=. \
 		--grpc-gateway_out=. \
+		--validate-go_out=. \
 		$(PROTO_FILES)
 	@echo "Protobuf code generation complete."
 
