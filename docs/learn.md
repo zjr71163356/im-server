@@ -162,3 +162,77 @@ make sqlc-generate
 ```
 
 现在，你就可以在你的 Go 业务逻辑代码中，通过 dao 调用这些新生成的、类型安全的方法来操作好友和好友请求了。这个流程完全符合你项目的既定规范。
+
+## `protoc-gen-validate` 的安装
+好的，我们来总结一下 `protoc-gen-validate` 的整个安装、调试过程，以及最终的解决方案。
+
+### 目标
+
+我们的目标是在 gRPC 服务层实现自动的请求参数校验。具体来说，是利用 `protoc-gen-validate` 插件，根据 `.proto` 文件中定义的校验规则（如字段长度、范围等），自动生成 Go 代码中的 `Validate()` 方法。这样，通过 gRPC 拦截器调用此方法，就能在业务逻辑执行前拒绝无效请求，避免像“超长用户名”那样导致数据库写入失败而产生 500 错误。
+
+---
+
+### 安装与调试过程中的问题
+
+我们在安装和配置过程中遇到了一系列环环相扣的问题：
+
+1.  **问题一：`go install` 路径错误**
+    *   **尝试的命令**：`go install github.com/envoyproxy/protoc-gen-validate/protoc-gen-validate@latest`
+    *   **遇到的错误**：`...module ... does not contain package...`
+    *   **原因**：我们使用了旧的包安装路径。`protoc-gen-validate` 项目的目录结构已经更新，其 Go 插件的 `main` 包不再位于项目根目录，而是移到了 `cmd/protoc-gen-validate-go` 子目录中。
+
+2.  **问题二：`protoc` 插件名称不匹配**
+    *   **解决问题一后**：我们使用正确的路径 `go install .../cmd/protoc-gen-validate-go@latest` 成功安装了插件，但这在 `GOPATH/bin` 中生成的是名为 `protoc-gen-validate-go` 的可执行文件。
+    *   **遇到的错误**：当运行 `make proto` 时，`protoc` 报错 `protoc-gen-validate: program not found...`。
+    *   **原因**：`protoc` 在处理 `--validate_out` 标志时，默认会去 `PATH` 中寻找名为 `protoc-gen-validate` 的可执行文件，而我们安装的却是 `protoc-gen-validate-go`，两者名称不匹配。
+
+3.  **问题三：创建符号链接时文件已存在**
+    *   **尝试的命令**：为了解决名称不匹配问题，我们尝试创建一个符号链接 `ln -s .../protoc-gen-validate-go .../protoc-gen-validate`。
+    *   **遇到的错误**：`ln: ... File exists`。
+    *   **原因**：之前可能存在一个不正确或不完整的安装残留，导致 `protoc-gen-validate` 这个文件或链接已经存在。
+
+4.  **问题四：`protoc` 插件参数格式错误**
+    *   **解决问题三后**：我们使用 `ln -sf` 强制创建了符号链接，并修改 Makefile 添加了 `--validate_out=lang=go:.` 参数。
+    *   **遇到的错误**：`[validator]unknown 'lang' parameter`。
+    *   **原因**：这是最关键的一步。这个错误表明我们使用的插件是**新版本**的，而 Makefile 中的 `--validate_out=lang=go:.` 是**旧版本**的参数格式。新版插件不再接受 `lang=go` 这种形式的参数。
+
+---
+
+### 最终的解决方案
+
+综合以上所有问题，最终形成了一套清晰、可行的解决方案：
+
+1.  **正确安装插件**：
+    使用 cmd 下的精确路径来安装 Go 版本的插件。
+
+    ```bash
+    go install github.com/envoyproxy/protoc-gen-validate/cmd/protoc-gen-validate-go@latest
+    ```
+
+2.  **更新 Makefile 以使用新版插件参数**：
+    修改 Makefile 中的 `proto` 任务，将旧的 `--validate_out=lang=go:.` 替换为新版的 `--validate-go_out=.`。这个标志会直接调用 `protoc-gen-validate-go` 插件。
+
+    ```makefile
+    # Makefile
+    # ...
+    proto:
+        # ...
+        @protoc --proto_path=. \
+            --proto_path=pkg/vendor \
+            --go_out=. \
+            --go-grpc_out=. \
+            --grpc-gateway_out=. \
+            --validate-go_out=. \
+            $(PROTO_FILES)
+    # ...
+    ```
+    *   **注意**：采用这种方式后，就不再需要创建 `protoc-gen-validate` 的符号链接了，因为 `protoc` 会根据 `--validate-go_out` 自动寻找 `protoc-gen-validate-go`。
+
+3.  **重新生成代码**：
+    执行 `make proto`。
+
+    ```bash
+    make proto
+    ```
+
+完成以上步骤后，`protoc` 成功调用了新版插件，并在 authpb 目录下生成了包含 `Validate()` 方法的 auth.int.pb.go 和 `auth.int.pb.validate.go` 文件，从而彻底解决了问题。现在，gRPC 拦截器可以正常工作，对超长用户名等非法请求返回 `400 Bad Request`。
