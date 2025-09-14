@@ -13,7 +13,6 @@ import (
 	"github.com/go-redis/redis/v8"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 const AuthKey = "auth:%d"
@@ -54,7 +53,7 @@ func (s *AuthIntService) getAuthDevice(ctx context.Context, userID, deviceID uin
 }
 
 // Auth 权限校验
-func (s *AuthIntService) Auth(ctx context.Context, req *authpb.AuthRequest) (*emptypb.Empty, error) {
+func (s *AuthIntService) Auth(ctx context.Context, req *authpb.AuthRequest) (*authpb.AuthResponse, error) {
 	// 从Redis获取设备认证信息
 	authDevice, err := s.getAuthDevice(ctx, req.UserId, req.DeviceId)
 	if err != nil {
@@ -71,7 +70,10 @@ func (s *AuthIntService) Auth(ctx context.Context, req *authpb.AuthRequest) (*em
 		return nil, status.Errorf(codes.Unauthenticated, "token已过期")
 	}
 
-	return &emptypb.Empty{}, nil
+	return &authpb.AuthResponse{
+		Valid:   true,
+		Message: "token验证成功",
+	}, nil
 }
 
 // Register 用户注册

@@ -11,7 +11,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -34,7 +33,7 @@ type AuthIntServiceClient interface {
 	// 登录
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
 	// 权限校验
-	Auth(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Auth(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 }
 
 type authIntServiceClient struct {
@@ -65,9 +64,9 @@ func (c *authIntServiceClient) Login(ctx context.Context, in *LoginRequest, opts
 	return out, nil
 }
 
-func (c *authIntServiceClient) Auth(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *authIntServiceClient) Auth(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(emptypb.Empty)
+	out := new(AuthResponse)
 	err := c.cc.Invoke(ctx, AuthIntService_Auth_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -84,7 +83,7 @@ type AuthIntServiceServer interface {
 	// 登录
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
 	// 权限校验
-	Auth(context.Context, *AuthRequest) (*emptypb.Empty, error)
+	Auth(context.Context, *AuthRequest) (*AuthResponse, error)
 	mustEmbedUnimplementedAuthIntServiceServer()
 }
 
@@ -101,7 +100,7 @@ func (UnimplementedAuthIntServiceServer) Register(context.Context, *RegisterRequ
 func (UnimplementedAuthIntServiceServer) Login(context.Context, *LoginRequest) (*LoginResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Login not implemented")
 }
-func (UnimplementedAuthIntServiceServer) Auth(context.Context, *AuthRequest) (*emptypb.Empty, error) {
+func (UnimplementedAuthIntServiceServer) Auth(context.Context, *AuthRequest) (*AuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Auth not implemented")
 }
 func (UnimplementedAuthIntServiceServer) mustEmbedUnimplementedAuthIntServiceServer() {}

@@ -23,7 +23,7 @@ service AuthIntService {
     };
   }
   // 权限校验
-  rpc Auth (AuthRequest) returns (google.protobuf.Empty) {
+  rpc Auth (AuthRequest) returns (AuthResponse) {
     option (google.api.http) = {
       post: "/api/v1/auth/verify"
       body: "*"
@@ -46,6 +46,11 @@ message AuthRequest {
   uint64 user_id = 1 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {uint64: {gte: 1}}];
   uint64 device_id = 2 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {uint64: {gte: 1}}];
   string token = 3 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {string: {min_len: 8}}];
+}
+
+message AuthResponse {
+  bool valid = 1; // Token 是否有效
+  string message = 2; // 验证结果信息（如错误原因或成功提示）
 }
 
 message LoginRequest {
