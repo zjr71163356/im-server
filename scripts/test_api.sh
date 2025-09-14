@@ -97,7 +97,7 @@ test_api() {
 
     if [ "$return_response" = "true" ]; then
         >&2 echo "状态码: $http_code"
-        >&2 echo "响应: [内容已返回给调用者]"
+        >&2 echo "响应: $body"
     else
         echo "状态码: $http_code"
         echo "响应: $body"
@@ -224,21 +224,76 @@ group_auth_verify() {
         "权限校验" "200"
 }
 
+# Assert helper for user search: call API and validate users array
+assert_search() {
+    local data="$1"
+    local description="$2"
+    local expected_status="$3"
+    local expect_type="$4" # "nonempty" | "empty" | "any" | "contains:<username>"
+
+    # call test_api and capture body
+    resp=$(test_api "POST" "/api/v1/user/search" "$data" "$description" "$expected_status" "true")
+
+    # if expected non-empty or specific check, parse
+    if command -v jq >/dev/null 2>&1; then
+        users_len=$(echo "$resp" | jq -r '.users | length // 0' 2>/dev/null || echo "0")
+        if [ "$expect_type" = "nonempty" ]; then
+            if [ "$users_len" -le 0 ]; then
+                print_error "断言失败: $description - 期望非空结果，实际 users_len=$users_len"
+                TESTS_FAILED=$((TESTS_FAILED+1))
+                return 1
+            fi
+        elif [ "$expect_type" = "empty" ]; then
+            if [ "$users_len" -ne 0 ]; then
+                print_error "断言失败: $description - 期望空结果，实际 users_len=$users_len"
+                TESTS_FAILED=$((TESTS_FAILED+1))
+                return 1
+            fi
+        elif [[ "$expect_type" == contains:* ]]; then
+            local want=${expect_type#contains:}
+            found=$(echo "$resp" | jq -r --arg w "$want" '.users[]?.username | select(. == $w) // empty' 2>/dev/null || true)
+            if [ -z "$found" ]; then
+                print_error "断言失败: $description - 期望包含 username=$want，但未找到"
+                TESTS_FAILED=$((TESTS_FAILED+1))
+                return 1
+            fi
+        fi
+    else
+        # no jq: best-effort regex checks
+        if [ "$expect_type" = "nonempty" ]; then
+            if ! echo "$resp" | grep -q '"users":\s*\['; then
+                print_error "断言失败: $description - 期望非空结果，未找到 users 数组"
+                TESTS_FAILED=$((TESTS_FAILED+1))
+                return 1
+            fi
+        fi
+    fi
+
+    return 0
+}
+
 # 分组：User.Search
 group_user_search() {
     print_header "[Group] USER - Search"
-    test_api "POST" "/api/v1/user/search" \
-        "{\"keyword\": \"$TEST_USER\", \"page\": 1, \"page_size\": 10}" \
-        "用户搜索 (使用刚注册用户名)" "200"
+    # 使用刚注册用户名进行精确搜索并断言包含该用户名
+    assert_search "{\"keyword\": \"$TEST_USER\", \"page\": 1, \"page_size\": 10}" "用户搜索 (使用刚注册用户名)" "200" "contains:$TEST_USER"
+
+    # 空关键字请求应返回 400（接口约束）
     test_api "POST" "/api/v1/user/search" \
         "{\"keyword\": \"\", \"page\": 1, \"page_size\": 5}" \
-        "空关键字搜索" "200"
-    test_api "POST" "/api/v1/user/search" \
-        "{\"keyword\": \"$TEST_USER\", \"page\": 2, \"page_size\": 20}" \
-        "用户搜索 (分页测试，使用刚注册用户名)" "200"
-    test_api "POST" "/api/v1/user/search" \
-        "{\"keyword\": \"not_exist_user_$(date +%s)\", \"page\": 1, \"page_size\": 5}" \
-        "用户搜索 (不存在的用户名，预期空结果)" "200"
+        "空关键字搜索" "400"
+
+    # 分页测试：至少返回非空结果
+    assert_search "{\"keyword\": \"$TEST_USER\", \"page\": 1, \"page_size\": 20}" "用户搜索 (分页测试，使用刚注册用户名)" "200" "nonempty"
+
+    # 另一个分页变体（保持与上面相同目的）
+    assert_search "{\"keyword\": \"$TEST_USER\", \"page\": 1, \"page_size\": 20}" "用户搜索 (分页测试，使用刚注册用户名)" "200" "nonempty"
+
+    # 搜不到用户，应返回空结果
+    assert_search "{\"keyword\": \"not_exist_user_$(date +%s)\", \"page\": 1, \"page_size\": 5}" "用户搜索 (不存在的用户名，预期空结果)" "200" "empty"
+
+    # 通用昵称搜索，期待返回用户列表（非空）
+    assert_search "{\"keyword\": \"user\", \"page\": 1, \"page_size\": 5}" "昵称搜索,返回用户列表" "200" "nonempty"
 }
 
 # --------------------

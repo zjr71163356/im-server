@@ -7,6 +7,12 @@ DAO_PATH := "pkg/dao"
 # 将 Go 的 bin 目录添加到 PATH
 GOPATH := $(shell go env GOPATH)
 export PATH := $(GOPATH)/bin:$(PATH)
+
+
+getip:
+	@echo "Getting local IP address..."
+	@export LOCAL_IP=$$(hostname -I | awk '{print $$1}'); \
+	echo "Local IP address is $$LOCAL_IP"
 # 运行docker命令启动mysql
 startdb:
 	@echo "Starting MySQL Docker container..."
@@ -44,6 +50,14 @@ proto:
 		$(PROTO_FILES)
 	@echo "Protobuf code generation complete."
 
+# 生成openAPI文档.json
+proto-openapi:
+	@protoc -I. -I pkg/vendor \
+	  --openapiv2_out docs \
+	  --openapiv2_opt logtostderr=true,allow_merge=true,merge_file_name=openapi.json,use_go_templates=true \
+	  pkg/protocol/proto/auth/*.proto \
+	  pkg/protocol/proto/user/*.proto
+	
 # 使用 sqlc 生成数据库操作代码
 sqlc-generate:
 	@echo "Removing existing generated DAO files..."

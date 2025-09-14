@@ -5,6 +5,8 @@ option go_package = "pkg/protocol/pb/userpb";
 
 
 import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
 
 // 用户服务
 service UserExtService {
@@ -19,20 +21,20 @@ service UserExtService {
 
 // 搜索用户请求
 message SearchUserRequest {
-  string keyword = 1; // 搜索关键字，可以是用户名或手机号
-  uint32 page = 2; // 分页页码，默认从 1 开始
-  uint32 page_size = 3; // 每页返回的用户数量，默认值为 10
+  string keyword = 1 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {string: {min_len: 1, max_len: 128}}]; // 搜索关键字，可以是用户名或手机号
+  uint32 page = 2 [(validate.rules) = {uint32: {gte: 1}}]; // 分页页码，默认从 1 开始
+  uint32 page_size = 3 [(validate.rules) = {uint32: {gte: 1, lte: 100}}]; // 每页返回的用户数量，默认值为 10
 }
 
 // 搜索用户响应
 message SearchUserResponse {
- repeated UserInfo users = 1; // 搜索结果中的用户列表
+  repeated UserInfo users = 1; // 搜索结果中的用户列表
   uint32 total = 2; // 搜索结果的总用户数
 }
 
 // 用户信息
 message UserInfo {
-  uint64 user_id = 1; // 用户 ID
-  string username = 2; // 用户名
-  string avatar_url = 3; // 用户头像 URL
+  uint64 user_id = 1 [(google.api.field_behavior) = REQUIRED]; // 用户 ID
+  string username = 2 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {string: {min_len: 1, max_len: 64}}]; // 用户名
+  string avatar_url = 3 [(validate.rules) = {string: {max_len: 256}}]; // 用户头像 URL
 }

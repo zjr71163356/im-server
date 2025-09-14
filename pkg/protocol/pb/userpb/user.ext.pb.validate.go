@@ -57,11 +57,38 @@ func (m *SearchUserRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Keyword
+	if l := utf8.RuneCountInString(m.GetKeyword()); l < 1 || l > 128 {
+		err := SearchUserRequestValidationError{
+			field:  "Keyword",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for Page
+	if m.GetPage() < 1 {
+		err := SearchUserRequestValidationError{
+			field:  "Page",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for PageSize
+	if val := m.GetPageSize(); val < 1 || val > 100 {
+		err := SearchUserRequestValidationError{
+			field:  "PageSize",
+			reason: "value must be inside range [1, 100]",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return SearchUserRequestMultiError(errors)
@@ -305,9 +332,27 @@ func (m *UserInfo) validate(all bool) error {
 
 	// no validation rules for UserId
 
-	// no validation rules for Username
+	if l := utf8.RuneCountInString(m.GetUsername()); l < 1 || l > 64 {
+		err := UserInfoValidationError{
+			field:  "Username",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
-	// no validation rules for AvatarUrl
+	if utf8.RuneCountInString(m.GetAvatarUrl()) > 256 {
+		err := UserInfoValidationError{
+			field:  "AvatarUrl",
+			reason: "value length must be at most 256 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
 
 	if len(errors) > 0 {
 		return UserInfoMultiError(errors)

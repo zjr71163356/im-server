@@ -7,6 +7,7 @@
 package userpb
 
 import (
+	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
@@ -201,19 +202,19 @@ var File_pkg_protocol_proto_user_user_ext_proto protoreflect.FileDescriptor
 
 const file_pkg_protocol_proto_user_user_ext_proto_rawDesc = "" +
 	"\n" +
-	"&pkg/protocol/proto/user/user.ext.proto\x12\x04user\x1a\x1cgoogle/api/annotations.proto\"^\n" +
-	"\x11SearchUserRequest\x12\x18\n" +
-	"\akeyword\x18\x01 \x01(\tR\akeyword\x12\x12\n" +
-	"\x04page\x18\x02 \x01(\rR\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\rR\bpageSize\"P\n" +
+	"&pkg/protocol/proto/user/user.ext.proto\x12\x04user\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x17validate/validate.proto\"\x81\x01\n" +
+	"\x11SearchUserRequest\x12'\n" +
+	"\akeyword\x18\x01 \x01(\tB\r\xe0A\x02\xfaB\ar\x05\x10\x01\x18\x80\x01R\akeyword\x12\x1b\n" +
+	"\x04page\x18\x02 \x01(\rB\a\xfaB\x04*\x02(\x01R\x04page\x12&\n" +
+	"\tpage_size\x18\x03 \x01(\rB\t\xfaB\x06*\x04\x18d(\x01R\bpageSize\"P\n" +
 	"\x12SearchUserResponse\x12$\n" +
 	"\x05users\x18\x01 \x03(\v2\x0e.user.UserInfoR\x05users\x12\x14\n" +
-	"\x05total\x18\x02 \x01(\rR\x05total\"^\n" +
-	"\bUserInfo\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x1a\n" +
-	"\busername\x18\x02 \x01(\tR\busername\x12\x1d\n" +
+	"\x05total\x18\x02 \x01(\rR\x05total\"{\n" +
+	"\bUserInfo\x12\x1c\n" +
+	"\auser_id\x18\x01 \x01(\x04B\x03\xe0A\x02R\x06userId\x12(\n" +
+	"\busername\x18\x02 \x01(\tB\f\xe0A\x02\xfaB\x06r\x04\x10\x01\x18@R\busername\x12'\n" +
 	"\n" +
-	"avatar_url\x18\x03 \x01(\tR\tavatarUrl2q\n" +
+	"avatar_url\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x02R\tavatarUrl2q\n" +
 	"\x0eUserExtService\x12_\n" +
 	"\n" +
 	"SearchUser\x12\x17.user.SearchUserRequest\x1a\x18.user.SearchUserResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/v1/user/searchB\x18Z\x16pkg/protocol/pb/userpbb\x06proto3"
