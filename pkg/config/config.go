@@ -90,6 +90,7 @@ type ServiceConfig struct {
 	Device  DeviceEndpoints  `yaml:"device"`
 	Auth    AuthEndpoints    `yaml:"auth"`
 	User    UserEndpoints    `yaml:"user"`
+	Friend  FriendEndpoints  `yaml:"friend"`
 	File    FileEndpoints    `yaml:"file"`
 	Gateway GatewayEndpoints `yaml:"gateway"`
 }
@@ -110,6 +111,12 @@ type DeviceEndpoints struct {
 
 // UserEndpoints 封装了User服务的监听端点
 type UserEndpoints struct {
+	LocalAddr string `yaml:"local_addr"`
+	RPCAddr   string `yaml:"rpc_addr"`
+}
+
+// FriendEndpoints 封装了Friend服务的监听端点
+type FriendEndpoints struct {
 	LocalAddr string `yaml:"local_addr"`
 	RPCAddr   string `yaml:"rpc_addr"`
 }

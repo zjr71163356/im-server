@@ -1,0 +1,143 @@
+syntax = "proto3";
+
+package friend;
+option go_package = "pkg/protocol/pb/friendpb";
+
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
+
+// 好友服务
+service FriendExtService {
+  // 发送好友申请
+  rpc SendFriendRequest (SendFriendRequestRequest) returns (SendFriendRequestResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/friend/request"
+      body: "*"
+    };
+  }
+
+  // 获取收到的好友申请列表
+  rpc GetReceivedFriendRequests (GetReceivedFriendRequestsRequest) returns (GetReceivedFriendRequestsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/friend/requests/received"
+    };
+  }
+
+  // 获取发送的好友申请列表
+  rpc GetSentFriendRequests (GetSentFriendRequestsRequest) returns (GetSentFriendRequestsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/friend/requests/sent"
+    };
+  }
+
+  // 处理好友申请（同意/拒绝/忽略）
+  rpc HandleFriendRequest (HandleFriendRequestRequest) returns (HandleFriendRequestResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/friend/request/{request_id}"
+      body: "*"
+    };
+  }
+
+  // 获取好友列表
+  rpc GetFriendList (GetFriendListRequest) returns (GetFriendListResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/friend/list"
+    };
+  }
+}
+
+// 发送好友申请请求
+message SendFriendRequestRequest {
+  uint64 recipient_id = 1 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {uint64: {gte: 1}}]; // 接收方用户ID
+  string message = 2 [(validate.rules) = {string: {max_len: 255}}]; // 申请消息
+}
+
+// 发送好友申请响应
+message SendFriendRequestResponse {
+  uint64 request_id = 1; // 申请ID
+  string message = 2; // 结果消息
+}
+
+// 获取收到的好友申请列表请求
+message GetReceivedFriendRequestsRequest {
+  uint32 page = 1 [(validate.rules) = {uint32: {gte: 1}}]; // 分页页码，默认从 1 开始
+  uint32 page_size = 2 [(validate.rules) = {uint32: {gte: 1, lte: 100}}]; // 每页返回的申请数量，默认值为 10
+  uint32 status = 3; // 申请状态过滤 (0=待处理, 1=已同意, 2=已拒绝, 3=已忽略)，不传则返回所有状态
+}
+
+// 获取收到的好友申请列表响应
+message GetReceivedFriendRequestsResponse {
+  repeated FriendRequestInfo requests = 1; // 申请列表
+  uint32 total = 2; // 总数量
+}
+
+// 获取发送的好友申请列表请求
+message GetSentFriendRequestsRequest {
+  uint32 page = 1 [(validate.rules) = {uint32: {gte: 1}}]; // 分页页码，默认从 1 开始
+  uint32 page_size = 2 [(validate.rules) = {uint32: {gte: 1, lte: 100}}]; // 每页返回的申请数量，默认值为 10
+  uint32 status = 3; // 申请状态过滤 (0=待处理, 1=已同意, 2=已拒绝, 3=已忽略)，不传则返回所有状态
+}
+
+// 获取发送的好友申请列表响应
+message GetSentFriendRequestsResponse {
+  repeated FriendRequestInfo requests = 1; // 申请列表
+  uint32 total = 2; // 总数量
+}
+
+// 处理好友申请请求
+message HandleFriendRequestRequest {
+  uint64 request_id = 1 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {uint64: {gte: 1}}]; // 申请ID
+  uint32 action = 2 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {uint32: {in: [1, 2, 3]}}]; // 处理动作 (1=同意, 2=拒绝, 3=忽略)
+}
+
+// 处理好友申请响应
+message HandleFriendRequestResponse {
+  string message = 1; // 结果消息
+}
+
+// 获取好友列表请求
+message GetFriendListRequest {
+  uint32 page = 1 [(validate.rules) = {uint32: {gte: 1}}]; // 分页页码，默认从 1 开始
+  uint32 page_size = 2 [(validate.rules) = {uint32: {gte: 1, lte: 100}}]; // 每页返回的好友数量，默认值为 10
+  uint64 category_id = 3; // 分类ID过滤，不传则返回所有分类
+}
+
+// 获取好友列表响应
+message GetFriendListResponse {
+  repeated FriendInfo friends = 1; // 好友列表
+  uint32 total = 2; // 总数量
+}
+
+// 好友申请信息
+message FriendRequestInfo {
+  uint64 id = 1 [(google.api.field_behavior) = REQUIRED]; // 申请ID
+  uint64 requester_id = 2 [(google.api.field_behavior) = REQUIRED]; // 申请人ID
+  uint64 recipient_id = 3 [(google.api.field_behavior) = REQUIRED]; // 接收人ID
+  uint32 status = 4; // 申请状态 (0=待处理, 1=已同意, 2=已拒绝, 3=已忽略)
+  string message = 5; // 申请消息
+  int64 created_at = 6; // 创建时间
+  int64 updated_at = 7; // 更新时间
+  UserInfo requester_info = 8; // 申请人信息（可选）
+  UserInfo recipient_info = 9; // 接收人信息（可选）
+}
+
+// 好友信息
+message FriendInfo {
+  uint64 user_id = 1 [(google.api.field_behavior) = REQUIRED]; // 用户ID
+  uint64 friend_id = 2 [(google.api.field_behavior) = REQUIRED]; // 好友ID
+  string remark = 3; // 备注名
+  uint64 category_id = 4; // 分类ID
+  bool is_blocked = 5; // 是否被屏蔽
+  int64 created_at = 6; // 添加时间
+  int64 updated_at = 7; // 更新时间
+  UserInfo friend_info = 8; // 好友用户信息（可选）
+}
+
+// 用户基本信息
+message UserInfo {
+  uint64 user_id = 1 [(google.api.field_behavior) = REQUIRED]; // 用户 ID
+  string username = 2 [(google.api.field_behavior) = REQUIRED]; // 用户名
+  string avatar_url = 3; // 用户头像 URL
+  string nickname = 4; // 昵称
+}

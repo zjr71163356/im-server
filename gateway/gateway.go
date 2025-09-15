@@ -13,6 +13,7 @@ import (
 
 	"im-server/pkg/config"
 	authpb "im-server/pkg/protocol/pb/authpb"
+	friendpb "im-server/pkg/protocol/pb/friendpb"
 	userpb "im-server/pkg/protocol/pb/userpb"
 )
 
@@ -83,9 +84,19 @@ func (g *GatewayServer) RegisterHandlers() error {
 		return fmt.Errorf("failed to register user service at %s: %v", userAddr, err)
 	}
 
+	// 注册好友服务
+	friendAddr := g.config.Services.Friend.RPCAddr
+	if friendAddr == "" {
+		friendAddr = "localhost:50053" // 默认地址
+	}
+	if err := friendpb.RegisterFriendExtServiceHandlerFromEndpoint(ctx, g.mux, friendAddr, opts); err != nil {
+		return fmt.Errorf("failed to register friend service at %s: %v", friendAddr, err)
+	}
+
 	log.Printf("Successfully registered grpc-gateway handlers:")
 	log.Printf("  Auth service: %s", authAddr)
 	log.Printf("  User service: %s", userAddr)
+	log.Printf("  Friend service: %s", friendAddr)
 
 	return nil
 }

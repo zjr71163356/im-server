@@ -14,9 +14,12 @@ services:
   user:
     rpc_addr: ":50052"
     local_addr: "localhost:50052"
-  device:
+  friend:
     rpc_addr: ":50053"
     local_addr: "localhost:50053"
-  connect:
+  device:
     rpc_addr: ":50054"
     local_addr: "localhost:50054"
+  connect:
+    rpc_addr: ":50055"
+    local_addr: "localhost:50055"
