@@ -9,6 +9,12 @@
       "name": "AuthIntService"
     },
     {
+      "name": "FriendExtService"
+    },
+    {
+      "name": "DeviceIntService"
+    },
+    {
       "name": "UserExtService"
     }
   ],
@@ -87,14 +93,13 @@
     },
     "/api/v1/auth/verify": {
       "post": {
-        "summary": "权限校验",
+        "summary": "权限校验（生产设计：仅凭 token 即可解析出 user_id、device_id）",
         "operationId": "AuthIntService_Auth",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "type": "object",
-              "properties": {}
+              "$ref": "#/definitions/authAuthResponse"
             }
           },
           "default": {
@@ -116,6 +121,227 @@
         ],
         "tags": [
           "AuthIntService"
+        ]
+      }
+    },
+    "/api/v1/friend/list": {
+      "get": {
+        "summary": "获取好友列表",
+        "operationId": "FriendExtService_GetFriendList",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/friendGetFriendListResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "description": "分页页码，默认从 1 开始",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "pageSize",
+            "description": "每页返回的好友数量，默认值为 10",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "categoryId",
+            "description": "分类ID过滤，不传则返回所有分类",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "FriendExtService"
+        ]
+      }
+    },
+    "/api/v1/friend/request": {
+      "post": {
+        "summary": "发送好友申请",
+        "operationId": "FriendExtService_SendFriendRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/friendSendFriendRequestResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/friendSendFriendRequestRequest"
+            }
+          }
+        ],
+        "tags": [
+          "FriendExtService"
+        ]
+      }
+    },
+    "/api/v1/friend/request/{requestId}": {
+      "put": {
+        "summary": "处理好友申请（同意/拒绝/忽略）",
+        "operationId": "FriendExtService_HandleFriendRequest",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/friendHandleFriendRequestResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "requestId",
+            "description": "申请ID",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/FriendExtServiceHandleFriendRequestBody"
+            }
+          }
+        ],
+        "tags": [
+          "FriendExtService"
+        ]
+      }
+    },
+    "/api/v1/friend/requests/received": {
+      "get": {
+        "summary": "获取收到的好友申请列表",
+        "operationId": "FriendExtService_GetReceivedFriendRequests",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/friendGetReceivedFriendRequestsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "description": "分页页码，默认从 1 开始",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "pageSize",
+            "description": "每页返回的申请数量，默认值为 10",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "status",
+            "description": "申请状态过滤 (0=待处理, 1=已同意, 2=已拒绝, 3=已忽略)，不传则返回所有状态",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "FriendExtService"
+        ]
+      }
+    },
+    "/api/v1/friend/requests/sent": {
+      "get": {
+        "summary": "获取发送的好友申请列表",
+        "operationId": "FriendExtService_GetSentFriendRequests",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/friendGetSentFriendRequestsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "page",
+            "description": "分页页码，默认从 1 开始",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "pageSize",
+            "description": "每页返回的申请数量，默认值为 10",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "status",
+            "description": "申请状态过滤 (0=待处理, 1=已同意, 2=已拒绝, 3=已忽略)，不传则返回所有状态",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "FriendExtService"
         ]
       }
     },
@@ -154,26 +380,54 @@
     }
   },
   "definitions": {
+    "FriendExtServiceHandleFriendRequestBody": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "integer",
+          "format": "int64",
+          "title": "处理动作 (1=同意, 2=拒绝, 3=忽略)"
+        }
+      },
+      "title": "处理好友申请请求",
+      "required": [
+        "action"
+      ]
+    },
     "authAuthRequest": {
       "type": "object",
       "properties": {
-        "userId": {
-          "type": "string",
-          "format": "uint64"
-        },
-        "deviceId": {
-          "type": "string",
-          "format": "uint64"
-        },
         "token": {
-          "type": "string"
+          "type": "string",
+          "title": "仅需 token，根据 token 服务端解析身份"
         }
       },
       "required": [
-        "userId",
-        "deviceId",
         "token"
       ]
+    },
+    "authAuthResponse": {
+      "type": "object",
+      "properties": {
+        "valid": {
+          "type": "boolean",
+          "title": "Token 是否有效"
+        },
+        "message": {
+          "type": "string",
+          "title": "验证结果信息（如错误原因或成功提示）"
+        },
+        "userId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "由服务端解析出的用户ID"
+        },
+        "deviceId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "由服务端解析出的设备ID"
+        }
+      }
     },
     "authLoginRequest": {
       "type": "object",
@@ -290,6 +544,233 @@
       },
       "required": [
         "id",
+        "username"
+      ]
+    },
+    "friendFriendInfo": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "用户ID"
+        },
+        "friendId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "好友ID"
+        },
+        "remark": {
+          "type": "string",
+          "title": "备注名"
+        },
+        "categoryId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "分类ID"
+        },
+        "isBlocked": {
+          "type": "boolean",
+          "title": "是否被屏蔽"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "int64",
+          "title": "添加时间"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "int64",
+          "title": "更新时间"
+        },
+        "friendInfo": {
+          "$ref": "#/definitions/friendUserInfo",
+          "title": "好友用户信息（可选）"
+        }
+      },
+      "title": "好友信息",
+      "required": [
+        "userId",
+        "friendId"
+      ]
+    },
+    "friendFriendRequestInfo": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uint64",
+          "title": "申请ID"
+        },
+        "requesterId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "申请人ID"
+        },
+        "recipientId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "接收人ID"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int64",
+          "title": "申请状态 (0=待处理, 1=已同意, 2=已拒绝, 3=已忽略)"
+        },
+        "message": {
+          "type": "string",
+          "title": "申请消息"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "int64",
+          "title": "创建时间"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "int64",
+          "title": "更新时间"
+        },
+        "requesterInfo": {
+          "$ref": "#/definitions/friendUserInfo",
+          "title": "申请人信息（可选）"
+        },
+        "recipientInfo": {
+          "$ref": "#/definitions/friendUserInfo",
+          "title": "接收人信息（可选）"
+        }
+      },
+      "title": "好友申请信息",
+      "required": [
+        "id",
+        "requesterId",
+        "recipientId"
+      ]
+    },
+    "friendGetFriendListResponse": {
+      "type": "object",
+      "properties": {
+        "friends": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/friendFriendInfo"
+          },
+          "title": "好友列表"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64",
+          "title": "总数量"
+        }
+      },
+      "title": "获取好友列表响应"
+    },
+    "friendGetReceivedFriendRequestsResponse": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/friendFriendRequestInfo"
+          },
+          "title": "申请列表"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64",
+          "title": "总数量"
+        }
+      },
+      "title": "获取收到的好友申请列表响应"
+    },
+    "friendGetSentFriendRequestsResponse": {
+      "type": "object",
+      "properties": {
+        "requests": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/friendFriendRequestInfo"
+          },
+          "title": "申请列表"
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64",
+          "title": "总数量"
+        }
+      },
+      "title": "获取发送的好友申请列表响应"
+    },
+    "friendHandleFriendRequestResponse": {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string",
+          "title": "结果消息"
+        }
+      },
+      "title": "处理好友申请响应"
+    },
+    "friendSendFriendRequestRequest": {
+      "type": "object",
+      "properties": {
+        "recipientId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "接收方用户ID"
+        },
+        "message": {
+          "type": "string",
+          "title": "申请消息"
+        }
+      },
+      "title": "发送好友申请请求",
+      "required": [
+        "recipientId"
+      ]
+    },
+    "friendSendFriendRequestResponse": {
+      "type": "object",
+      "properties": {
+        "requestId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "申请ID"
+        },
+        "message": {
+          "type": "string",
+          "title": "结果消息"
+        }
+      },
+      "title": "发送好友申请响应"
+    },
+    "friendUserInfo": {
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "format": "uint64",
+          "title": "用户 ID"
+        },
+        "username": {
+          "type": "string",
+          "title": "用户名"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "title": "用户头像 URL"
+        },
+        "nickname": {
+          "type": "string",
+          "title": "昵称"
+        }
+      },
+      "title": "用户基本信息",
+      "required": [
+        "userId",
         "username"
       ]
     },

@@ -55,8 +55,7 @@ proto-openapi:
 	@protoc -I. -I pkg/vendor \
 	  --openapiv2_out docs \
 	  --openapiv2_opt logtostderr=true,allow_merge=true,merge_file_name=openapi.json,use_go_templates=true \
-	  pkg/protocol/proto/auth/*.proto \
-	  pkg/protocol/proto/user/*.proto
+	  $(PROTO_FILES)
 	
 # 使用 sqlc 生成数据库操作代码
 sqlc-generate:

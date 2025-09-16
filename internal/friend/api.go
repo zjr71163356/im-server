@@ -47,7 +47,7 @@ func (s *FriendExtService) SendFriendRequest(ctx context.Context, req *friendpb.
 		RecipientID: req.RecipientId,
 	})
 	if err != nil {
-		return nil, status.Error(codes.Internal, "failed to check existing request")
+		return nil, status.Errorf(codes.Internal, "failed to check existing request: %v", err)
 	}
 	if existingCount > 0 {
 		return nil, status.Error(codes.AlreadyExists, "friend request already exists")
