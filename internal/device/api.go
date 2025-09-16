@@ -4,9 +4,7 @@ import (
 	"context"
 	"fmt"
 	"im-server/pkg/dao"
-	"im-server/pkg/protocol/pb/authpb"
 	"im-server/pkg/protocol/pb/devicepb"
-	"im-server/pkg/rpc"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -32,18 +30,22 @@ func NewDeviceIntService(queries *dao.Queries) *DeviceIntService {
 //通过函数的receiver访问queries再访问数据库函数
 
 func (s *DeviceIntService) ConnSignIn(ctx context.Context, req *devicepb.ConnSignInRequest) (*emptypb.Empty, error) {
-	_, err := rpc.GetAuthIntServiceClient().Auth(ctx, &authpb.AuthRequest{
-		UserId:   req.UserId,
-		DeviceId: req.DeviceId,
-		Token:    req.Token,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("authentication failed: %v", err)
+	// JWT 认证已在拦截器中完成，此处直接从 context 获取用户信息
+	userID, ok := ctx.Value("user_id").(uint64)
+	if !ok {
+		return nil, fmt.Errorf("user not authenticated")
 	}
+
 	device, err := s.queries.GetDevice(ctx, req.DeviceId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get device: %v", err)
 	}
+
+	// 验证设备是否属于当前用户
+	if device.UserID != userID {
+		return nil, fmt.Errorf("device does not belong to user")
+	}
+
 	err = SetDeviceOnline(ctx, &device)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set device online: %v", err)

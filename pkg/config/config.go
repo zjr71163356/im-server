@@ -64,6 +64,7 @@ func generateGRPCClientConfig(services ServiceConfig) GRPCClientConfig {
 type Configuration struct {
 	Database   DatabaseConfig   `yaml:"database"`
 	Services   ServiceConfig    `yaml:"services"`
+	JWT        JWTConfig        `yaml:"jwt"`
 	GRPCClient GRPCClientConfig `yaml:"-"` // 通过代码动态生成，忽略 YAML 解析
 }
 
@@ -82,6 +83,14 @@ type MySQLConfig struct {
 type RedisConfig struct {
 	Host     string `yaml:"host"`
 	Password string `yaml:"password"`
+}
+
+// JWTConfig 封装了JWT的配置
+type JWTConfig struct {
+	Secret   string `yaml:"secret"`   // JWT 签名密钥
+	Issuer   string `yaml:"issuer"`   // JWT 签发者
+	Audience string `yaml:"audience"` // JWT 接收者
+	TTL      string `yaml:"ttl"`      // JWT 过期时间 (如 "24h", "7d")
 }
 
 // ServiceConfig 封装了所有服务监听地址的配置

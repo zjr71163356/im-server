@@ -137,10 +137,9 @@ func (x *RegisterResponse) GetCode() uint32 {
 }
 
 type AuthRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        uint64                 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	DeviceId      uint64                 `protobuf:"varint,2,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
-	Token         string                 `protobuf:"bytes,3,opt,name=token,proto3" json:"token,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 仅需 token，根据 token 服务端解析身份
+	Token         string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -175,20 +174,6 @@ func (*AuthRequest) Descriptor() ([]byte, []int) {
 	return file_pkg_protocol_proto_auth_auth_int_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *AuthRequest) GetUserId() uint64 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
-}
-
-func (x *AuthRequest) GetDeviceId() uint64 {
-	if x != nil {
-		return x.DeviceId
-	}
-	return 0
-}
-
 func (x *AuthRequest) GetToken() string {
 	if x != nil {
 		return x.Token
@@ -198,8 +183,10 @@ func (x *AuthRequest) GetToken() string {
 
 type AuthResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Valid         bool                   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`    // Token 是否有效
-	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"` // 验证结果信息（如错误原因或成功提示）
+	Valid         bool                   `protobuf:"varint,1,opt,name=valid,proto3" json:"valid,omitempty"`                       // Token 是否有效
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`                    // 验证结果信息（如错误原因或成功提示）
+	UserId        uint64                 `protobuf:"varint,3,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`       // 由服务端解析出的用户ID
+	DeviceId      uint64                 `protobuf:"varint,4,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"` // 由服务端解析出的设备ID
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -246,6 +233,20 @@ func (x *AuthResponse) GetMessage() string {
 		return x.Message
 	}
 	return ""
+}
+
+func (x *AuthResponse) GetUserId() uint64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *AuthResponse) GetDeviceId() uint64 {
+	if x != nil {
+		return x.DeviceId
+	}
+	return 0
 }
 
 type LoginRequest struct {
@@ -479,17 +480,15 @@ const file_pkg_protocol_proto_auth_auth_int_proto_rawDesc = "" +
 	"\x10RegisterResponse\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x04R\x06userId\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x12\n" +
-	"\x04code\x18\x03 \x01(\rR\x04code\"}\n" +
-	"\vAuthRequest\x12#\n" +
-	"\auser_id\x18\x01 \x01(\x04B\n" +
-	"\xe0A\x02\xfaB\x042\x02(\x01R\x06userId\x12'\n" +
-	"\tdevice_id\x18\x02 \x01(\x04B\n" +
-	"\xe0A\x02\xfaB\x042\x02(\x01R\bdeviceId\x12 \n" +
-	"\x05token\x18\x03 \x01(\tB\n" +
-	"\xe0A\x02\xfaB\x04r\x02\x10\bR\x05token\">\n" +
+	"\x04code\x18\x03 \x01(\rR\x04code\"/\n" +
+	"\vAuthRequest\x12 \n" +
+	"\x05token\x18\x01 \x01(\tB\n" +
+	"\xe0A\x02\xfaB\x04r\x02\x10\bR\x05token\"t\n" +
 	"\fAuthResponse\x12\x14\n" +
 	"\x05valid\x18\x01 \x01(\bR\x05valid\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"\x8c\x01\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x17\n" +
+	"\auser_id\x18\x03 \x01(\x04R\x06userId\x12\x1b\n" +
+	"\tdevice_id\x18\x04 \x01(\x04R\bdeviceId\"\x8c\x01\n" +
 	"\fLoginRequest\x12(\n" +
 	"\busername\x18\x01 \x01(\tB\f\xe0A\x02\xfaB\x06r\x04\x10\x01\x18@R\busername\x12)\n" +
 	"\bpassword\x18\x02 \x01(\tB\r\xe0A\x02\xfaB\ar\x05\x10\x06\x18\x80\x01R\bpassword\x12'\n" +

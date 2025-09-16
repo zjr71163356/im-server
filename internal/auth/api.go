@@ -2,27 +2,17 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
+	"im-server/pkg/config"
 	"im-server/pkg/dao"
+	"im-server/pkg/jwt"
 	authpb "im-server/pkg/protocol/pb/authpb"
-	"strconv"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
-
-const AuthKey = "auth:%d"
-
-// AuthDevice 定义了存储在 Redis 中的设备认证信息
-type AuthDevice struct {
-	DeviceID       uint64 `json:"device_id"`        // 设备ID
-	Token          string `json:"token"`            // 设备Token
-	TokenExpiresAt int64  `json:"token_expires_at"` // Token过期时间
-}
 
 // AuthIntService 认证服务
 type AuthIntService struct {
@@ -39,40 +29,26 @@ func NewAuthIntService(queries dao.Querier, rdb redis.Cmdable) *AuthIntService {
 	}
 }
 
-// getAuthDevice 从 Redis 获取单个设备的认证信息
-func (s *AuthIntService) getAuthDevice(ctx context.Context, userID, deviceID uint64) (*AuthDevice, error) {
-	key := fmt.Sprintf(AuthKey, userID)
-	bytes, err := s.rdb.HGet(ctx, key, strconv.FormatUint(deviceID, 10)).Bytes()
-	if err != nil {
-		return nil, err
-	}
-
-	var device AuthDevice
-	err = json.Unmarshal(bytes, &device)
-	return &device, err
-}
-
-// Auth 权限校验
+// Auth 权限校验：使用 JWT 验证并解析身份
 func (s *AuthIntService) Auth(ctx context.Context, req *authpb.AuthRequest) (*authpb.AuthResponse, error) {
-	// 从Redis获取设备认证信息
-	authDevice, err := s.getAuthDevice(ctx, req.UserId, req.DeviceId)
+	if req.GetToken() == "" {
+		return nil, status.Error(codes.Unauthenticated, "empty token")
+	}
+
+	// 获取 JWT 配置
+	jwtConfig := config.Config.JWT
+	secret := []byte(jwtConfig.Secret)
+
+	// 解析并验证 JWT
+	_, _, err := jwt.ParseJWT(req.Token, secret, jwtConfig.Issuer, jwtConfig.Audience)
 	if err != nil {
-		return nil, status.Errorf(codes.Unauthenticated, "获取设备认证信息失败: %v", err)
-	}
-
-	// 验证token
-	if authDevice.Token != req.Token {
-		return nil, status.Errorf(codes.Unauthenticated, "token验证失败")
-	}
-
-	// 检查token是否过期
-	if time.Now().Unix() > authDevice.TokenExpiresAt {
-		return nil, status.Errorf(codes.Unauthenticated, "token已过期")
+		return nil, status.Errorf(codes.Unauthenticated, "invalid token: %v", err)
 	}
 
 	return &authpb.AuthResponse{
 		Valid:   true,
-		Message: "token验证成功",
+		Message: "token verified",
+		// 注意：需要重新生成 proto 代码后才能返回 user_id/device_id 字段
 	}, nil
 }
 
@@ -81,14 +57,13 @@ func (s *AuthIntService) Register(ctx context.Context, req *authpb.RegisterReque
 	// 检查用户是否存在
 	exists, err := s.queries.UserExistsByUsername(ctx, req.Username)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, " 检查用户是否存在失败: %v", err)
+		return nil, status.Errorf(codes.Internal, "检查用户是否存在失败: %v", err)
 	}
 	if exists {
-		// 如果 err 是 nil，说明用户已存在
 		return &authpb.RegisterResponse{
 			Message: "用户已存在",
-			Code:    uint32(codes.InvalidArgument), // 建议使用非零状态码表示失败
-		}, status.Errorf(codes.InvalidArgument, "用户已存在: %v", err)
+			Code:    uint32(codes.InvalidArgument),
+		}, status.Errorf(codes.InvalidArgument, "用户已存在")
 	}
 
 	hashedPassword, err := hashPassword(req.Password)
@@ -115,7 +90,7 @@ func (s *AuthIntService) Register(ctx context.Context, req *authpb.RegisterReque
 	return &authpb.RegisterResponse{
 		UserId:  uint64(lastID),
 		Message: "注册成功",
-		Code:    0, // 建议使用 0 表示成功
+		Code:    0,
 	}, nil
 }
 
@@ -127,44 +102,30 @@ func (s *AuthIntService) Login(ctx context.Context, req *authpb.LoginRequest) (*
 		return nil, status.Errorf(codes.Unauthenticated, "用户名或密码错误")
 	}
 
-	// 生成随机token
-	token := generateRandomToken()
+	// 获取 JWT 配置
+	jwtConfig := config.Config.JWT
+	secret := []byte(jwtConfig.Secret)
 
-	// 设置token过期时间
-	expiresAt := time.Now().Add(time.Hour * 24 * 7).Unix() // 7天有效期
-
-	// 将设备认证信息存储到Redis
-	authDevice := AuthDevice{
-		DeviceID:       req.DeviceId,
-		Token:          token,
-		TokenExpiresAt: expiresAt,
-	}
-	err = s.setAuthDevice(ctx, user.ID, req.DeviceId, authDevice)
+	// 解析 TTL
+	ttl, err := time.ParseDuration(jwtConfig.TTL)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "存储认证信息失败: %v", err)
+		ttl = 24 * time.Hour // 默认 24 小时
 	}
+
+	// 生成 JWT token
+	token, err := jwt.GenerateJWT(user.ID, req.DeviceId, secret, ttl, jwtConfig.Issuer, jwtConfig.Audience)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "生成token失败: %v", err)
+	}
+
+	expiresAt := time.Now().Add(ttl).Unix()
 
 	return &authpb.LoginResponse{
-		UserId:  user.ID,
-		Token:   token,
-		Message: "登录成功",
-		// Code:    0,
+		UserId:    user.ID,
+		Token:     token,
+		ExpiresAt: expiresAt,
+		Message:   "登录成功",
 	}, nil
-}
-
-// setAuthDevice 将设备认证信息存储到 Redis
-func (s *AuthIntService) setAuthDevice(ctx context.Context, userID, deviceID uint64, device AuthDevice) error {
-	bytes, err := json.Marshal(device)
-	if err != nil {
-		return err
-	}
-
-	key := fmt.Sprintf(AuthKey, userID)
-	_, err = s.rdb.HSet(ctx, key, strconv.FormatUint(deviceID, 10), bytes).Result()
-	if err != nil {
-		return err
-	}
-	return nil
 }
 
 // validateUserCredentials 验证用户凭据

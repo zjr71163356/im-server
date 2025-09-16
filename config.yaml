@@ -5,6 +5,12 @@ database:
     host: "localhost:6379"
     password: ""
 
+jwt:
+  secret: "your-super-secret-jwt-signing-key-change-in-production"
+  issuer: "im-server"
+  audience: "im-client"
+  ttl: "24h"
+
 services:
   gateway:
     port: 8080

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
@@ -53,6 +54,15 @@ func NewGatewayServer(cfg *config.Configuration) *GatewayServer {
 	mux := runtime.NewServeMux(
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{}),
 		runtime.WithErrorHandler(customErrorHandler),
+		// 仅透传 Authorization 头到下游 gRPC metadata（仅凭 token 验证）
+		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
+			switch strings.ToLower(key) {
+			case "authorization":
+				return key, true
+			default:
+				return runtime.DefaultHeaderMatcher(key)
+			}
+		}),
 	)
 
 	return &GatewayServer{

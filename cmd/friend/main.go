@@ -35,9 +35,12 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	// 使用公共校验拦截器
+	// 使用参数校验 + JWT 认证拦截器（链式）
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(rpc.ValidationUnaryInterceptor()),
+		grpc.ChainUnaryInterceptor(
+			rpc.ValidationUnaryInterceptor(),
+			rpc.JWTAuthUnaryInterceptor(),
+		),
 	)
 	friendpb.RegisterFriendExtServiceServer(grpcServer, friendService)
 

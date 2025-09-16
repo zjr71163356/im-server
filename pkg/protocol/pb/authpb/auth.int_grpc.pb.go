@@ -32,7 +32,7 @@ type AuthIntServiceClient interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
 	// 登录
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
-	// 权限校验
+	// 权限校验（生产设计：仅凭 token 即可解析出 user_id、device_id）
 	Auth(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 }
 
@@ -82,7 +82,7 @@ type AuthIntServiceServer interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
 	// 登录
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
-	// 权限校验
+	// 权限校验（生产设计：仅凭 token 即可解析出 user_id、device_id）
 	Auth(context.Context, *AuthRequest) (*AuthResponse, error)
 	mustEmbedUnimplementedAuthIntServiceServer()
 }

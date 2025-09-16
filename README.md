@@ -115,9 +115,11 @@
 - [x] 数据库设计：friend_request、friend 表结构设计与迁移、生成相应的dao层代码以及dao层代码的mock
 - [x] 重构:将项目中涉及logic的重构为device
 - [x] 实现用户搜索 API (GET /api/v1/user/search)
-- [] 实现发送好友申请 API (POST /api/v1/friend/request)
-- [ ] 实现查看好友申请列表 API (GET /api/v1/friend/requests)
-- [ ] 实现处理好友申请 API (PUT /api/v1/friend/request/:id)
+- [ ] 实现与测试发送好友申请 API (POST /api/v1/friend/request)
+- [ ] 实现与测试查看好友申请列表 API (GET /api/v1/friend/requests)
+- [ ] 实现与测试处理好友申请 API (PUT /api/v1/friend/request/:id)
+- [ ] 添加鉴权中间件
+- [ ] 添加获取userId将其存储到ctx中的中间件
 
 ### Phase 2: 基础单聊功能 (第 3-4 周)
 

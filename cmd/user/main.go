@@ -5,7 +5,7 @@ import (
 	"im-server/internal/user"
 	"im-server/pkg/config"
 	"im-server/pkg/dao"
-	
+
 	userpb "im-server/pkg/protocol/pb/userpb"
 	"im-server/pkg/rpc"
 	"log/slog"
@@ -27,7 +27,10 @@ func main() {
 
 	// 使用带拦截器的 gRPC 服务器
 	server := grpc.NewServer(
-		grpc.UnaryInterceptor(rpc.ValidationUnaryInterceptor()),
+		grpc.ChainUnaryInterceptor(
+			rpc.ValidationUnaryInterceptor(),
+			rpc.JWTAuthUnaryInterceptor(),
+		),
 	)
 
 	// 注册用户服务（不包括认证功能）

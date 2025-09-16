@@ -285,28 +285,6 @@ func (m *AuthRequest) validate(all bool) error {
 
 	var errors []error
 
-	if m.GetUserId() < 1 {
-		err := AuthRequestValidationError{
-			field:  "UserId",
-			reason: "value must be greater than or equal to 1",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
-	if m.GetDeviceId() < 1 {
-		err := AuthRequestValidationError{
-			field:  "DeviceId",
-			reason: "value must be greater than or equal to 1",
-		}
-		if !all {
-			return err
-		}
-		errors = append(errors, err)
-	}
-
 	if utf8.RuneCountInString(m.GetToken()) < 8 {
 		err := AuthRequestValidationError{
 			field:  "Token",
@@ -420,6 +398,10 @@ func (m *AuthResponse) validate(all bool) error {
 	// no validation rules for Valid
 
 	// no validation rules for Message
+
+	// no validation rules for UserId
+
+	// no validation rules for DeviceId
 
 	if len(errors) > 0 {
 		return AuthResponseMultiError(errors)
