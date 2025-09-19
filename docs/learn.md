@@ -367,3 +367,334 @@ func (s *FriendExtService) SendFriendRequest(ctx context.Context, req *friendpb.
 虽然方案 1 在开发和测试阶段更简单，但从安全性、可维护性和行业标准来看，**方案 2 是正确的选择**。安全性问题一旦发生，后果往往是灾难性的，而认证机制的复杂性是一次性的投入，带来的是长期的安全保障。
 
 建议继续推进当前的 Context 方案，并逐步完善认证 middleware 的实现。
+# 授权鉴权机制说明
+
+基于对 im-server 项目代码的分析，我来总结当前的签名授权机制实现方式，并对比其他方案的优劣。
+
+## 当前项目的授权机制实现
+
+### 1. **JWT 基础实现**
+
+```go
+// pkg/jwt/jwt.go - 当前实现
+type Claims struct {
+    UID uint64 `json:"uid"`
+    DID uint64 `json:"did"`
+    jwt.RegisteredClaims
+}
+
+// 生成JWT Token
+func GenerateJWT(uid, did uint64, ttl time.Duration, secret []byte, iss, aud string) (string, error)
+
+// 解析JWT Token  
+func ParseJWT(tokenStr string, secret []byte, iss, aud string) (uint64, uint64, error)
+```
+
+### 2. **gRPC 拦截器验证**
+
+```go
+// pkg/rpc/auth_interceptor.go - 统一验证入口
+func JWTAuthUnaryInterceptor() grpc.UnaryServerInterceptor {
+    // 1. 从 metadata 提取 Authorization Bearer token
+    // 2. 调用 jwt.ParseJWT 验证签名和过期时间
+    // 3. 将 user_id/device_id 注入到 context
+    // 4. 防止 alg 攻击，强制使用 HMAC 签名方法
+}
+```
+
+### 3. **Auth 服务集中签发**
+
+```go
+// internal/auth/api.go - Token 签发中心
+func (s *AuthIntService) Login(ctx context.Context, req *authpb.LoginRequest) (*authpb.LoginResponse, error) {
+    // 验证用户凭据后，生成JWT返回给客户端
+    token, err := jwt.GenerateJWT(user.ID, req.DeviceId, ttl, secret, iss, aud)
+}
+```
+
+### 4. **Gateway 层透传**
+
+```go
+// gateway/grpc_gateway.go - HTTP到gRPC的认证透传
+// Authorization header 自动映射到 gRPC metadata
+```
+
+## 优劣对比分析
+
+### 当前方案：JWT + HMAC (HS256)
+
+#### ✅ **优势**
+- **高性能**: 对称加密验证速度快，适合高并发 IM 场景
+- **无状态**: 各微服务独立验证，无需依赖 auth 服务，支持水平扩展
+- **简单部署**: 只需共享一个 secret，无需管理公私钥对
+- **分布式友好**: 完美契合项目的微服务架构
+
+#### ❌ **劣势**  
+- **无法撤销**: Token 签发后无法主动失效（用户注销/踢下线困难）
+- **密钥泄露风险**: 所有服务共享同一个 secret
+- **缺乏细粒度控制**: 无法实现会话管理、设备管理等复杂场景
+
+### 对比方案
+
+#### 1. **JWT + RSA (RS256)**
+
+```go
+// 公私钥分离的非对称签名
+type RSATokenManager struct {
+    privateKey *rsa.PrivateKey // auth 服务独有
+    publicKey  *rsa.PublicKey  // 其他服务共享
+}
+```
+
+**优势**:
+- 密钥分离：auth 服务私钥签发，其他服务公钥验证
+- 更高安全性：即使公钥泄露也无法伪造 token
+
+**劣势**:
+- 性能开销：RSA 验证比 HMAC 慢 10-100 倍
+- 部署复杂：需要 JWKS 管理公钥轮换
+- 对本项目过度设计
+
+#### 2. **Session + Redis**
+
+```go
+// 传统会话管理
+type SessionManager struct {
+    rdb redis.Cmdable
+}
+
+func (sm *SessionManager) ValidateSession(sessionID string) (*UserSession, error) {
+    // 每次请求查询 Redis
+}
+```
+
+**优势**:
+- 完全可控：可随时撤销任何会话
+- 精确统计：准确的在线用户、设备管理
+- 灵活权限：支持细粒度权限控制
+
+**劣势**:
+- 性能瓶颈：每次请求都要查询 Redis
+- 单点故障：Redis 故障影响所有验证
+- 状态依赖：不适合分布式扩展
+
+#### 3. **OAuth 2.0 + OpenID Connect**
+
+```go
+// 标准化的授权框架
+type OAuthProvider struct {
+    authServer   string
+    clientID     string
+    clientSecret string
+}
+```
+
+**优势**:
+- 标准化：业界成熟标准，易于集成第三方
+- 功能完整：支持授权码、刷新 token 等多种流程
+- 生态丰富：大量现成的库和工具
+
+**劣势**:
+- 复杂度高：对 IM 场景过度复杂
+- 性能开销：多次网络调用验证
+- 依赖外部：需要额外的 OAuth 服务器
+
+## 推荐的优化方案
+
+基于项目特点，我推荐 **JWT + Redis 混合方案**：
+
+### 增强实现
+
+```go
+// pkg/jwt/enhanced_jwt.go - 增强版JWT
+type EnhancedClaims struct {
+    UID uint64 `json:"uid"`
+    DID uint64 `json:"did"`
+    JTI string `json:"jti"` // JWT ID，用于黑名单
+    jwt.RegisteredClaims
+}
+
+// pkg/redis/token_manager.go - Token管理器
+type TokenManager struct {
+    rdb redis.Cmdable
+}
+
+// 黑名单机制
+func (tm *TokenManager) BlacklistToken(ctx context.Context, jti string, ttl time.Duration) error {
+    return tm.rdb.Set(ctx, fmt.Sprintf("blacklist:%s", jti), "1", ttl).Err()
+}
+
+func (tm *TokenManager) IsBlacklisted(ctx context.Context, jti string) (bool, error) {
+    result := tm.rdb.Exists(ctx, fmt.Sprintf("blacklist:%s", jti))
+    return result.Val() > 0, result.Err()
+}
+
+// 设备会话管理
+func (tm *TokenManager) StoreActiveToken(ctx context.Context, userID, deviceID uint64, jti string) error {
+    key := fmt.Sprintf("user:token:%d:%d", userID, deviceID)
+    return tm.rdb.Set(ctx, key, jti, time.Hour*24).Err()
+}
+```
+
+### 增强的拦截器
+
+```go
+// pkg/rpc/enhanced_auth_interceptor.go
+func EnhancedJWTAuthInterceptor(tokenManager *redis.TokenManager) grpc.UnaryServerInterceptor {
+    return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+        // 1. 解析JWT获取 uid/did/jti
+        uid, did, jti, err := jwt.ParseEnhancedJWT(token, secret, iss, aud)
+        
+        // 2. 检查黑名单（只有需要时才查询Redis）
+        if blacklisted, err := tokenManager.IsBlacklisted(ctx, jti); blacklisted {
+            return nil, status.Error(codes.Unauthenticated, "token revoked")
+        }
+        
+        // 3. 注入用户信息
+        ctx = context.WithValue(ctx, "user_id", uid)
+        ctx = context.WithValue(ctx, "device_id", did)
+        
+        return handler(ctx, req)
+    }
+}
+```
+
+### 注销功能实现
+
+```go
+// internal/auth/api.go - 增加注销接口
+func (s *AuthIntService) Logout(ctx context.Context, req *authpb.LogoutRequest) (*authpb.LogoutResponse, error) {
+    jti := ctx.Value("token_id").(string)
+    
+    // 将当前token加入黑名单
+    if err := s.tokenManager.BlacklistToken(ctx, jti, time.Hour*24*7); err != nil {
+        return nil, status.Error(codes.Internal, "logout failed")
+    }
+    
+    return &authpb.LogoutResponse{Message: "注销成功"}, nil
+}
+
+// 踢下线功能
+func (s *AuthIntService) KickDevice(ctx context.Context, req *authpb.KickDeviceRequest) (*authpb.KickDeviceResponse, error) {
+    // 获取目标设备的活跃token并加入黑名单
+    activeJTI, err := s.tokenManager.GetActiveToken(ctx, req.UserId, req.DeviceId)
+    if err == nil && activeJTI != "" {
+        s.tokenManager.BlacklistToken(ctx, activeJTI, time.Hour*24*7)
+    }
+    
+    return &authpb.KickDeviceResponse{Message: "设备已下线"}, nil
+}
+```
+
+## 推荐方案的优势
+
+### 1. **性能最优**
+- 99% 的请求只做 JWT 本地验证（无网络 I/O）
+- 仅在注销/踢下线时查询 Redis 黑名单
+- 完美适合高并发 IM 场景
+
+### 2. **功能完整**
+- ✅ 支持用户主动注销
+- ✅ 支持管理员踢下线
+- ✅ 支持多设备登录管理
+- ✅ 支持异地登录检测
+
+### 3. **运维友好**
+- 黑名单自动过期，无需手动清理
+- 可监控异常 token 使用
+- 支持灰度发布（新旧 token 并存）
+
+### 4. **渐进式升级**
+- 基于现有 JWT 实现，改动最小
+- 向后兼容，可平滑升级
+- 不影响现有的微服务架构
+
+这种混合方案既保持了 JWT 的无状态优势，又通过 Redis 提供了有状态的精确控制能力，是当前项目最适合的升级路径。
+
+# 无状态（Stateless）与有状态（Stateful）服务的核心区别是？
+核心区别在于**服务本身是否保存客户端的会话状态（上下文信息）**。
+
+---
+
+### 1. 无状态服务 (Stateless)
+
+-   **不保存状态**：服务处理完请求后，不会保留任何关于该次交互的记忆。每个请求都必须包含处理它所需的全部信息。
+-   **易于扩展**：任何一个服务实例都可以处理任何请求，因此可以简单地通过增加服务器数量来水平扩展。
+-   **高可用**：单个实例宕机不影响用户，请求可以无缝切换到其他健康实例。
+-   **状态外部化**：状态被存储在外部共享存储中（如数据库、Redis）或由客户端自己携带（如 JWT Token）。
+-   **在您的项目中**：`auth`, `user`, `friend`, `message` 服务都是无状态的。它们处理请求所需的数据要么来自请求本身，要么来自外部的 MySQL/Redis。
+
+### 2. 有状态服务 (Stateful)
+
+-   **保存状态**：服务会在自身内存中为客户端维持一个会话状态。后续的请求依赖于这个已存在于服务器上的状态。
+-   **扩展复杂**：通常需要“会话粘滞”（Sticky Session），确保来自同一客户端的请求总是被路由到保存其状态的同一个实例上。
+-   **故障敏感**：单个实例宕机将导致其维护的所有会话状态丢失，影响用户体验。
+-   **状态内部化**：状态主要存在于服务实例的内存中。
+-   **在您的项目中**：`connect` 服务是典型的有状态服务，因为它维护着与客户端之间的 WebSocket **长连接**，这个连接本身就是一种状态。
+
+好的，我来解释无状态（Stateless）与有状态（Stateful）服务的定义，并结合您的 `im-server` 项目进行说明。
+
+这是分布式系统设计中的一个核心概念，直接关系到服务的可扩展性、可靠性和复杂性。
+
+---
+
+### 1. 无状态服务 (Stateless Service)
+
+**定义**：
+无状态服务**不保存**任何关于客户端先前交互的上下文信息（状态）。每一次请求对于服务器来说都是全新的、独立的，它包含了处理该请求所需的所有信息。服务器处理完请求后，不会“记住”任何关于这次交互的事情。
+
+**通俗比喻**：
+就像一个**自动售货机**。你投入硬币，按下按钮，它吐出饮料。它不关心你是谁，也不记得你上次买了什么。每次购买都是一次独立的交易。
+
+**关键特征**：
+*   **无会话状态**：服务器自身内存中不存储任何客户端的会话数据。
+*   **极易水平扩展**：因为任何一台服务器实例都可以处理任何请求，所以可以简单地在负载均衡器后面增加更多的服务实例来分担压力。
+*   **高可用性**：如果一个实例宕机，负载均衡器可以无缝地将请求转发到另一个健康的实例，不会丢失任何会话信息，因为信息根本就不在服务器上。
+*   **状态外部化**：服务的状态被存储在外部系统中，例如：
+    *   **数据库/缓存** (MySQL, Redis)：用户的个人资料、好友关系等。
+    *   **客户端**：通过 Token (如 JWT) 携带用户身份信息。
+
+**在您的 `im-server` 项目中**：
+`auth`, `user`, `friend`, `message` 这些通过 gRPC 提供核心业务逻辑的服务，都应该是**无状态**的。
+*   **为什么？** 当 gateway 收到一个“添加好友”的 HTTP 请求时，它会转发给 `friend` 服务。这个 gRPC 请求本身包含了发起者 `UserID` (来自 JWT) 和目标好友的 `ID`。`friend` 服务处理这个请求，在 MySQL 中创建一条好友申请记录，然后就完成了。它不需要记住“这个用户正在申请好友”。下一次该用户查看好友列表的请求，可以由 `friend` 服务的任何一个实例来处理。
+
+---
+
+### 2. 有状态服务 (Stateful Service)
+
+**定义**：
+有状态服务**会保存**并维护客户端的交互状态（上下文）。后续的请求会依赖于服务器上已存储的这个状态。服务器需要“记住”客户端是谁，以及它当前处于什么状态。
+
+**通俗比喻**：
+就像一通**电话**。一旦连接建立，双方就可以连续对话。对话的上下文是持续的，你下一句说什么和上一句是相关的。这个“连接”本身就是一种状态。
+
+**关键特征**：
+*   **维持会话状态**：服务器在内存中为每个客户端维持一个会话（Session）。
+*   **扩展复杂**：简单地增加实例是不够的。需要确保来自同一客户端的后续请求被路由到**同一个**保存其状态的服务器实例上（这称为“会话粘滞”或“Sticky Sessions”）。
+*   **故障恢复困难**：如果一个实例宕机，它内存中保存的所有客户端状态都会丢失。客户端需要重新建立连接和状态，体验较差。
+*   **状态内部化**：状态主要存储在服务实例的内存中。
+
+**在您的 `im-server` 项目中**：
+`connect` 服务是典型的**有状态**服务。
+*   **为什么？** `connect` 服务的核心职责是维护与客户端之间的 WebSocket 长连接。
+    *   当一个客户端通过 WebSocket 连接上来，`connect` 服务的一个实例会为它创建一个 `Conn` 对象，并记录其 `UserID`、`DeviceID` 等信息。
+    *   这个**TCP/WebSocket 连接本身就是一种状态**。
+    *   当 `message` 服务需要向这个用户推送消息时，它必须通过某种方式找到维持着这个用户连接的那个**特定的 `connect` 服务实例**，并将消息发给它，再由它通过 WebSocket 连接推送给客户端。
+
+---
+
+### 总结对比
+
+| 特性 | 无状态服务 (Stateless) | 有状态服务 (Stateful) |
+| :--- | :--- | :--- |
+| **状态存储** | 外部 (数据库, Redis, 客户端 Token) | 内部 (服务实例内存) |
+| **请求处理** | 每个请求都独立，自包含 | 后续请求依赖于先前状态 |
+| **水平扩展** | **非常容易**，直接增加实例 | **复杂**，需要会话粘滞或状态同步 |
+| **可靠性** | **高**，实例故障无影响 | **低**，实例故障导致状态丢失 |
+| **`im-server` 示例** | `auth`, `user`, `friend`, `message` | `connect` |
+
+### 对您项目设计的意义
+
+您的项目设计体现了将**无状态计算**与**有状态连接**分离的最佳实践：
+1.  **核心业务逻辑（无状态）**：将注册、登录、好友管理、消息处理等业务逻辑做成无状态的 gRPC 服务，使得这部分最核心、最复杂的逻辑可以被轻松地扩展和维护。
+2.  **连接管理（有状态）**：将管理海量长连接的复杂性隔离在 `connect` 服务中。虽然 `connect` 服务是有状态的，但可以通过将“用户在哪台 `connect` 节点上”这个路由信息存储在 Redis 中，来降低其状态性，从而实现 `connect` 层的水平扩展。

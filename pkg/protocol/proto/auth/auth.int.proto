@@ -2,7 +2,6 @@ syntax = "proto3";
 package auth;
 option go_package = "pkg/protocol/pb/authpb";
 
-import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "google/api/field_behavior.proto";
 import "validate/validate.proto";

@@ -24,6 +24,34 @@ func NewFriendExtService(queries dao.Querier) *FriendExtService {
 	}
 }
 
+// 发送好友消息
+func (s *FriendExtService) SendMessage(ctx context.Context, req *friendpb.SendFriendMessageRequest) (*friendpb.SendFriendMessageReply, error) {
+	userId := ctx.Value("user_id")
+	deviceId := ctx.Value("device_id")
+	if userId == nil || deviceId == nil {
+		return nil, status.Error(codes.Unauthenticated, "user not authenticated")
+	}
+	//检查是否为好友关系
+	friendshipCount, err := s.queries.CheckFriendship(ctx, dao.CheckFriendshipParams{
+		UserID:   userId.(uint64),
+		FriendID: req.RecipientId,
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed to check friendship")
+	}
+	if friendshipCount == 0 {
+		return nil, status.Error(codes.PermissionDenied, "is not friend")
+	}
+
+	
+
+	// 目前仅校验通过后返回占位的 message_id，后续由消息服务分配
+	return &friendpb.SendFriendMessageReply{
+		MessageId: "0",
+	}, nil
+
+}
+
 // SendFriendRequest 发送好友申请
 func (s *FriendExtService) SendFriendRequest(ctx context.Context, req *friendpb.SendFriendRequestRequest) (*friendpb.SendFriendRequestResponse, error) {
 	if req == nil {

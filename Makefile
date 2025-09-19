@@ -1,3 +1,6 @@
+# 使用 bash 以便在配方中使用更丰富的语法
+SHELL := /bin/bash
+
 # 查找项目中需要编译的 .proto 文件（排除vendor目录）
 PROTO_FILES := $(shell find pkg/protocol/proto -name "*.proto")
 DATABASE_URL := "mysql://root:azsx0123456@tcp(localhost:3307)/imserver?multiStatements=true"
@@ -73,6 +76,7 @@ sqlc-generate:
 # 完整的数据库更新流程：迁移 + 生成代码
 db-update: migrate-up sqlc-generate  mockdb
 	@echo "Database schema updated and Go code regenerated."
+
 dao-update: sqlc-generate mockdb
 	@echo "DAO code regenerated."
 # 验证数据库连接
@@ -97,57 +101,89 @@ build-user:
 	@echo "Building user service..."
 	go build -o bin/user ./cmd/user
 
-build-all: build-auth build-connect build-device build-user
+# 构建 gateway 服务
+build-gateway:
+	@echo "Building gateway service..."
+	go build -o bin/gateway ./cmd/gateway
+
+# 一次性构建全部服务
+build-all: build-auth build-connect build-device build-user build-gateway
 	@echo "All services built successfully."
 
 mockdb:
 	@echo "Generating mock for DAO layer..."
 	mockgen -source=pkg/dao/querier.go -destination=pkg/mocks/mock_querier.go -package=mocks
 
-e2e-start-containers:
-	@echo "Starting Redis and MySQL containers (if not running)..."
-	@docker start redis 2>/dev/null || docker run -d --name redis -p 6379:6379 redis:alpine
-	@docker start mysql 2>/dev/null || docker run -d --name mysql -e MYSQL_ROOT_PASSWORD=azsx0123456 -p 3307:3306 mysql:8.0
+# ---------------------------
+# 运行项目（改为纯 Makefile 管理）
+# ---------------------------
 
-# Stop containers used for e2e
-e2e-stop-containers:
-	@echo "Stopping Redis and MySQL containers..."
-	@docker stop redis mysql || true
+# 启动依赖（MySQL/Redis/Mongo/NATS）并等待 MySQL 健康
+start-deps:
+	@echo "Starting dependencies (docker compose up -d)..."
+	@docker compose up -d
+	@echo "Waiting for MySQL container (im_mysql) to be healthy..."
+	@for i in $$(seq 1 30); do \
+		status=$$(docker inspect -f '{{.State.Health.Status}}' im_mysql 2>/dev/null || echo starting); \
+		if [ "$$status" = "healthy" ]; then \
+			echo "MySQL is healthy."; \
+			break; \
+		fi; \
+		if [ $$i -eq 30 ]; then \
+			echo "Timeout waiting for MySQL to be healthy"; \
+			exit 1; \
+		fi; \
+		sleep 2; \
+	 done
 
-# Wait for services to be ready (delegates to script)
-e2e-wait:
-	@echo "Waiting for Redis and MySQL to be ready..."
-	@./scripts/e2e_test.sh wait
+# 后台启动业务服务（auth/user/device/connect）和 gateway（不再依赖脚本，不写 PID 文件）
+start-services: build-all
+	@mkdir -p logs || true
+	@echo "Starting services in background (logs/*.log)..."
+	@nohup bin/auth     > logs/auth.log 2>&1 & echo "auth PID $$!"     || true
+	@nohup bin/user     > logs/user.log 2>&1 & echo "user PID $$!"     || true
+	@nohup bin/device   > logs/device.log 2>&1 & echo "device PID $$!"   || true
+	@nohup bin/connect  > logs/connect.log 2>&1 & echo "connect PID $$!"  || true
+	@nohup bin/gateway -config config.yaml > logs/gateway.log 2>&1 & echo "gateway PID $$!" || true
+	@echo "Services started. See logs/ for output."
 
-# Build and start auth service for e2e
-e2e-build-auth:
-	@echo "Building auth service..."
-	@go build -o bin/auth ./cmd/auth
+# 一键启动：依赖 -> 迁移 -> 构建 -> 运行
+start: start-deps migrate-up start-services
+	@echo "Project is up. Gateway: http://localhost:8080  Mongo Express: http://localhost:8081"
 
-# Start auth service in background and record pid
-e2e-start-auth: e2e-build-auth
-	@mkdir -p logs run || true
-	@echo "Starting auth service in background (logs to logs/auth.log)..."
-	@nohup bin/auth > logs/auth.log 2>&1 & echo $$! > run/auth.pid || true
+# 停止服务（按可执行路径精确匹配，不依赖脚本/PID 文件）
+stop-services:
+	@echo "Stopping app services..."
+	@for s in auth user device connect gateway; do \
+		p=$$(realpath bin/$$s 2>/dev/null || echo ""); \
+		if [ -n "$$p" ] && pgrep -f "^$$p( |$$)" >/dev/null 2>&1; then \
+			echo "Stopping $$s ..."; \
+			pkill -f "^$$p( |$$)" || true; \
+		else \
+			echo "$$s not running"; \
+		fi; \
+	 done
 
-# Stop auth service started by e2e
-e2e-stop-auth:
-	@if [ -f run/auth.pid ]; then \
-		PID=`cat run/auth.pid`; \
-		kill $$PID || true; \
-		rm -f run/auth.pid; \
-		echo "Stopped auth (pid $$PID)"; \
-	else \
-		echo "No auth pid file, skip"; \
-	fi
+stop-deps:
+	@echo "Stopping dependencies (docker compose down)..."
+	@docker compose down
 
-# Run smoke tests (delegates to script)
-e2e-smoke:
-	@echo "Running e2e smoke tests..."
-	@./scripts/e2e_test.sh smoke || true
+stop: stop-services stop-deps
+	@echo "Project stopped."
 
-# Full e2e flow: start containers, wait, start services, run smoke, cleanup
-e2e: e2e-start-containers e2e-wait e2e-start-auth e2e-smoke e2e-stop-auth e2e-stop-containers
-	@echo "E2E flow finished."
+# 查看运行状态
+status:
+	@echo "Docker compose services:" && docker compose ps || true
+	@echo "\nApp processes:"
+	@for s in auth user device connect gateway; do \
+		p=$$(realpath bin/$$s 2>/dev/null || echo ""); \
+		if [ -z "$$p" ]; then echo " - $$s: binary missing"; continue; fi; \
+		pgrep -fl "^$$p( |$$)" >/dev/null 2>&1 && pgrep -fl "^$$p( |$$)" | sed 's/^/ - /' || echo " - $$s: stopped"; \
+	 done
 
-.PHONY: migrate-up migrate-down migrate-create proto sqlc-generate db-update db-check build-auth build-connect build-device build-user build-all e2e-start-containers e2e-stop-containers e2e-wait e2e-build-auth e2e-start-auth e2e-stop-auth e2e-smoke e2e
+# ---------------------------
+# 移除脚本化 e2e 目标（保留占位说明）
+# ---------------------------
+# e2e 相关逻辑请改为使用专用测试工具或在 CI 中编排。
+
+.PHONY: migrate-up migrate-down migrate-create proto sqlc-generate db-update db-check build-auth build-connect build-device build-user build-gateway build-all start-deps start-services start stop-services stop-deps stop status mockdb proto-openapi

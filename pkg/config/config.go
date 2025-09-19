@@ -65,13 +65,15 @@ type Configuration struct {
 	Database   DatabaseConfig   `yaml:"database"`
 	Services   ServiceConfig    `yaml:"services"`
 	JWT        JWTConfig        `yaml:"jwt"`
-	GRPCClient GRPCClientConfig `yaml:"-"` // 通过代码动态生成，忽略 YAML 解析
+	Broker     BrokerConfig     `yaml:"broker"` // 新增：消息中间件配置（如 NATS）
+	GRPCClient GRPCClientConfig `yaml:"-"`      // 通过代码动态生成，忽略 YAML 解析
 }
 
 // DatabaseConfig 封装了所有数据存储的配置
 type DatabaseConfig struct {
 	MySQL MySQLConfig `yaml:"mysql"`
 	Redis RedisConfig `yaml:"redis"`
+	Mongo MongoConfig `yaml:"mongo"` // 新增：MongoDB 配置
 }
 
 // MySQLConfig 封装了MySQL的配置
@@ -83,6 +85,19 @@ type MySQLConfig struct {
 type RedisConfig struct {
 	Host     string `yaml:"host"`
 	Password string `yaml:"password"`
+}
+
+// MongoConfig 封装了MongoDB的配置
+type MongoConfig struct {
+	URI        string `yaml:"uri"`
+	Database   string `yaml:"database"`
+	AuthSource string `yaml:"authSource"`
+}
+
+// BrokerConfig 封装了消息中间件（例如 NATS）配置
+type BrokerConfig struct {
+	NATSURL      string `yaml:"nats_url"`
+	UseJetStream bool   `yaml:"use_jetstream"`
 }
 
 // JWTConfig 封装了JWT的配置

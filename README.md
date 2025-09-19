@@ -112,25 +112,42 @@
 
 **Week 1-2:**
 
-- [x] 数据库设计：friend_request、friend 表结构设计与迁移、生成相应的dao层代码以及dao层代码的mock
-- [x] 重构:将项目中涉及logic的重构为device
+- [x] 数据库设计：friend_request、friend 表结构设计与迁移、生成相应的 dao 层代码以及 dao 层代码的 mock
+- [x] 重构:将项目中涉及 logic 的重构为 device
 - [x] 实现用户搜索 API (GET /api/v1/user/search)
-- [ ] 实现与测试发送好友申请 API (POST /api/v1/friend/request)
-- [ ] 实现与测试查看好友申请列表 API (GET /api/v1/friend/requests)
-- [ ] 实现与测试处理好友申请 API (PUT /api/v1/friend/request/:id)
-- [ ] 添加鉴权中间件
-- [ ] 添加获取userId将其存储到ctx中的中间件
+- [x] 实现与测试发送好友申请 API (POST /api/v1/friend/request)
+- [x] 实现与测试查看好友申请列表 API (GET /api/v1/friend/requests)
+- [x] 实现与测试处理好友申请 API (PUT /api/v1/friend/request/:id)
+- [x] 添加鉴权中间件
+- [x] 添加获取 userId 将其存储到 ctx 中的中间件
 
 ### Phase 2: 基础单聊功能 (第 3-4 周)
 
 **Week 3-4:**
 
-- [ ] 数据库设计：message、conversation 表结构设计
+- [x] 数据库设计：message、conversation 表结构设计
+- [] proto 设计:message
 - [ ] 实现消息发送 WebSocket 协议
 - [ ] 实现消息持久化存储 (MongoDB)
 - [ ] 实现离线消息拉取 API
 - [ ] 实现获取好友列表 API (GET /api/v1/friends)
 
+客户端经 WS/HTTP 发起发送请求（携带 recipient_id、client_msg_id、内容等）。
+Gateway/拦截器校验 JWT，注入 user_id/device_id。
+Message 服务：
+参数校验（protoc-gen-validate）与限流（IP/用户/会话维度）。
+调 Friend 服务校验好友关系/黑名单（优先读缓存，回源 DB）。
+幂等：以 (sender_id, device_id, client_msg_id) 作为幂等键，重复请求直接返回首个结果。
+会话解析：生成/获取单聊会话 conversation_id。
+序列号：按会话发号（会话序列）或按用户收件箱发号（接收方序列），需要原子自增（Redis INCR + 持久化或 DB 乐观锁）。
+落库：消息体入 MongoDB，索引/关系入 MySQL（message_index、conversation、user_conversation 更新未读/last_message）。
+事务/一致性：使用 Outbox 或事务消息，确保“落库成功 -> 投递事件”不丢失。
+发布事件：写入 Kafka/NATS（topic: message.deliver）。
+Connect/Delivery 服务订阅事件，向在线设备推送；离线则依赖未读与历史拉取。
+返回发送结果：server_msg_id、seq、server_timestamp、conversation_id、回显的 client_msg_id。
+
+1."消息体入 MongoDB"目前环境没有MongoDB数据库，请解决这个问题，最好使用docker
+2."使用 Outbox 或事务消息" 请解释什么是Outbox？能否只使用事务消息解决
 ### Phase 3: 完善单聊 (第 5-6 周)
 
 **Week 5-6:**

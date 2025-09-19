@@ -11,7 +11,6 @@ import (
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
-	_ "google.golang.org/protobuf/types/known/emptypb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -473,7 +472,7 @@ var File_pkg_protocol_proto_auth_auth_int_proto protoreflect.FileDescriptor
 
 const file_pkg_protocol_proto_auth_auth_int_proto_rawDesc = "" +
 	"\n" +
-	"&pkg/protocol/proto/auth/auth.int.proto\x12\x04auth\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x17validate/validate.proto\"f\n" +
+	"&pkg/protocol/proto/auth/auth.int.proto\x12\x04auth\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/api/field_behavior.proto\x1a\x17validate/validate.proto\"f\n" +
 	"\x0fRegisterRequest\x12(\n" +
 	"\busername\x18\x01 \x01(\tB\f\xe0A\x02\xfaB\x06r\x04\x10\x01\x18@R\busername\x12)\n" +
 	"\bpassword\x18\x02 \x01(\tB\r\xe0A\x02\xfaB\ar\x05\x10\x06\x18\x80\x01R\bpassword\"Y\n" +

@@ -35,6 +35,234 @@ var (
 	_ = sort.Sort
 )
 
+// Validate checks the field values on SendFriendMessageRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SendFriendMessageRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SendFriendMessageRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SendFriendMessageRequestMultiError, or nil if none found.
+func (m *SendFriendMessageRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SendFriendMessageRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if m.GetRecipientId() < 1 {
+		err := SendFriendMessageRequestValidationError{
+			field:  "RecipientId",
+			reason: "value must be greater than or equal to 1",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetMessage()); l < 1 || l > 1000 {
+		err := SendFriendMessageRequestValidationError{
+			field:  "Message",
+			reason: "value length must be between 1 and 1000 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return SendFriendMessageRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// SendFriendMessageRequestMultiError is an error wrapping multiple validation
+// errors returned by SendFriendMessageRequest.ValidateAll() if the designated
+// constraints aren't met.
+type SendFriendMessageRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SendFriendMessageRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SendFriendMessageRequestMultiError) AllErrors() []error { return m }
+
+// SendFriendMessageRequestValidationError is the validation error returned by
+// SendFriendMessageRequest.Validate if the designated constraints aren't met.
+type SendFriendMessageRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SendFriendMessageRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SendFriendMessageRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SendFriendMessageRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SendFriendMessageRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SendFriendMessageRequestValidationError) ErrorName() string {
+	return "SendFriendMessageRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SendFriendMessageRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSendFriendMessageRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SendFriendMessageRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SendFriendMessageRequestValidationError{}
+
+// Validate checks the field values on SendFriendMessageReply with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SendFriendMessageReply) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SendFriendMessageReply with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SendFriendMessageReplyMultiError, or nil if none found.
+func (m *SendFriendMessageReply) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SendFriendMessageReply) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for MessageId
+
+	if len(errors) > 0 {
+		return SendFriendMessageReplyMultiError(errors)
+	}
+
+	return nil
+}
+
+// SendFriendMessageReplyMultiError is an error wrapping multiple validation
+// errors returned by SendFriendMessageReply.ValidateAll() if the designated
+// constraints aren't met.
+type SendFriendMessageReplyMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SendFriendMessageReplyMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SendFriendMessageReplyMultiError) AllErrors() []error { return m }
+
+// SendFriendMessageReplyValidationError is the validation error returned by
+// SendFriendMessageReply.Validate if the designated constraints aren't met.
+type SendFriendMessageReplyValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SendFriendMessageReplyValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SendFriendMessageReplyValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SendFriendMessageReplyValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SendFriendMessageReplyValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SendFriendMessageReplyValidationError) ErrorName() string {
+	return "SendFriendMessageReplyValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SendFriendMessageReplyValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSendFriendMessageReply.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SendFriendMessageReplyValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SendFriendMessageReplyValidationError{}
+
 // Validate checks the field values on SendFriendRequestRequest with the rules
 // defined in the proto definition for this message. If any rules are
 // violated, the first error encountered is returned, or nil if there are no violations.

@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: im_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: azsx0123456
+      MYSQL_DATABASE: imserver
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pazsx0123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - im-net
+
+  redis:
+    image: redis:7
+    container_name: im_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - im-net
+
+  mongo:
+    image: mongo:6
+    container_name: im_mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: gim
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - im-net
+
+  mongo-express:
+    image: mongo-express:1
+    container_name: im_mongo_express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_SERVER: mongo
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_BASICAUTH: "false"
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongo
+    networks:
+      - im-net
+
+  nats:
+    image: nats:2
+    container_name: im_nats
+    restart: unless-stopped
+    command: ["-js", "-m", "8222"]
+    ports:
+      - "4222:4222"  # client
+      - "8222:8222"  # monitoring
+    networks:
+      - im-net
+
+networks:
+  im-net:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  mongo_data:
+    driver: local
