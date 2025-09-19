@@ -328,9 +328,10 @@ db/
 
 运行要点：
 
-- 配置 `broker.kafka_brokers` 与 `broker.topic_prefix`（如 `im`），确保 Kafka/ZooKeeper 已就绪。
-- `make build-all && make start-services` 会启动 outbox 与 connect，完成端到端推送。
-- 日志位于 `logs/outbox.log` 与 `logs/connect.log`（按 Makefile 启动脚本为准）。
+- 依赖：MySQL、Redis、MongoDB、Kafka（建议用 docker compose 启动，参见项目根目录 docker-compose.yml，如未提供请自备环境）。
+- WebSocket：Connect 监听 `ws_addr`（默认 `:8082`），路径 `/ws`。
+- 启动：`make start`（包含依赖、迁移、构建、启动服务）。
+- 停止：`make stop`。
 
 ### Outbox 与事务消息的取舍
 

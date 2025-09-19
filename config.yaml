@@ -33,6 +33,7 @@ services:
   connect:
     rpc_addr: ":50055"
     local_addr: "localhost:50055"
+    ws_addr: ":8082"
   message:
     rpc_addr: ":50056"
     local_addr: "localhost:50056"

@@ -38,6 +38,7 @@ func (p *KafkaProducer) Topic(name string) string {
 
 func (p *KafkaProducer) Publish(ctx context.Context, topic string, key, value []byte) error {
 	return p.writer.WriteMessages(ctx, kafka.Message{
+		Topic: topic,
 		Key:   key,
 		Value: value,
 	})
