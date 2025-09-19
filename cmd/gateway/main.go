@@ -38,6 +38,7 @@ func main() {
 	log.Printf("  POST /api/v1/auth/login - User login")
 	log.Printf("  POST /api/v1/auth/verify - Token verification")
 	log.Printf("  POST /api/v1/user/search - User search")
+	log.Printf("  POST /api/v1/message - Send message")
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), gatewayServer))
 }

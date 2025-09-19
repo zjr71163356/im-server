@@ -33,7 +33,13 @@ services:
   connect:
     rpc_addr: ":50055"
     local_addr: "localhost:50055"
+  message:
+    rpc_addr: ":50056"
+    local_addr: "localhost:50056"
 
 broker:
-  nats_url: "nats://localhost:4222"
-  use_jetstream: true
+  kafka_brokers:
+    - "localhost:9092"
+  topic_prefix: "im"
+  nats_url: ""
+  use_jetstream: false

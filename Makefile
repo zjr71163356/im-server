@@ -5,6 +5,7 @@ SHELL := /bin/bash
 PROTO_FILES := $(shell find pkg/protocol/proto -name "*.proto")
 DATABASE_URL := "mysql://root:azsx0123456@tcp(localhost:3307)/imserver?multiStatements=true"
 DAO_PATH := "pkg/dao"
+BIN_DIR := bin
 
 
 # 将 Go 的 bin 目录添加到 PATH
@@ -106,8 +107,17 @@ build-gateway:
 	@echo "Building gateway service..."
 	go build -o bin/gateway ./cmd/gateway
 
+build-message:
+	@echo "Building message service..."
+	@mkdir -p $(BIN_DIR)
+	@go build -o $(BIN_DIR)/message ./cmd/message
+
+build-outbox:
+	@echo "Building outbox dispatcher..."
+	@go build -o bin/outbox ./cmd/outbox
+
 # 一次性构建全部服务
-build-all: build-auth build-connect build-device build-user build-gateway
+build-all: build-auth build-connect build-device build-user build-gateway build-message build-outbox
 	@echo "All services built successfully."
 
 mockdb:
@@ -145,6 +155,8 @@ start-services: build-all
 	@nohup bin/device   > logs/device.log 2>&1 & echo "device PID $$!"   || true
 	@nohup bin/connect  > logs/connect.log 2>&1 & echo "connect PID $$!"  || true
 	@nohup bin/gateway -config config.yaml > logs/gateway.log 2>&1 & echo "gateway PID $$!" || true
+	@nohup $(BIN_DIR)/message > logs/message.log 2>&1 & echo "message PID $$!" || true
+	@nohup bin/outbox  > logs/outbox.log 2>&1 & echo "outbox PID $$!"  || true
 	@echo "Services started. See logs/ for output."
 
 # 一键启动：依赖 -> 迁移 -> 构建 -> 运行
@@ -154,7 +166,7 @@ start: start-deps migrate-up start-services
 # 停止服务（按可执行路径精确匹配，不依赖脚本/PID 文件）
 stop-services:
 	@echo "Stopping app services..."
-	@for s in auth user device connect gateway; do \
+	@for s in auth user device connect gateway outbox; do \
 		p=$$(realpath bin/$$s 2>/dev/null || echo ""); \
 		if [ -n "$$p" ] && pgrep -f "^$$p( |$$)" >/dev/null 2>&1; then \
 			echo "Stopping $$s ..."; \
@@ -163,6 +175,8 @@ stop-services:
 			echo "$$s not running"; \
 		fi; \
 	 done
+	@echo "Stopping message service..."
+	-@if [ -f /tmp/im_message.pid ]; then kill -9 `cat /tmp/im_message.pid` 2>/dev/null || true; rm -f /tmp/im_message.pid; fi
 
 stop-deps:
 	@echo "Stopping dependencies (docker compose down)..."
@@ -175,7 +189,7 @@ stop: stop-services stop-deps
 status:
 	@echo "Docker compose services:" && docker compose ps || true
 	@echo "\nApp processes:"
-	@for s in auth user device connect gateway; do \
+	@for s in auth user device connect gateway outbox; do \
 		p=$$(realpath bin/$$s 2>/dev/null || echo ""); \
 		if [ -z "$$p" ]; then echo " - $$s: binary missing"; continue; fi; \
 		pgrep -fl "^$$p( |$$)" >/dev/null 2>&1 && pgrep -fl "^$$p( |$$)" | sed 's/^/ - /' || echo " - $$s: stopped"; \
@@ -186,4 +200,4 @@ status:
 # ---------------------------
 # e2e 相关逻辑请改为使用专用测试工具或在 CI 中编排。
 
-.PHONY: migrate-up migrate-down migrate-create proto sqlc-generate db-update db-check build-auth build-connect build-device build-user build-gateway build-all start-deps start-services start stop-services stop-deps stop status mockdb proto-openapi
+.PHONY: migrate-up migrate-down migrate-create proto sqlc-generate db-update db-check build-auth build-connect build-device build-user build-gateway build-all start-deps start-services start stop-services stop-deps stop status mockdb proto-openapi build-outbox

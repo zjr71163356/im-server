@@ -19,7 +19,6 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	FriendExtService_SendMessage_FullMethodName               = "/friend.FriendExtService/SendMessage"
 	FriendExtService_SendFriendRequest_FullMethodName         = "/friend.FriendExtService/SendFriendRequest"
 	FriendExtService_GetReceivedFriendRequests_FullMethodName = "/friend.FriendExtService/GetReceivedFriendRequests"
 	FriendExtService_GetSentFriendRequests_FullMethodName     = "/friend.FriendExtService/GetSentFriendRequests"
@@ -33,8 +32,6 @@ const (
 //
 // 好友服务
 type FriendExtServiceClient interface {
-	// 发送好友消息
-	SendMessage(ctx context.Context, in *SendFriendMessageRequest, opts ...grpc.CallOption) (*SendFriendMessageReply, error)
 	// 发送好友申请
 	SendFriendRequest(ctx context.Context, in *SendFriendRequestRequest, opts ...grpc.CallOption) (*SendFriendRequestResponse, error)
 	// 获取收到的好友申请列表
@@ -53,16 +50,6 @@ type friendExtServiceClient struct {
 
 func NewFriendExtServiceClient(cc grpc.ClientConnInterface) FriendExtServiceClient {
 	return &friendExtServiceClient{cc}
-}
-
-func (c *friendExtServiceClient) SendMessage(ctx context.Context, in *SendFriendMessageRequest, opts ...grpc.CallOption) (*SendFriendMessageReply, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SendFriendMessageReply)
-	err := c.cc.Invoke(ctx, FriendExtService_SendMessage_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *friendExtServiceClient) SendFriendRequest(ctx context.Context, in *SendFriendRequestRequest, opts ...grpc.CallOption) (*SendFriendRequestResponse, error) {
@@ -121,8 +108,6 @@ func (c *friendExtServiceClient) GetFriendList(ctx context.Context, in *GetFrien
 //
 // 好友服务
 type FriendExtServiceServer interface {
-	// 发送好友消息
-	SendMessage(context.Context, *SendFriendMessageRequest) (*SendFriendMessageReply, error)
 	// 发送好友申请
 	SendFriendRequest(context.Context, *SendFriendRequestRequest) (*SendFriendRequestResponse, error)
 	// 获取收到的好友申请列表
@@ -143,9 +128,6 @@ type FriendExtServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedFriendExtServiceServer struct{}
 
-func (UnimplementedFriendExtServiceServer) SendMessage(context.Context, *SendFriendMessageRequest) (*SendFriendMessageReply, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SendMessage not implemented")
-}
 func (UnimplementedFriendExtServiceServer) SendFriendRequest(context.Context, *SendFriendRequestRequest) (*SendFriendRequestResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendFriendRequest not implemented")
 }
@@ -180,24 +162,6 @@ func RegisterFriendExtServiceServer(s grpc.ServiceRegistrar, srv FriendExtServic
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&FriendExtService_ServiceDesc, srv)
-}
-
-func _FriendExtService_SendMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SendFriendMessageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(FriendExtServiceServer).SendMessage(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: FriendExtService_SendMessage_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(FriendExtServiceServer).SendMessage(ctx, req.(*SendFriendMessageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _FriendExtService_SendFriendRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -297,10 +261,6 @@ var FriendExtService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "friend.FriendExtService",
 	HandlerType: (*FriendExtServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "SendMessage",
-			Handler:    _FriendExtService_SendMessage_Handler,
-		},
 		{
 			MethodName: "SendFriendRequest",
 			Handler:    _FriendExtService_SendFriendRequest_Handler,

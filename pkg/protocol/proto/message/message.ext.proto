@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package message;
+option go_package = "pkg/protocol/pb/messagepb";
+import "google/api/annotations.proto";
+import "google/api/field_behavior.proto";
+import "validate/validate.proto";
+
+
+service MessageExtService {
+    // 发送好友消息
+    rpc SendMessage (SendMessageRequest) returns (SendMessageReply){
+        option (google.api.http) = {
+            post: "/api/v1/message"
+            body: "*"
+        };
+    }
+}
+
+// 发送好友消息请求
+message SendMessageRequest {
+    uint64 recipient_id = 1 [(google.api.field_behavior) = REQUIRED, (validate.rules).uint64.gt = 0];
+    string client_msg_id = 2 [(google.api.field_behavior) = REQUIRED, (validate.rules).string.min_len = 1];
+    MessageContent content = 3 [(google.api.field_behavior) = REQUIRED];
+}
+
+// 发送好友消息响应
+message SendMessageReply {
+    string message_id = 1;
+    string conversation_id = 2;
+    int64 seq = 3;
+    int64 server_time = 4;
+    string client_msg_id = 5;
+}
+
+// 消息内容
+message MessageContent {
+    oneof content {
+        TextContent text = 1;
+        ImageContent image = 2;
+        AudioContent audio = 3;
+        FileContent file = 4;
+    }
+}
+
+// 文本消息
+message TextContent {
+    string text = 1 [(validate.rules).string = {min_len: 1, max_len: 4096}];
+}
+
+// 图片消息
+message ImageContent {
+    string url = 1;
+    uint32 width = 2;
+    uint32 height = 3;
+    uint64 size = 4;
+}
+
+// 音频消息
+message AudioContent {
+    string url = 1;
+    uint32 duration = 2;
+    uint64 size = 3;
+}
+
+// 文件消息
+message FileContent {
+    string url = 1;
+    string filename = 2;
+    uint64 size = 3;
+    string mime_type = 4;
+}

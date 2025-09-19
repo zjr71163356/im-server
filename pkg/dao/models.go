@@ -6,9 +6,72 @@ package dao
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"time"
 )
+
+type OutboxEventsStatus string
+
+const (
+	OutboxEventsStatusPending OutboxEventsStatus = "pending"
+	OutboxEventsStatusSent    OutboxEventsStatus = "sent"
+	OutboxEventsStatusFailed  OutboxEventsStatus = "failed"
+)
+
+func (e *OutboxEventsStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = OutboxEventsStatus(s)
+	case string:
+		*e = OutboxEventsStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for OutboxEventsStatus: %T", src)
+	}
+	return nil
+}
+
+type NullOutboxEventsStatus struct {
+	OutboxEventsStatus OutboxEventsStatus `json:"outbox_events_status"`
+	Valid              bool               `json:"valid"` // Valid is true if OutboxEventsStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullOutboxEventsStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.OutboxEventsStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.OutboxEventsStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullOutboxEventsStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.OutboxEventsStatus), nil
+}
+
+// 会话表（热数据）
+type Conversation struct {
+	// 会话ID
+	ConversationID string `json:"conversation_id"`
+	// 1:单聊 2:群聊
+	Type int8 `json:"type"`
+	// 参与者ID数组
+	Participants json.RawMessage `json:"participants"`
+	// 最后一条消息ID
+	LastMessageID sql.NullString `json:"last_message_id"`
+	// 最新序列号
+	LastSeq sql.NullInt64 `json:"last_seq"`
+	// 创建时间
+	CreatedAt time.Time `json:"created_at"`
+	// 更新时间
+	UpdatedAt time.Time `json:"updated_at"`
+}
 
 // 设备
 type Device struct {
@@ -134,6 +197,50 @@ type Message struct {
 	Status int8 `json:"status"`
 }
 
+// 消息索引表（热数据）
+type MessageIndex struct {
+	// 消息ID
+	MessageID string `json:"message_id"`
+	// 会话ID
+	ConversationID string `json:"conversation_id"`
+	// 发送者ID
+	SenderID uint64 `json:"sender_id"`
+	// 接收者ID
+	RecipientID uint64 `json:"recipient_id"`
+	// 1:文本 2:图片 3:音频 4:视频 5:文件 6:位置
+	MessageType int8 `json:"message_type"`
+	// 会话内序列号
+	Seq int64 `json:"seq"`
+	// 回复的消息ID
+	ReplyToMsgID sql.NullString `json:"reply_to_msg_id"`
+	// 消息状态
+	Status sql.NullInt16 `json:"status"`
+	// 创建时间
+	CreatedAt time.Time `json:"created_at"`
+	// 更新时间
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// Outbox事件表
+type OutboxEvent struct {
+	// 自增主键
+	ID uint64 `json:"id"`
+	// 事件主题
+	Topic string `json:"topic"`
+	// 事件负载
+	Payload json.RawMessage `json:"payload"`
+	// 状态
+	Status NullOutboxEventsStatus `json:"status"`
+	// 重试次数
+	RetryCount sql.NullInt32 `json:"retry_count"`
+	// 下次投递时间
+	NextDeliveryAt sql.NullTime `json:"next_delivery_at"`
+	// 创建时间
+	CreatedAt sql.NullTime `json:"created_at"`
+	// 更新时间
+	UpdatedAt sql.NullTime `json:"updated_at"`
+}
+
 // 序列号
 type Seq struct {
 	// 自增主键
@@ -176,6 +283,24 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	// 更新时间
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// 用户会话状态
+type UserConversation struct {
+	// 用户ID
+	UserID uint64 `json:"user_id"`
+	// 会话ID
+	ConversationID string `json:"conversation_id"`
+	// 最后已读序列号
+	LastReadSeq sql.NullInt64 `json:"last_read_seq"`
+	// 未读数
+	UnreadCount sql.NullInt32 `json:"unread_count"`
+	// 是否免打扰
+	IsMuted sql.NullBool `json:"is_muted"`
+	// 是否置顶
+	IsPinned sql.NullBool `json:"is_pinned"`
+	// 更新时间
+	UpdatedAt sql.NullTime `json:"updated_at"`
 }
 
 // 用户消息

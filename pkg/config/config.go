@@ -57,6 +57,7 @@ func generateGRPCClientConfig(services ServiceConfig) GRPCClientConfig {
 		ConnectTargetAddr: fmt.Sprintf("addrs:///%s", services.Connect.LocalAddr),
 		DeviceTargetAddr:  fmt.Sprintf("addrs:///%s", services.Device.LocalAddr), // Device 服务地址
 		AuthTargetAddr:    fmt.Sprintf("addrs:///%s", services.Auth.LocalAddr),
+		MessageTargetAddr: fmt.Sprintf("addrs:///%s", services.Message.LocalAddr),
 	}
 }
 
@@ -65,7 +66,7 @@ type Configuration struct {
 	Database   DatabaseConfig   `yaml:"database"`
 	Services   ServiceConfig    `yaml:"services"`
 	JWT        JWTConfig        `yaml:"jwt"`
-	Broker     BrokerConfig     `yaml:"broker"` // 新增：消息中间件配置（如 NATS）
+	Broker     BrokerConfig     `yaml:"broker"` // 消息中间件配置
 	GRPCClient GRPCClientConfig `yaml:"-"`      // 通过代码动态生成，忽略 YAML 解析
 }
 
@@ -94,10 +95,12 @@ type MongoConfig struct {
 	AuthSource string `yaml:"authSource"`
 }
 
-// BrokerConfig 封装了消息中间件（例如 NATS）配置
+// BrokerConfig 封装了消息中间件配置（Kafka 为主，保留 NATS 兼容字段）
 type BrokerConfig struct {
-	NATSURL      string `yaml:"nats_url"`
-	UseJetStream bool   `yaml:"use_jetstream"`
+	KafkaBrokers []string `yaml:"kafka_brokers"`
+	NATSURL      string   `yaml:"nats_url"`
+	UseJetStream bool     `yaml:"use_jetstream"`
+	TopicPrefix  string   `yaml:"topic_prefix"`
 }
 
 // JWTConfig 封装了JWT的配置
@@ -115,6 +118,7 @@ type ServiceConfig struct {
 	Auth    AuthEndpoints    `yaml:"auth"`
 	User    UserEndpoints    `yaml:"user"`
 	Friend  FriendEndpoints  `yaml:"friend"`
+	Message MessageEndpoints `yaml:"message"`
 	File    FileEndpoints    `yaml:"file"`
 	Gateway GatewayEndpoints `yaml:"gateway"`
 }
@@ -141,6 +145,12 @@ type UserEndpoints struct {
 
 // FriendEndpoints 封装了Friend服务的监听端点
 type FriendEndpoints struct {
+	LocalAddr string `yaml:"local_addr"`
+	RPCAddr   string `yaml:"rpc_addr"`
+}
+
+// MessageEndpoints 封装了Message服务的监听端点
+type MessageEndpoints struct {
 	LocalAddr string `yaml:"local_addr"`
 	RPCAddr   string `yaml:"rpc_addr"`
 }

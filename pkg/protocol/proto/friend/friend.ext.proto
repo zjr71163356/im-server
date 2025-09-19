@@ -9,13 +9,7 @@ import "validate/validate.proto";
 
 // 好友服务
 service FriendExtService {
-  // 发送好友消息
-  rpc SendMessage (SendFriendMessageRequest) returns (SendFriendMessageReply){
-    option (google.api.http) = {
-      post: "/api/v1/friend/message"
-      body: "*"
-    };
-  }
+
 
   // 发送好友申请
   rpc SendFriendRequest (SendFriendRequestRequest) returns (SendFriendRequestResponse) {
@@ -55,16 +49,7 @@ service FriendExtService {
   }
 }
 
-// 发送好友消息请求
-message SendFriendMessageRequest {
-  uint64 recipient_id = 1 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {uint64: {gte: 1}}]; // 接收方用户ID
-  string message = 2 [(google.api.field_behavior) = REQUIRED, (validate.rules) = {string: {min_len: 1, max_len: 1000}}]; // 消息内容
-}
 
-// 发送好友消息响应
-message SendFriendMessageReply {
-  string message_id = 1; // 消息ID 序列号
-}
 
 // 发送好友申请请求
 message SendFriendRequestRequest {

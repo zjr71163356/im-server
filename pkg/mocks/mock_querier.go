@@ -365,6 +365,21 @@ func (mr *MockQuerierMockRecorder) GetBlockedFriends(ctx, userID interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlockedFriends", reflect.TypeOf((*MockQuerier)(nil).GetBlockedFriends), ctx, userID)
 }
 
+// GetConversationMessages mocks base method.
+func (m *MockQuerier) GetConversationMessages(ctx context.Context, arg dao.GetConversationMessagesParams) ([]dao.MessageIndex, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConversationMessages", ctx, arg)
+	ret0, _ := ret[0].([]dao.MessageIndex)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetConversationMessages indicates an expected call of GetConversationMessages.
+func (mr *MockQuerierMockRecorder) GetConversationMessages(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConversationMessages", reflect.TypeOf((*MockQuerier)(nil).GetConversationMessages), ctx, arg)
+}
+
 // GetDevice mocks base method.
 func (m *MockQuerier) GetDevice(ctx context.Context, id uint64) (dao.Device, error) {
 	m.ctrl.T.Helper()
@@ -544,6 +559,21 @@ func (mr *MockQuerierMockRecorder) GetPendingFriendRequests(ctx, recipientID int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingFriendRequests", reflect.TypeOf((*MockQuerier)(nil).GetPendingFriendRequests), ctx, recipientID)
 }
 
+// GetPendingOutboxEvents mocks base method.
+func (m *MockQuerier) GetPendingOutboxEvents(ctx context.Context, limit int32) ([]dao.GetPendingOutboxEventsRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPendingOutboxEvents", ctx, limit)
+	ret0, _ := ret[0].([]dao.GetPendingOutboxEventsRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPendingOutboxEvents indicates an expected call of GetPendingOutboxEvents.
+func (mr *MockQuerierMockRecorder) GetPendingOutboxEvents(ctx, limit interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingOutboxEvents", reflect.TypeOf((*MockQuerier)(nil).GetPendingOutboxEvents), ctx, limit)
+}
+
 // GetReceivedFriendRequests mocks base method.
 func (m *MockQuerier) GetReceivedFriendRequests(ctx context.Context, arg dao.GetReceivedFriendRequestsParams) ([]dao.FriendRequest, error) {
 	m.ctrl.T.Helper()
@@ -587,6 +617,21 @@ func (m *MockQuerier) GetSeq(ctx context.Context, arg dao.GetSeqParams) (dao.Seq
 func (mr *MockQuerierMockRecorder) GetSeq(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSeq", reflect.TypeOf((*MockQuerier)(nil).GetSeq), ctx, arg)
+}
+
+// GetUnreadByUserAndConversation mocks base method.
+func (m *MockQuerier) GetUnreadByUserAndConversation(ctx context.Context, arg dao.GetUnreadByUserAndConversationParams) (sql.NullInt32, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUnreadByUserAndConversation", ctx, arg)
+	ret0, _ := ret[0].(sql.NullInt32)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetUnreadByUserAndConversation indicates an expected call of GetUnreadByUserAndConversation.
+func (mr *MockQuerierMockRecorder) GetUnreadByUserAndConversation(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUnreadByUserAndConversation", reflect.TypeOf((*MockQuerier)(nil).GetUnreadByUserAndConversation), ctx, arg)
 }
 
 // GetUser mocks base method.
@@ -813,6 +858,20 @@ func (mr *MockQuerierMockRecorder) IgnoreFriendRequest(ctx, arg interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IgnoreFriendRequest", reflect.TypeOf((*MockQuerier)(nil).IgnoreFriendRequest), ctx, arg)
 }
 
+// IncrUnreadOnRecipient mocks base method.
+func (m *MockQuerier) IncrUnreadOnRecipient(ctx context.Context, arg dao.IncrUnreadOnRecipientParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IncrUnreadOnRecipient", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// IncrUnreadOnRecipient indicates an expected call of IncrUnreadOnRecipient.
+func (mr *MockQuerierMockRecorder) IncrUnreadOnRecipient(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrUnreadOnRecipient", reflect.TypeOf((*MockQuerier)(nil).IncrUnreadOnRecipient), ctx, arg)
+}
+
 // IncrementSeq mocks base method.
 func (m *MockQuerier) IncrementSeq(ctx context.Context, arg dao.IncrementSeqParams) error {
 	m.ctrl.T.Helper()
@@ -825,6 +884,34 @@ func (m *MockQuerier) IncrementSeq(ctx context.Context, arg dao.IncrementSeqPara
 func (mr *MockQuerierMockRecorder) IncrementSeq(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IncrementSeq", reflect.TypeOf((*MockQuerier)(nil).IncrementSeq), ctx, arg)
+}
+
+// InsertMessageIndex mocks base method.
+func (m *MockQuerier) InsertMessageIndex(ctx context.Context, arg dao.InsertMessageIndexParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertMessageIndex", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertMessageIndex indicates an expected call of InsertMessageIndex.
+func (mr *MockQuerierMockRecorder) InsertMessageIndex(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertMessageIndex", reflect.TypeOf((*MockQuerier)(nil).InsertMessageIndex), ctx, arg)
+}
+
+// InsertOutboxEvent mocks base method.
+func (m *MockQuerier) InsertOutboxEvent(ctx context.Context, arg dao.InsertOutboxEventParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertOutboxEvent", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertOutboxEvent indicates an expected call of InsertOutboxEvent.
+func (mr *MockQuerierMockRecorder) InsertOutboxEvent(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertOutboxEvent", reflect.TypeOf((*MockQuerier)(nil).InsertOutboxEvent), ctx, arg)
 }
 
 // ListGroups mocks base method.
@@ -870,6 +957,48 @@ func (m *MockQuerier) ListUsersByNickname(ctx context.Context, arg dao.ListUsers
 func (mr *MockQuerierMockRecorder) ListUsersByNickname(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByNickname", reflect.TypeOf((*MockQuerier)(nil).ListUsersByNickname), ctx, arg)
+}
+
+// MarkOutboxEventFailed mocks base method.
+func (m *MockQuerier) MarkOutboxEventFailed(ctx context.Context, id uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkOutboxEventFailed", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkOutboxEventFailed indicates an expected call of MarkOutboxEventFailed.
+func (mr *MockQuerierMockRecorder) MarkOutboxEventFailed(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkOutboxEventFailed", reflect.TypeOf((*MockQuerier)(nil).MarkOutboxEventFailed), ctx, id)
+}
+
+// MarkOutboxEventSent mocks base method.
+func (m *MockQuerier) MarkOutboxEventSent(ctx context.Context, id uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkOutboxEventSent", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkOutboxEventSent indicates an expected call of MarkOutboxEventSent.
+func (mr *MockQuerierMockRecorder) MarkOutboxEventSent(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkOutboxEventSent", reflect.TypeOf((*MockQuerier)(nil).MarkOutboxEventSent), ctx, id)
+}
+
+// MarkRead mocks base method.
+func (m *MockQuerier) MarkRead(ctx context.Context, arg dao.MarkReadParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MarkRead", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MarkRead indicates an expected call of MarkRead.
+func (mr *MockQuerierMockRecorder) MarkRead(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkRead", reflect.TypeOf((*MockQuerier)(nil).MarkRead), ctx, arg)
 }
 
 // RejectFriendRequest mocks base method.
@@ -1080,6 +1209,34 @@ func (m *MockQuerier) UpdateUserPassword(ctx context.Context, arg dao.UpdateUser
 func (mr *MockQuerierMockRecorder) UpdateUserPassword(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserPassword", reflect.TypeOf((*MockQuerier)(nil).UpdateUserPassword), ctx, arg)
+}
+
+// UpsertConversationOnSend mocks base method.
+func (m *MockQuerier) UpsertConversationOnSend(ctx context.Context, arg dao.UpsertConversationOnSendParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertConversationOnSend", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertConversationOnSend indicates an expected call of UpsertConversationOnSend.
+func (mr *MockQuerierMockRecorder) UpsertConversationOnSend(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertConversationOnSend", reflect.TypeOf((*MockQuerier)(nil).UpsertConversationOnSend), ctx, arg)
+}
+
+// UpsertUserConversationOnSend mocks base method.
+func (m *MockQuerier) UpsertUserConversationOnSend(ctx context.Context, arg dao.UpsertUserConversationOnSendParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertUserConversationOnSend", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpsertUserConversationOnSend indicates an expected call of UpsertUserConversationOnSend.
+func (mr *MockQuerierMockRecorder) UpsertUserConversationOnSend(ctx, arg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertUserConversationOnSend", reflect.TypeOf((*MockQuerier)(nil).UpsertUserConversationOnSend), ctx, arg)
 }
 
 // UserExistsByUsername mocks base method.

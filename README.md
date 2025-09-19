@@ -146,8 +146,9 @@ Message 服务：
 Connect/Delivery 服务订阅事件，向在线设备推送；离线则依赖未读与历史拉取。
 返回发送结果：server_msg_id、seq、server_timestamp、conversation_id、回显的 client_msg_id。
 
-1."消息体入 MongoDB"目前环境没有MongoDB数据库，请解决这个问题，最好使用docker
-2."使用 Outbox 或事务消息" 请解释什么是Outbox？能否只使用事务消息解决
+1."消息体入 MongoDB"目前环境没有 MongoDB 数据库，请解决这个问题，最好使用 docker
+2."使用 Outbox 或事务消息" 请解释什么是 Outbox？能否只使用事务消息解决
+
 ### Phase 3: 完善单聊 (第 5-6 周)
 
 **Week 5-6:**
@@ -315,4 +316,24 @@ db/
 
 - fim 即时通讯微服务项目课程介绍 https://www.fengfengzhidao.com/article/JtzvhY4BEG4v2tWkjl7-
 
--
+---
+
+## 消息投递链路（Kafka + Outbox）
+
+- Message 服务在保存 Mongo 消息体、更新 MySQL 索引/会话/未读后，在同一事务中写入 `outbox_events`（topic: `message.deliver`，payload 为 JSON）。
+- 事务提交后：
+  - 快速路径：尝试直接发布到 Kafka 主题 `${topic_prefix}.message.deliver`（失败无碍，有 Outbox 兜底）。
+  - 兜底路径：`bin/outbox` 周期扫描 `outbox_events(status=pending)`，成功发布后标记 sent；失败按退避重试。
+- Connect 服务作为消费者，订阅 `${topic_prefix}.message.deliver`，将 payload 转为 `connectpb.Packet{Command=MESSAGE, Data=payload}` 并推送至目标用户在线设备。
+
+运行要点：
+
+- 配置 `broker.kafka_brokers` 与 `broker.topic_prefix`（如 `im`），确保 Kafka/ZooKeeper 已就绪。
+- `make build-all && make start-services` 会启动 outbox 与 connect，完成端到端推送。
+- 日志位于 `logs/outbox.log` 与 `logs/connect.log`（按 Makefile 启动脚本为准）。
+
+### Outbox 与事务消息的取舍
+
+- Outbox：通过 DB 本地事务原子化“写业务数据 + 记录事件”，由异步派发器保障最终投递，常见、通用、对 MQ 无特殊依赖。
+- 事务消息：依赖 MQ 的事务能力/两阶段协议，端到端原子性更强，但对基础设施有更高耦合与运维复杂度。
+- 本项目采用 Outbox，配合 Kafka 实现至少一次投递与最终一致性。

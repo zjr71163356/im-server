@@ -56,6 +56,7 @@ type Querier interface {
 	DeleteUserMessage(ctx context.Context, arg DeleteUserMessageParams) error
 	// 获取被屏蔽的好友
 	GetBlockedFriends(ctx context.Context, userID uint64) ([]Friend, error)
+	GetConversationMessages(ctx context.Context, arg GetConversationMessagesParams) ([]MessageIndex, error)
 	// 根据设备ID获取设备信息
 	GetDevice(ctx context.Context, id uint64) (Device, error)
 	// 根据用户ID和设备类型获取设备
@@ -80,12 +81,14 @@ type Querier interface {
 	GetOrCreateSeq(ctx context.Context, arg GetOrCreateSeqParams) error
 	// 获取待处理的好友申请
 	GetPendingFriendRequests(ctx context.Context, recipientID uint64) ([]FriendRequest, error)
+	GetPendingOutboxEvents(ctx context.Context, limit int32) ([]GetPendingOutboxEventsRow, error)
 	// 获取收到的好友申请列表
 	GetReceivedFriendRequests(ctx context.Context, arg GetReceivedFriendRequestsParams) ([]FriendRequest, error)
 	// 获取发送的好友申请列表
 	GetSentFriendRequests(ctx context.Context, arg GetSentFriendRequestsParams) ([]FriendRequest, error)
 	// 获取序列号
 	GetSeq(ctx context.Context, arg GetSeqParams) (Seq, error)
+	GetUnreadByUserAndConversation(ctx context.Context, arg GetUnreadByUserAndConversationParams) (sql.NullInt32, error)
 	// 根据用户ID获取用户信息
 	GetUser(ctx context.Context, id uint64) (User, error)
 	GetUserByEmail(ctx context.Context, email sql.NullString) (User, error)
@@ -115,14 +118,20 @@ type Querier interface {
 	GetUserMessages(ctx context.Context, arg GetUserMessagesParams) ([]GetUserMessagesRow, error)
 	// 忽略好友申请
 	IgnoreFriendRequest(ctx context.Context, arg IgnoreFriendRequestParams) error
+	IncrUnreadOnRecipient(ctx context.Context, arg IncrUnreadOnRecipientParams) error
 	// 递增序列号
 	IncrementSeq(ctx context.Context, arg IncrementSeqParams) error
+	InsertMessageIndex(ctx context.Context, arg InsertMessageIndexParams) error
+	InsertOutboxEvent(ctx context.Context, arg InsertOutboxEventParams) error
 	// 获取群组列表
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	// 获取用户列表
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	// 根据昵称获取用户信息（模糊匹配，支持分页）
 	ListUsersByNickname(ctx context.Context, arg ListUsersByNicknameParams) ([]ListUsersByNicknameRow, error)
+	MarkOutboxEventFailed(ctx context.Context, id uint64) error
+	MarkOutboxEventSent(ctx context.Context, id uint64) error
+	MarkRead(ctx context.Context, arg MarkReadParams) error
 	// 拒绝好友申请
 	RejectFriendRequest(ctx context.Context, arg RejectFriendRequestParams) error
 	// 取消屏蔽好友
@@ -153,6 +162,8 @@ type Querier interface {
 	UpdateUserAvatar(ctx context.Context, arg UpdateUserAvatarParams) error
 	// 更新用户密码
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	UpsertConversationOnSend(ctx context.Context, arg UpsertConversationOnSendParams) error
+	UpsertUserConversationOnSend(ctx context.Context, arg UpsertUserConversationOnSendParams) error
 	// 检查用户名是否存在
 	UserExistsByUsername(ctx context.Context, username string) (bool, error)
 }
