@@ -698,3 +698,57 @@ func (s *AuthIntService) KickDevice(ctx context.Context, req *authpb.KickDeviceR
 您的项目设计体现了将**无状态计算**与**有状态连接**分离的最佳实践：
 1.  **核心业务逻辑（无状态）**：将注册、登录、好友管理、消息处理等业务逻辑做成无状态的 gRPC 服务，使得这部分最核心、最复杂的逻辑可以被轻松地扩展和维护。
 2.  **连接管理（有状态）**：将管理海量长连接的复杂性隔离在 `connect` 服务中。虽然 `connect` 服务是有状态的，但可以通过将“用户在哪台 `connect` 节点上”这个路由信息存储在 Redis 中，来降低其状态性，从而实现 `connect` 层的水平扩展。
+
+
+# 建立了连接为什么还要通过HTTP 接口调用 SendMessage，而不是websocket
+
+为什么已建立 WebSocket 还用 HTTP 调 SendMessage：
+- 职责分离更清晰
+  - WebSocket：只做“下行推送/广播”（在线投递、心跳、会话保持）。
+  - HTTP/gRPC：做“上行写入”（鉴权、参数校验、幂等、事务、落库、出箱/投递）。
+- 可观测性与治理更好
+  - HTTP 有完善的网关/限流/熔断/重试/指标体系，便于审计与排错。
+  - 超时、重试、幂等键（client_msg_id）在 HTTP 语义更自然。
+- 稳定性更高
+  - 移动网络场景 WS 易断，HTTP 短连接重试成本低；断线也能补发。
+- 架构解耦
+  - Connect 专注连接与下行广播；Message 服务专注写路径与出站事件。避免把业务写路径塞进长连层。
+
+当然，也可以支持“WS 上行发送”：
+- 方案：在 WS 协议里加一个 SendMessage 命令。Connect 收到后转调 Message RPC，成功后通过 WS 回 ACK；事件照常进 Kafka，再由 Connect 的消费者推送给接收方。
+- 代价：Connect 需承担鉴权、限流、转发、重试、幂等等写路径职责，复杂度上升。
+
+当前项目默认：HTTP/网关发消息，上行更稳；WebSocket 只做下行推送。若你更想贴近 IM 客户端“纯长连”的体验，我可以按你现有的 `connectpb.Packet` 增加上行命令并落地实现。
+
+
+# 对本项目的期望是作为类似qq/微信那样的后端，希望测试发送信息时更接近真实场景，应该使用什么方式测试发送信息的函数
+我是 GitHub Copilot。
+
+建议用“端到端、黑盒”的方式，尽量还原 QQ/微信的真实链路来测。
+
+推荐测试方式（按真实度从高到低）:
+- 真机/浏览器 WebSocket 连线
+  - 启动 Connect 服务（WS: `:8082`），分别用用户A、用户B登录后拿到各自 token。
+  - 在两台“设备”（两份 wscat/websocat 或一个前端页 + 一个 wscat）用 `ws://localhost:8082/ws?token=...` 建立连接。
+  - 通过网关的 HTTP 接口调用 SendMessage，把 A→B 的消息发出（携带 recipient_id、client_msg_id、content）。
+  - 期望：B 的所有在线设备都能收到 Kafka 推来的 deliver 事件，Connect 经 `DeliverToUser` 广播，客户端弹出一条 JSON 消息负载。
+- Kafka 侧验证
+  - 在 Kafka 容器里用 console-consumer 订阅 `im.message.deliver`，确认事件确实入了队列。
+- Outbox 兜底链路
+  - 停掉 Kafka，再发消息：MySQL 的 outbox_events 应出现一条待发送记录；启动 Outbox 分发器后应补发到 Kafka。
+- 幂等与多设备
+  - 用相同 client_msg_id 重复调用 SendMessage，应只产生一次有效入库/未读+1；B 的多设备应都能收到同一条 deliver。
+
+需要启动的进程:
+- Connect（已内置 Kafka 消费并调用 `DeliverToUser` 推送）
+- Message（提供 SendMessage，写 Mongo、Outbox、MySQL，并尝试直发 Kafka）
+- Outbox 分发器（cmd/outbox/main.go，会扫描 outbox_events 并发布到 Kafka）
+- Indexer（可选，cmd/indexer/main.go，用于从 deliver 事件回填 MySQL 索引/未读，保证最终一致）
+
+你的第二个问题：本项目是否已实现“扫描 outbox 表然后重新发送”？
+- 已实现。位置在 main.go：
+  - 周期性查询待发送的 outbox_events
+  - 发布到 `${topic_prefix}.message.deliver`（默认 `im.message.deliver`）
+  - 成功后标记已发送
+
+若需要，我可以提供一套具体的测试清单（登录拿 token → 建立两端 WS → 发消息 → 看 Kafka/Connect 日志与客户端收包），或编写一个简单的前端页专门用来发消息与收消息，便于你一键演示整链路。
