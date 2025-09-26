@@ -42,9 +42,20 @@ func main() {
 			continue
 		}
 		for _, r := range rows {
-			var key json.RawMessage
 			// 可选：从 payload 里抽取 conv_id 作为 key
-			_ = producer.Publish(ctx, producer.Topic(r.Topic), key, r.Payload)
+			var key json.RawMessage
+
+			pubCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+			err := producer.Publish(pubCtx, producer.Topic(r.Topic), key, r.Payload)
+			cancel()
+			if err != nil {
+				log.Printf("publish failed id=%d: %v", r.ID, err)
+				if markErr := q.MarkOutboxEventFailed(ctx, r.ID); markErr != nil {
+					log.Printf("mark failed error id=%d: %v", r.ID, markErr)
+				}
+				continue
+			}
+
 			if err := q.MarkOutboxEventSent(ctx, r.ID); err != nil {
 				log.Printf("mark sent failed id=%d: %v", r.ID, err)
 			}

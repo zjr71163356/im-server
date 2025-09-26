@@ -367,6 +367,7 @@ func (s *FriendExtService) SendFriendRequest(ctx context.Context, req *friendpb.
 虽然方案 1 在开发和测试阶段更简单，但从安全性、可维护性和行业标准来看，**方案 2 是正确的选择**。安全性问题一旦发生，后果往往是灾难性的，而认证机制的复杂性是一次性的投入，带来的是长期的安全保障。
 
 建议继续推进当前的 Context 方案，并逐步完善认证 middleware 的实现。
+
 # 授权鉴权机制说明
 
 基于对 im-server 项目代码的分析，我来总结当前的签名授权机制实现方式，并对比其他方案的优劣。
@@ -386,7 +387,7 @@ type Claims struct {
 // 生成JWT Token
 func GenerateJWT(uid, did uint64, ttl time.Duration, secret []byte, iss, aud string) (string, error)
 
-// 解析JWT Token  
+// 解析JWT Token
 func ParseJWT(tokenStr string, secret []byte, iss, aud string) (uint64, uint64, error)
 ```
 
@@ -424,12 +425,14 @@ func (s *AuthIntService) Login(ctx context.Context, req *authpb.LoginRequest) (*
 ### 当前方案：JWT + HMAC (HS256)
 
 #### ✅ **优势**
+
 - **高性能**: 对称加密验证速度快，适合高并发 IM 场景
 - **无状态**: 各微服务独立验证，无需依赖 auth 服务，支持水平扩展
 - **简单部署**: 只需共享一个 secret，无需管理公私钥对
 - **分布式友好**: 完美契合项目的微服务架构
 
-#### ❌ **劣势**  
+#### ❌ **劣势**
+
 - **无法撤销**: Token 签发后无法主动失效（用户注销/踢下线困难）
 - **密钥泄露风险**: 所有服务共享同一个 secret
 - **缺乏细粒度控制**: 无法实现会话管理、设备管理等复杂场景
@@ -447,10 +450,12 @@ type RSATokenManager struct {
 ```
 
 **优势**:
+
 - 密钥分离：auth 服务私钥签发，其他服务公钥验证
 - 更高安全性：即使公钥泄露也无法伪造 token
 
 **劣势**:
+
 - 性能开销：RSA 验证比 HMAC 慢 10-100 倍
 - 部署复杂：需要 JWKS 管理公钥轮换
 - 对本项目过度设计
@@ -469,11 +474,13 @@ func (sm *SessionManager) ValidateSession(sessionID string) (*UserSession, error
 ```
 
 **优势**:
+
 - 完全可控：可随时撤销任何会话
 - 精确统计：准确的在线用户、设备管理
 - 灵活权限：支持细粒度权限控制
 
 **劣势**:
+
 - 性能瓶颈：每次请求都要查询 Redis
 - 单点故障：Redis 故障影响所有验证
 - 状态依赖：不适合分布式扩展
@@ -490,11 +497,13 @@ type OAuthProvider struct {
 ```
 
 **优势**:
+
 - 标准化：业界成熟标准，易于集成第三方
 - 功能完整：支持授权码、刷新 token 等多种流程
 - 生态丰富：大量现成的库和工具
 
 **劣势**:
+
 - 复杂度高：对 IM 场景过度复杂
 - 性能开销：多次网络调用验证
 - 依赖外部：需要额外的 OAuth 服务器
@@ -544,16 +553,16 @@ func EnhancedJWTAuthInterceptor(tokenManager *redis.TokenManager) grpc.UnaryServ
     return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
         // 1. 解析JWT获取 uid/did/jti
         uid, did, jti, err := jwt.ParseEnhancedJWT(token, secret, iss, aud)
-        
+
         // 2. 检查黑名单（只有需要时才查询Redis）
         if blacklisted, err := tokenManager.IsBlacklisted(ctx, jti); blacklisted {
             return nil, status.Error(codes.Unauthenticated, "token revoked")
         }
-        
+
         // 3. 注入用户信息
         ctx = context.WithValue(ctx, "user_id", uid)
         ctx = context.WithValue(ctx, "device_id", did)
-        
+
         return handler(ctx, req)
     }
 }
@@ -565,12 +574,12 @@ func EnhancedJWTAuthInterceptor(tokenManager *redis.TokenManager) grpc.UnaryServ
 // internal/auth/api.go - 增加注销接口
 func (s *AuthIntService) Logout(ctx context.Context, req *authpb.LogoutRequest) (*authpb.LogoutResponse, error) {
     jti := ctx.Value("token_id").(string)
-    
+
     // 将当前token加入黑名单
     if err := s.tokenManager.BlacklistToken(ctx, jti, time.Hour*24*7); err != nil {
         return nil, status.Error(codes.Internal, "logout failed")
     }
-    
+
     return &authpb.LogoutResponse{Message: "注销成功"}, nil
 }
 
@@ -581,7 +590,7 @@ func (s *AuthIntService) KickDevice(ctx context.Context, req *authpb.KickDeviceR
     if err == nil && activeJTI != "" {
         s.tokenManager.BlacklistToken(ctx, activeJTI, time.Hour*24*7)
     }
-    
+
     return &authpb.KickDeviceResponse{Message: "设备已下线"}, nil
 }
 ```
@@ -589,22 +598,26 @@ func (s *AuthIntService) KickDevice(ctx context.Context, req *authpb.KickDeviceR
 ## 推荐方案的优势
 
 ### 1. **性能最优**
+
 - 99% 的请求只做 JWT 本地验证（无网络 I/O）
 - 仅在注销/踢下线时查询 Redis 黑名单
 - 完美适合高并发 IM 场景
 
 ### 2. **功能完整**
+
 - ✅ 支持用户主动注销
 - ✅ 支持管理员踢下线
 - ✅ 支持多设备登录管理
 - ✅ 支持异地登录检测
 
 ### 3. **运维友好**
+
 - 黑名单自动过期，无需手动清理
 - 可监控异常 token 使用
 - 支持灰度发布（新旧 token 并存）
 
 ### 4. **渐进式升级**
+
 - 基于现有 JWT 实现，改动最小
 - 向后兼容，可平滑升级
 - 不影响现有的微服务架构
@@ -612,25 +625,27 @@ func (s *AuthIntService) KickDevice(ctx context.Context, req *authpb.KickDeviceR
 这种混合方案既保持了 JWT 的无状态优势，又通过 Redis 提供了有状态的精确控制能力，是当前项目最适合的升级路径。
 
 # 无状态（Stateless）与有状态（Stateful）服务的核心区别是？
+
 核心区别在于**服务本身是否保存客户端的会话状态（上下文信息）**。
 
 ---
 
 ### 1. 无状态服务 (Stateless)
 
--   **不保存状态**：服务处理完请求后，不会保留任何关于该次交互的记忆。每个请求都必须包含处理它所需的全部信息。
--   **易于扩展**：任何一个服务实例都可以处理任何请求，因此可以简单地通过增加服务器数量来水平扩展。
--   **高可用**：单个实例宕机不影响用户，请求可以无缝切换到其他健康实例。
--   **状态外部化**：状态被存储在外部共享存储中（如数据库、Redis）或由客户端自己携带（如 JWT Token）。
--   **在您的项目中**：`auth`, `user`, `friend`, `message` 服务都是无状态的。它们处理请求所需的数据要么来自请求本身，要么来自外部的 MySQL/Redis。
+- **不保存状态**：服务处理完请求后，不会保留任何关于该次交互的记忆。每个请求都必须包含处理它所需的全部信息。
+- **易于扩展**：任何一个服务实例都可以处理任何请求，因此可以简单地通过增加服务器数量来水平扩展。
+- **高可用**：单个实例宕机不影响用户，请求可以无缝切换到其他健康实例。
+- **状态外部化**：状态被存储在外部共享存储中（如数据库、Redis）或由客户端自己携带（如 JWT Token）。
+- **在您的项目中**：`auth`, `user`, `friend`, `message` 服务都是无状态的。它们处理请求所需的数据要么来自请求本身，要么来自外部的 MySQL/Redis。
 
 ### 2. 有状态服务 (Stateful)
 
--   **保存状态**：服务会在自身内存中为客户端维持一个会话状态。后续的请求依赖于这个已存在于服务器上的状态。
--   **扩展复杂**：通常需要“会话粘滞”（Sticky Session），确保来自同一客户端的请求总是被路由到保存其状态的同一个实例上。
--   **故障敏感**：单个实例宕机将导致其维护的所有会话状态丢失，影响用户体验。
--   **状态内部化**：状态主要存在于服务实例的内存中。
--   **在您的项目中**：`connect` 服务是典型的有状态服务，因为它维护着与客户端之间的 WebSocket **长连接**，这个连接本身就是一种状态。
+- **保存状态**：服务会在自身内存中为客户端维持一个会话状态。后续的请求会依赖于这个已存在于服务器上的状态。服务器需要“记住”客户端是谁，以及它当前处于什么状态。
+
+- **扩展复杂**：通常需要“会话粘滞”（Sticky Session），确保来自同一客户端的请求总是被路由到保存其状态的同一个实例上。
+- **故障敏感**：单个实例宕机将导致其维护的所有会话状态丢失，影响用户体验。
+- **状态内部化**：状态主要存在于服务实例的内存中。
+- **在您的项目中**：`connect` 服务是典型的有状态服务，因为它维护着与客户端之间的 WebSocket **长连接**，这个连接本身就是一种状态。
 
 好的，我来解释无状态（Stateless）与有状态（Stateful）服务的定义，并结合您的 `im-server` 项目进行说明。
 
@@ -647,20 +662,22 @@ func (s *AuthIntService) KickDevice(ctx context.Context, req *authpb.KickDeviceR
 就像一个**自动售货机**。你投入硬币，按下按钮，它吐出饮料。它不关心你是谁，也不记得你上次买了什么。每次购买都是一次独立的交易。
 
 **关键特征**：
-*   **无会话状态**：服务器自身内存中不存储任何客户端的会话数据。
-*   **极易水平扩展**：因为任何一台服务器实例都可以处理任何请求，所以可以简单地在负载均衡器后面增加更多的服务实例来分担压力。
-*   **高可用性**：如果一个实例宕机，负载均衡器可以无缝地将请求转发到另一个健康的实例，不会丢失任何会话信息，因为信息根本就不在服务器上。
-*   **状态外部化**：服务的状态被存储在外部系统中，例如：
-    *   **数据库/缓存** (MySQL, Redis)：用户的个人资料、好友关系等。
-    *   **客户端**：通过 Token (如 JWT) 携带用户身份信息。
+
+- **无会话状态**：服务器自身内存中不存储任何客户端的会话数据。
+- **极易水平扩展**：因为任何一台服务器实例都可以处理任何请求，所以可以简单地在负载均衡器后面增加更多的服务实例来分担压力。
+- **高可用性**：如果一个实例宕机，负载均衡器可以无缝地将请求转发到另一个健康的实例，不会丢失任何会话信息，因为信息根本就不在服务器上。
+- **状态外部化**：服务的状态被存储在外部系统中，例如：
+  - **数据库/缓存** (MySQL, Redis)：用户的个人资料、好友关系等。
+  - **客户端**：通过 Token (如 JWT) 携带用户身份信息。
 
 **在您的 `im-server` 项目中**：
 `auth`, `user`, `friend`, `message` 这些通过 gRPC 提供核心业务逻辑的服务，都应该是**无状态**的。
-*   **为什么？** 当 gateway 收到一个“添加好友”的 HTTP 请求时，它会转发给 `friend` 服务。这个 gRPC 请求本身包含了发起者 `UserID` (来自 JWT) 和目标好友的 `ID`。`friend` 服务处理这个请求，在 MySQL 中创建一条好友申请记录，然后就完成了。它不需要记住“这个用户正在申请好友”。下一次该用户查看好友列表的请求，可以由 `friend` 服务的任何一个实例来处理。
+
+- **为什么？** 当 gateway 收到一个“添加好友”的 HTTP 请求时，它会转发给 `friend` 服务。这个 gRPC 请求本身包含了发起者 `UserID` (来自 JWT) 和目标好友的 `ID`。`friend` 服务处理这个请求，在 MySQL 中创建一条好友申请记录，然后就完成了。它不需要记住“这个用户正在申请好友”。下一次该用户查看好友列表的请求，可以由 `friend` 服务的任何一个实例来处理。
 
 ---
 
-### 2. 有状态服务 (Stateful Service)
+### 2. 有状态服务 (Stateful)
 
 **定义**：
 有状态服务**会保存**并维护客户端的交互状态（上下文）。后续的请求会依赖于服务器上已存储的这个状态。服务器需要“记住”客户端是谁，以及它当前处于什么状态。
@@ -669,40 +686,43 @@ func (s *AuthIntService) KickDevice(ctx context.Context, req *authpb.KickDeviceR
 就像一通**电话**。一旦连接建立，双方就可以连续对话。对话的上下文是持续的，你下一句说什么和上一句是相关的。这个“连接”本身就是一种状态。
 
 **关键特征**：
-*   **维持会话状态**：服务器在内存中为每个客户端维持一个会话（Session）。
-*   **扩展复杂**：简单地增加实例是不够的。需要确保来自同一客户端的后续请求被路由到**同一个**保存其状态的服务器实例上（这称为“会话粘滞”或“Sticky Sessions”）。
-*   **故障恢复困难**：如果一个实例宕机，它内存中保存的所有客户端状态都会丢失。客户端需要重新建立连接和状态，体验较差。
-*   **状态内部化**：状态主要存储在服务实例的内存中。
+
+- **维持会话状态**：服务器在内存中为每个客户端维持一个会话（Session）。
+- **扩展复杂**：简单地增加实例是不够的。需要确保来自同一客户端的后续请求被路由到**同一个**保存其状态的服务器实例上（这称为“会话粘滞”或“Sticky Sessions”）。
+- **故障恢复困难**：如果一个实例宕机，它内存中保存的所有客户端状态都会丢失。客户端需要重新建立连接和状态，体验较差。
+- **状态内部化**：状态主要存储在服务实例的内存中。
 
 **在您的 `im-server` 项目中**：
 `connect` 服务是典型的**有状态**服务。
-*   **为什么？** `connect` 服务的核心职责是维护与客户端之间的 WebSocket 长连接。
-    *   当一个客户端通过 WebSocket 连接上来，`connect` 服务的一个实例会为它创建一个 `Conn` 对象，并记录其 `UserID`、`DeviceID` 等信息。
-    *   这个**TCP/WebSocket 连接本身就是一种状态**。
-    *   当 `message` 服务需要向这个用户推送消息时，它必须通过某种方式找到维持着这个用户连接的那个**特定的 `connect` 服务实例**，并将消息发给它，再由它通过 WebSocket 连接推送给客户端。
+
+- **为什么？** `connect` 服务的核心职责是维护与客户端之间的 WebSocket 长连接。
+  - 当一个客户端通过 WebSocket 连接上来，`connect` 服务的一个实例会为它创建一个 `Conn` 对象，并记录其 `UserID`、`DeviceID` 等信息。
+  - 这个**TCP/WebSocket 连接本身就是一种状态**。
+  - 当 `message` 服务需要向这个用户推送消息时，它必须通过某种方式找到维持着这个用户连接的那个**特定的 `connect` 服务实例**，并将消息发给它，再由它通过 WebSocket 连接推送给客户端。
 
 ---
 
 ### 总结对比
 
-| 特性 | 无状态服务 (Stateless) | 有状态服务 (Stateful) |
-| :--- | :--- | :--- |
-| **状态存储** | 外部 (数据库, Redis, 客户端 Token) | 内部 (服务实例内存) |
-| **请求处理** | 每个请求都独立，自包含 | 后续请求依赖于先前状态 |
-| **水平扩展** | **非常容易**，直接增加实例 | **复杂**，需要会话粘滞或状态同步 |
-| **可靠性** | **高**，实例故障无影响 | **低**，实例故障导致状态丢失 |
-| **`im-server` 示例** | `auth`, `user`, `friend`, `message` | `connect` |
+| 特性                 | 无状态服务 (Stateless)              | 有状态服务 (Stateful)            |
+| :------------------- | :---------------------------------- | :------------------------------- |
+| **状态存储**         | 外部 (数据库、Redis、客户端 Token)  | 内部 (服务实例内存)              |
+| **请求处理**         | 每个请求都独立、自包含              | 后续请求依赖于先前状态           |
+| **水平扩展**         | **非常容易**，直接增加实例          | **复杂**，需要会话粘滞或状态同步 |
+| **可靠性**           | **高**，实例故障无影响              | **低**，实例故障导致状态丢失     |
+| **`im-server` 示例** | `auth`, `user`, `friend`, `message` | `connect`                        |
 
 ### 对您项目设计的意义
 
 您的项目设计体现了将**无状态计算**与**有状态连接**分离的最佳实践：
+
 1.  **核心业务逻辑（无状态）**：将注册、登录、好友管理、消息处理等业务逻辑做成无状态的 gRPC 服务，使得这部分最核心、最复杂的逻辑可以被轻松地扩展和维护。
 2.  **连接管理（有状态）**：将管理海量长连接的复杂性隔离在 `connect` 服务中。虽然 `connect` 服务是有状态的，但可以通过将“用户在哪台 `connect` 节点上”这个路由信息存储在 Redis 中，来降低其状态性，从而实现 `connect` 层的水平扩展。
 
-
-# 建立了连接为什么还要通过HTTP 接口调用 SendMessage，而不是websocket
+# 建立了连接为什么还要通过 HTTP 接口调用 SendMessage，而不是 websocket
 
 为什么已建立 WebSocket 还用 HTTP 调 SendMessage：
+
 - 职责分离更清晰
   - WebSocket：只做“下行推送/广播”（在线投递、心跳、会话保持）。
   - HTTP/gRPC：做“上行写入”（鉴权、参数校验、幂等、事务、落库、出箱/投递）。
@@ -715,20 +735,22 @@ func (s *AuthIntService) KickDevice(ctx context.Context, req *authpb.KickDeviceR
   - Connect 专注连接与下行广播；Message 服务专注写路径与出站事件。避免把业务写路径塞进长连层。
 
 当然，也可以支持“WS 上行发送”：
+
 - 方案：在 WS 协议里加一个 SendMessage 命令。Connect 收到后转调 Message RPC，成功后通过 WS 回 ACK；事件照常进 Kafka，再由 Connect 的消费者推送给接收方。
 - 代价：Connect 需承担鉴权、限流、转发、重试、幂等等写路径职责，复杂度上升。
 
 当前项目默认：HTTP/网关发消息，上行更稳；WebSocket 只做下行推送。若你更想贴近 IM 客户端“纯长连”的体验，我可以按你现有的 `connectpb.Packet` 增加上行命令并落地实现。
 
+# 对本项目的期望是作为类似 qq/微信那样的后端，希望测试发送信息时更接近真实场景，应该使用什么方式测试发送信息的函数
 
-# 对本项目的期望是作为类似qq/微信那样的后端，希望测试发送信息时更接近真实场景，应该使用什么方式测试发送信息的函数
 我是 GitHub Copilot。
 
 建议用“端到端、黑盒”的方式，尽量还原 QQ/微信的真实链路来测。
 
 推荐测试方式（按真实度从高到低）:
+
 - 真机/浏览器 WebSocket 连线
-  - 启动 Connect 服务（WS: `:8082`），分别用用户A、用户B登录后拿到各自 token。
+  - 启动 Connect 服务（WS: `:8082`），分别用用户 A、用户 B 登录后拿到各自 token。
   - 在两台“设备”（两份 wscat/websocat 或一个前端页 + 一个 wscat）用 `ws://localhost:8082/ws?token=...` 建立连接。
   - 通过网关的 HTTP 接口调用 SendMessage，把 A→B 的消息发出（携带 recipient_id、client_msg_id、content）。
   - 期望：B 的所有在线设备都能收到 Kafka 推来的 deliver 事件，Connect 经 `DeliverToUser` 广播，客户端弹出一条 JSON 消息负载。
@@ -740,15 +762,305 @@ func (s *AuthIntService) KickDevice(ctx context.Context, req *authpb.KickDeviceR
   - 用相同 client_msg_id 重复调用 SendMessage，应只产生一次有效入库/未读+1；B 的多设备应都能收到同一条 deliver。
 
 需要启动的进程:
+
 - Connect（已内置 Kafka 消费并调用 `DeliverToUser` 推送）
 - Message（提供 SendMessage，写 Mongo、Outbox、MySQL，并尝试直发 Kafka）
 - Outbox 分发器（cmd/outbox/main.go，会扫描 outbox_events 并发布到 Kafka）
-- Indexer（可选，cmd/indexer/main.go，用于从 deliver 事件回填 MySQL 索引/未读，保证最终一致）
+- Indexer（可选，cmd/indexer/main.go，用于从 deliver 事件回填 MySQL 索引/未读，保证最终一致性）
 
 你的第二个问题：本项目是否已实现“扫描 outbox 表然后重新发送”？
+
 - 已实现。位置在 main.go：
   - 周期性查询待发送的 outbox_events
   - 发布到 `${topic_prefix}.message.deliver`（默认 `im.message.deliver`）
-  - 成功后标记已发送
+  - 成功后标记已发送，保证消息最终至少一次投递。
 
 若需要，我可以提供一套具体的测试清单（登录拿 token → 建立两端 WS → 发消息 → 看 Kafka/Connect 日志与客户端收包），或编写一个简单的前端页专门用来发消息与收消息，便于你一键演示整链路。
+
+## Kafka Writer.WriteMessages 方法说明
+
+```go
+func (w *kafka.Writer) WriteMessages(ctx context.Context, msgs ...kafka.Message) error
+```
+
+- 功能：向写入器配置的 Kafka 主题批量写入消息。
+- 同步/异步写入：
+  - 若写入器未配置为异步模式，本方法会阻塞直到所有消息写入完成或达到最大重试次数。
+  - 同步模式下，当批量大小大于 1 时，会等待直到：
+    1. 收集到足够的消息组成完整批量，或
+    2. 达到批量超时（BatchTimeout）。
+  - 批量和超时是按分区评估的，不同分区可能有不同触发条件，调度器（Balancer）也会影响写入时机。
+- 返回值：
+  - 写入失败时返回 error，类型可能是 kafka.WriteError，可用于判断每条消息的状态。
+  - 上层可通过 ctx 取消操作，取消时可能已部分写入，需整体重写。
+
+## 本项目涉及的 Kafka 关键知识点
+
+1. **Topic 前缀与主题命名**：
+   - 在 `config.yaml` 中通过 `broker.topic_prefix` 指定前缀（默认为 `im`），最终消费/生产的主题形如 `im.message.deliver`。
+2. **生产者封装**：
+   - `broker.NewKafkaProducer` 创建 `KafkaProducer`，内部使用 `kafka.Writer`，并设置 `LeastBytes` 负载均衡和 `BatchTimeout`。
+   - 调用 `Publish(ctx, topic, key, payload)` 写入消息，`key` 用于分区和局部顺序保证。
+3. **消费者封装**：
+   - `broker.NewKafkaConsumer` 创建 `KafkaConsumer`，使用 `GroupID` 和 `GroupTopics` 实现消费者组。
+   - `Start(ctx, handler)` 循环调用 `reader.ReadMessage`，并将消息交给业务处理回调。
+4. **Outbox 模式**：
+   - 写入业务数据库后将事件存入 `outbox_events` 表，定时扫描并调用 `Publish` 可靠投递。
+   - 成功后标记已发送，保证消息最终至少一次投递。
+5. **实时投递与回填**：
+   - Connect 服务直接消费 `im.message.deliver` 并通过 WebSocket 推送给在线设备。
+   - Indexer 服务消费同一主题，将事件回写 MySQL 索引和未读数，实现最终一致性。
+6. **幂等和错误处理**：
+   - 生产者可重试，写失败时保留在 Outbox 继续重试。
+   - 消费者侧需捕获 JSON 解析错误、业务错误后跳过或重试。
+7. **监控与扩展**：
+   - 可配合 Kafka 控制台工具（console-consumer、kafka-topics）观察消息流。
+   - 在生产者/消费者封装中可添加指标、结构化日志和重试策略，满足高可用需求。
+
+## Kafka 分区数和副本数详解
+
+### 分区数 (Partitions)
+
+**定义**: 分区是 Kafka 主题的水平切分单位，一个主题可以分为多个分区，每个分区是一个有序的消息序列。
+
+#### 分区的作用
+
+1. **并行处理**：
+
+   ```bash
+   # 一个主题有 3 个分区
+   im.message.deliver-0  [msg1, msg2, msg3, ...]
+   im.message.deliver-1  [msg4, msg5, msg6, ...]
+   im.message.deliver-2  [msg7, msg8, msg9, ...]
+   ```
+
+   - 多个消费者可以同时消费不同分区，提高吞吐量
+   - 生产者可以并行写入多个分区
+
+2. **水平扩展**：
+
+   - 分区数决定了消费者组内最大并发消费者数量
+   - 分区数 = 3，最多只能有 3 个消费者同时工作
+
+3. **负载均衡**：
+   ```go
+   // 在本项目中，使用 conversation_id 作为 key
+   producer.Publish(ctx, topic, []byte(convID), payload)
+   ```
+   - 相同 key 的消息会路由到同一分区，保证顺序
+   - 不同 key 的消息分散到不同分区，实现负载均衡
+
+#### 分区数的选择策略
+
+**选择原则**：
+
+- **IM 场景建议**：3-6 个分区起步
+- **计算公式**：分区数 ≥ 预期的消费者实例数
+- **考虑因素**：
+  - 消息量：高并发场景需要更多分区
+  - 顺序性：需要严格顺序的场景分区不宜过多
+  - 资源开销：每个分区占用文件句柄和内存
+
+### 副本数 (Replicas)
+
+**定义**: 副本是分区数据的备份，用于保证数据的可靠性和高可用性。
+
+#### 副本的作用
+
+1. **数据备份**：
+
+   ```bash
+   # 副本数 = 3 的情况
+   Broker-1: [分区0-主副本] [分区1-从副本] [分区2-从副本]
+   Broker-2: [分区0-从副本] [分区1-主副本] [分区2-从副本]
+   Broker-3: [分区0-从副本] [分区1-从副本] [分区2-主副本]
+   ```
+
+2. **故障恢复**：
+
+   - 主副本（Leader）负责读写
+   - 从副本（Follower）同步主副本数据
+   - 主副本故障时，从副本自动提升为主副本
+
+3. **数据一致性**：
+   - 生产者等待所有副本确认后才认为写入成功
+   - 保证数据不丢失
+
+#### 副本数的配置
+
+```yaml
+# docker-compose.yml 中的单机配置
+kafka:
+  environment:
+    KAFKA_DEFAULT_REPLICATION_FACTOR: 1 # 单机只能设为1
+    KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+```
+
+**选择原则**：
+
+- **单机开发**：副本数 = 1
+- **生产环境**：副本数 = 3（推荐）
+- **高可用场景**：副本数 = 5
+- **限制**：副本数不能超过 Broker 数量
+
+### 在本项目中的应用
+
+#### 针对 IM 场景的优化建议
+
+1. **消息投递主题** (`im.message.deliver`)：
+
+   ```bash
+   # 创建主题时指定分区数和副本数
+   kafka-topics --create \
+     --topic im.message.deliver \
+     --partitions 6 \
+     --replication-factor 3 \
+     --bootstrap-server localhost:9092
+   ```
+
+2. **分区策略**：
+   ```go
+   // 使用 conversation_id 作为分区键
+   // 保证同一会话的消息有序
+   func (s *MessageExtService) publishToKafka(convID, payload string) {
+       key := []byte(convID) // conversation_id 作为 key
+       s.kafka.Publish(ctx, topic, key, []byte(payload))
+   }
+   ```
+
+### 性能影响
+
+| 配置项         | 对性能的影响               |
+| -------------- | -------------------------- |
+| **分区数过少** | 限制并发度，成为性能瓶颈   |
+| **分区数过多** | 增加内存开销，影响选举性能 |
+| **副本数过少** | 数据安全风险，但性能较好   |
+| **副本数过多** | 写入延迟增加，网络开销大   |
+
+对于本项目的 IM 场景：
+
+- **开发环境**: 分区数=3, 副本数=1
+- **生产环境**: 分区数=6-12, 副本数=3
+- **关键**: 使用 `conversation_id` 作为分区键，保证会话内消息有序
+
+## WriteMessages 阻塞机制详解
+
+### "所有消息写入完成或达到最大重试次数"的含义
+
+当调用 `WriteMessages()` 时，该方法会一直阻塞（停在那里等待），直到满足以下**任意一个**条件：
+
+#### 条件 1：所有消息写入完成 ✅
+
+```go
+// 成功场景
+messages := []kafka.Message{
+    {Topic: "im.message.deliver", Value: []byte("msg1")},
+    {Topic: "im.message.deliver", Value: []byte("msg2")},
+    {Topic: "im.message.deliver", Value: []byte("msg3")},
+}
+
+// 这个调用会阻塞，直到所有3条消息都成功写入Kafka
+err := writer.WriteMessages(ctx, messages...)
+if err == nil {
+    // 说明所有消息都成功写入
+    fmt.Println("所有消息写入成功")
+}
+```
+
+#### 条件 2：达到最大重试次数 ❌
+
+```go
+// 失败场景
+err := writer.WriteMessages(ctx, messages...)
+if err != nil {
+    // 可能的错误原因：
+    // - Kafka broker 不可达
+    // - 网络超时
+    // - 分区不存在
+    // - 认证失败等
+
+    fmt.Printf("写入失败: %v\n", err)
+}
+```
+
+### 重试机制的工作原理
+
+#### 重试过程示例
+
+```
+第1次尝试: 发送消息 -> 网络超时 -> 失败
+第2次尝试: 发送消息 -> 连接拒绝 -> 失败
+第3次尝试: 发送消息 -> 分区leader选举中 -> 失败
+达到最大重试次数(3次) -> 返回错误，停止阻塞
+```
+
+### 在本项目中的实际表现
+
+#### 当前 Outbox 分发器的使用
+
+```go
+// cmd/outbox/main.go 当前实现
+for _, r := range rows {
+    var key json.RawMessage
+
+    // 这里会阻塞直到成功或达到最大重试次数
+    _ = producer.Publish(ctx, producer.Topic(r.Topic), key, r.Payload)
+    //  ^-- 注意：当前代码忽略了错误！
+
+    // 无论成功失败都标记为已发送（这可能有问题）
+    if err := q.MarkOutboxEventSent(ctx, r.ID); err != nil {
+        log.Printf("mark sent failed id=%d: %v", r.ID, err)
+    }
+}
+```
+
+#### 改进版本（处理重试失败）
+
+```go
+// 改进后的 Outbox 分发器
+for _, r := range rows {
+    var key json.RawMessage
+
+    // 正确处理发布结果
+    err := producer.Publish(ctx, producer.Topic(r.Topic), key, r.Payload)
+    if err != nil {
+        log.Printf("publish failed for event %d: %v", r.ID, err)
+
+        // 标记为失败，下次继续重试
+        if markErr := q.MarkOutboxEventFailed(ctx, r.ID); markErr != nil {
+            log.Printf("mark failed error: %v", markErr)
+        }
+        continue
+    }
+
+    // 只有成功时才标记为已发送
+    if err := q.MarkOutboxEventSent(ctx, r.ID); err != nil {
+        log.Printf("mark sent failed id=%d: %v", r.ID, err)
+    }
+}
+```
+
+### 常见的重试失败场景
+
+#### 网络问题
+
+```
+时间线：
+10:00:00 - 第1次尝试发送消息
+10:00:02 - 网络超时，准备重试
+10:00:05 - 第2次尝试发送消息
+10:00:07 - 网络超时，准备重试
+10:00:10 - 第3次尝试发送消息
+10:00:12 - 网络超时，达到最大重试次数
+10:00:12 - WriteMessages 返回错误，结束阻塞
+```
+
+### 总结
+
+- **阻塞等待**：`WriteMessages` 会一直等待，不会立即返回
+- **成功条件**：所有消息都成功写入 Kafka 并得到确认
+- **失败条件**：经过多次重试后仍然失败，达到配置的最大重试次数
+- **本项目影响**：当前 Outbox 分发器没有正确处理重试失败的情况，建议改进错误处理逻辑
+
+这种设计保证了消息的可靠投递，同时通过重试机制处理临时性故障，是 Kafka 客户端的标准行为。

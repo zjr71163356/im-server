@@ -85,6 +85,10 @@ func StartWSConn(ws *websocket.Conn, session *Session) {
 		Session:   session,
 		Transport: &WSTransport{Ws: ws},
 	}
+	// 如果 session 已包含认证后的设备信息，立刻注册，便于下行投递
+	if session != nil && session.DeviceID != 0 {
+		SetConnection(session.DeviceID, conn)
+	}
 	go conn.Serve()
 }
 
