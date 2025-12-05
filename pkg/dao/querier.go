@@ -81,7 +81,6 @@ type Querier interface {
 	GetOrCreateSeq(ctx context.Context, arg GetOrCreateSeqParams) error
 	// 获取待处理的好友申请
 	GetPendingFriendRequests(ctx context.Context, recipientID uint64) ([]FriendRequest, error)
-	GetPendingOutboxEvents(ctx context.Context, limit int32) ([]GetPendingOutboxEventsRow, error)
 	// 获取收到的好友申请列表
 	GetReceivedFriendRequests(ctx context.Context, arg GetReceivedFriendRequestsParams) ([]FriendRequest, error)
 	// 获取发送的好友申请列表
@@ -122,15 +121,12 @@ type Querier interface {
 	// 递增序列号
 	IncrementSeq(ctx context.Context, arg IncrementSeqParams) error
 	InsertMessageIndex(ctx context.Context, arg InsertMessageIndexParams) error
-	InsertOutboxEvent(ctx context.Context, arg InsertOutboxEventParams) error
 	// 获取群组列表
 	ListGroups(ctx context.Context, arg ListGroupsParams) ([]Group, error)
 	// 获取用户列表
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]User, error)
 	// 根据昵称获取用户信息（模糊匹配，支持分页）
 	ListUsersByNickname(ctx context.Context, arg ListUsersByNicknameParams) ([]ListUsersByNicknameRow, error)
-	MarkOutboxEventFailed(ctx context.Context, id uint64) error
-	MarkOutboxEventSent(ctx context.Context, id uint64) error
 	MarkRead(ctx context.Context, arg MarkReadParams) error
 	// 拒绝好友申请
 	RejectFriendRequest(ctx context.Context, arg RejectFriendRequestParams) error

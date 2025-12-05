@@ -12,6 +12,13 @@ import (
 var ConnectManager = sync.Map{}
 
 func SetConnection(deviceID uint64, conn *Conn) {
+	// 多端顶号：同一 deviceID 仅保留最后一次连接
+	if old, ok := ConnectManager.Load(deviceID); ok {
+		if oldConn, ok := old.(*Conn); ok && oldConn != conn {
+			slog.Info("kick existing connection", "deviceID", deviceID)
+			oldConn.Close()
+		}
+	}
 	ConnectManager.Store(deviceID, conn)
 }
 

@@ -3,12 +3,15 @@ package connect
 import (
 	"container/list"
 	"context"
+	"errors"
+	"im-server/internal/device"
 	"im-server/pkg/config"
 	"im-server/pkg/protocol/pb/connectpb"
 	"im-server/pkg/protocol/pb/devicepb"
 	"im-server/pkg/rpc"
 	"log/slog"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 
@@ -74,9 +77,20 @@ type Session struct {
 
 // Conn 代表一个抽象的逻辑连接，它包含会话信息和一个具体的 Transport 实现。
 type Conn struct {
-	Session   *Session
-	Transport Transport
+	Session    *Session
+	Transport  Transport
+	closed     sync.Once
+	lastTouch  time.Time
+	hbLimiter  rateCounter
+	subLimiter rateCounter
 }
+
+const (
+	HeartbeatsPerWindow = 30
+	HeartbeatWindow     = 30 * time.Second
+	SubscribesPerWindow = 5
+	SubscribeWindow     = 3 * time.Second
+)
 
 // StartWSConn 是处理新 WebSocket 连接的入口函数。
 // 它创建一个 Conn 对象，并启动一个 goroutine 来服务于这个连接。
@@ -107,7 +121,9 @@ func (c *Conn) SignIn(packet *connectpb.Packet) {
 	//TODO
 	//使用gRPC进行远程调用函数验证登录context
 	//需要验证传入的信息是否与数据库中的符合，必然涉及repo的开发，目前先不加(7.21)
-	_, err = rpc.GetDeviceIntServiceClient().ConnSignIn(context.TODO(), &devicepb.ConnSignInRequest{
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	_, err = rpc.GetDeviceIntServiceClient().ConnSignIn(ctx, &devicepb.ConnSignInRequest{
 		DeviceId:   signInputReq.DeviceId,
 		UserId:     signInputReq.UserId,
 		Token:      signInputReq.Token,
@@ -125,6 +141,7 @@ func (c *Conn) SignIn(packet *connectpb.Packet) {
 	c.Session.UserID = signInputReq.UserId
 
 	SetConnection(c.Session.DeviceID, c)
+	c.touchOnlineTTL()
 
 	// 验证 token，更新 Session 等逻辑
 }
@@ -136,7 +153,8 @@ func (c *Conn) Send(packet *connectpb.Packet, message proto.Message, err error) 
 	packet.Message = ""
 
 	if err != nil {
-
+		packet.Code = 1
+		packet.Message = err.Error()
 	}
 
 	if message != nil {
@@ -191,37 +209,96 @@ func (c *Conn) HandleMessage(buf []byte) {
 	switch packet.Command {
 	case connectpb.Command_SIGN_IN:
 		c.SignIn(packet)
+	case connectpb.Command_HEARTBEAT:
+		c.Heartbeat(packet)
+	case connectpb.Command_SUBSCRIBE_ROOM:
+		c.SubscribeRoom(packet)
 
 	default:
 		slog.Error("handler switch other")
 	}
+	c.touchOnlineTTL()
+}
+
+func (c *Conn) Heartbeat(packet *connectpb.Packet) {
+	if !c.hbLimiter.Allow(HeartbeatsPerWindow, HeartbeatWindow) {
+		slog.Warn("heartbeat rate limited", "deviceID", c.Session.DeviceID)
+		return
+	}
+	c.Send(packet, nil, nil)
+}
+
+func (c *Conn) SubscribeRoom(packet *connectpb.Packet) {
+	if !c.subLimiter.Allow(SubscribesPerWindow, SubscribeWindow) {
+		c.Send(packet, nil, ErrTooManySubscribe)
+		return
+	}
+	roomID, err := parseRoomID(packet.Data)
+	if err != nil {
+		c.Send(packet, nil, err)
+		return
+	}
+	// 幂等：重复订阅同一房间直接返回成功
+	if c.Session.RoomID == roomID {
+		c.Send(packet, nil, nil)
+		return
+	}
+	c.Session.RoomID = roomID
+	c.Send(packet, nil, nil)
 }
 
 // Close 关闭一个连接，并执行相关的清理工作。
 func (c *Conn) Close() {
 
-	// 如果设备已登录，则从全局连接管理器中删除此连接
-	if c.Session.DeviceID != 0 {
-		DeleteConnection(c.Session.DeviceID)
-	}
+	c.closed.Do(func() {
+		// 如果设备已登录，则从全局连接管理器中删除此连接
+		if c.Session.DeviceID != 0 {
+			DeleteConnection(c.Session.DeviceID)
+		}
 
-	//TO DO
-	// 取消订阅房间
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
 
-	//TO DO
-	// gPRC远程调用函数，使得设备离线
-	_, err := rpc.GetDeviceIntServiceClient().Offline(context.TODO(), &devicepb.OfflineRequest{
-		UserId:     c.Session.UserID,
-		DeviceId:   c.Session.DeviceID,
-		ClientAddr: c.Transport.RemoteAddr().String(),
+		//TO DO
+		// 取消订阅房间
+
+		//TO DO
+		// gPRC远程调用函数，使得设备离线
+		if c.Session.DeviceID != 0 {
+			_, err := rpc.GetDeviceIntServiceClient().Offline(ctx, &devicepb.OfflineRequest{
+				UserId:     c.Session.UserID,
+				DeviceId:   c.Session.DeviceID,
+				ClientAddr: c.Transport.RemoteAddr().String(),
+			})
+
+			if err != nil {
+				slog.Error("offline error", "error", err, "userID", c.Session.UserID, "deviceID", c.Session.DeviceID, "clientAddr", c.Transport.RemoteAddr().String())
+				// 回写兜底：即使 gRPC 失败，也刷新 Redis 离线态，避免假在线
+				_ = device.SetDeviceOffline(context.Background(), c.Session.DeviceID)
+				go c.retryOffline(c.Session.UserID, c.Session.DeviceID, c.Transport.RemoteAddr().String())
+			}
+		}
+
+		// 关闭底层的物理连接
+		_ = c.Transport.Close()
 	})
+}
 
-	if err != nil {
-		slog.Error("offline error", "error", err, "userID", c.Session.UserID, "deviceID", c.Session.DeviceID, "clientAddr", c.Transport.RemoteAddr().String())
+// retryOffline 尝试后台重试离线，保障 Redis TTL 过期后数据库也被回写为离线
+func (c *Conn) retryOffline(userID, deviceID uint64, clientAddr string) {
+	for i := 0; i < 3; i++ {
+		time.Sleep(time.Second * time.Duration(i+1))
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		_, err := rpc.GetDeviceIntServiceClient().Offline(ctx, &devicepb.OfflineRequest{
+			UserId:     userID,
+			DeviceId:   deviceID,
+			ClientAddr: clientAddr,
+		})
+		cancel()
+		if err == nil {
+			return
+		}
 	}
-
-	// 关闭底层的物理连接
-	c.Transport.Close()
 }
 
 // Serve 是每个连接的主服务循环。
@@ -229,7 +306,7 @@ func (c *Conn) Close() {
 // 当发生任何错误时，循环终止，连接被关闭。
 func (c *Conn) Serve() {
 	for {
-		err := c.Transport.SetReadDeadline(time.Now().Add(12 * time.Minute))
+		err := c.Transport.SetReadDeadline(time.Now().Add(device.DeviceOnlineTTL))
 		if err != nil {
 			c.Close()
 			return
@@ -242,3 +319,53 @@ func (c *Conn) Serve() {
 		c.HandleMessage(data)
 	}
 }
+
+// touchOnlineTTL 续期设备在线态，防止连接异常中断后留下“假在线”
+func (c *Conn) touchOnlineTTL() {
+	if c.Session == nil || c.Session.DeviceID == 0 || c.Session.UserID == 0 {
+		return
+	}
+	if !c.lastTouch.IsZero() && time.Since(c.lastTouch) < device.DeviceOnlineTTL/3 {
+		return
+	}
+	c.lastTouch = time.Now()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	err := device.TouchDeviceOnline(ctx, c.Session.DeviceID, c.Session.UserID, config.Config.Services.Connect.LocalAddr, c.Transport.RemoteAddr().String())
+	if err != nil {
+		slog.Warn("refresh online ttl failed", "error", err, "deviceID", c.Session.DeviceID)
+	}
+}
+
+// 解析订阅房间ID，允许客户端传入数字字符串
+func parseRoomID(data []byte) (uint64, error) {
+	roomStr := string(data)
+	if roomStr == "" {
+		return 0, ErrInvalidRoom
+	}
+	return strconv.ParseUint(roomStr, 10, 64)
+}
+
+type rateCounter struct {
+	windowStart time.Time
+	count       int
+}
+
+func (r *rateCounter) Allow(limit int, window time.Duration) bool {
+	now := time.Now()
+	if r.windowStart.IsZero() || now.Sub(r.windowStart) > window {
+		r.windowStart = now
+		r.count = 0
+	}
+	if r.count >= limit {
+		return false
+	}
+	r.count++
+	return true
+}
+
+var (
+	ErrTooManySubscribe = errors.New("subscribe too frequent")
+	ErrInvalidRoom      = errors.New("invalid room")
+)

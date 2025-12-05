@@ -1,4 +1,4 @@
--- Schema upgrade: message indexing, conversations, and outbox (per docs/数据库设计说明.md)
+-- Schema upgrade: message indexing and conversations
 
 -- 消息索引表（热数据，MySQL）
 CREATE TABLE IF NOT EXISTS `message_index` (
@@ -47,18 +47,3 @@ CREATE TABLE IF NOT EXISTS `user_conversation` (
   PRIMARY KEY (`user_id`, `conversation_id`),
   KEY `idx_user_updated` (`user_id`, `updated_at` DESC)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='用户会话状态';
-
-
--- Outbox事件表（热数据，MySQL）
-CREATE TABLE IF NOT EXISTS `outbox_events` (
-  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '自增主键',
-  `topic` VARCHAR(100) NOT NULL COMMENT '事件主题',
-  `payload` JSON NOT NULL COMMENT '事件负载',
-  `status` ENUM('pending','sent','failed') DEFAULT 'pending' COMMENT '状态',
-  `retry_count` INT DEFAULT 0 COMMENT '重试次数',
-  `next_delivery_at` TIMESTAMP NULL DEFAULT NULL COMMENT '下次投递时间',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  KEY `idx_status_delivery` (`status`, `next_delivery_at`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='Outbox事件表';

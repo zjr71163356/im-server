@@ -2,9 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
-	"net/http"
 
 	"im-server/gateway"
 	"im-server/pkg/config"
@@ -40,5 +38,5 @@ func main() {
 	log.Printf("  POST /api/v1/user/search - User search")
 	log.Printf("  POST /api/v1/message - Send message")
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), gatewayServer))
+	log.Fatal(gatewayServer.Listen(port))
 }

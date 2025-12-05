@@ -559,21 +559,6 @@ func (mr *MockQuerierMockRecorder) GetPendingFriendRequests(ctx, recipientID int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingFriendRequests", reflect.TypeOf((*MockQuerier)(nil).GetPendingFriendRequests), ctx, recipientID)
 }
 
-// GetPendingOutboxEvents mocks base method.
-func (m *MockQuerier) GetPendingOutboxEvents(ctx context.Context, limit int32) ([]dao.GetPendingOutboxEventsRow, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPendingOutboxEvents", ctx, limit)
-	ret0, _ := ret[0].([]dao.GetPendingOutboxEventsRow)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPendingOutboxEvents indicates an expected call of GetPendingOutboxEvents.
-func (mr *MockQuerierMockRecorder) GetPendingOutboxEvents(ctx, limit interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingOutboxEvents", reflect.TypeOf((*MockQuerier)(nil).GetPendingOutboxEvents), ctx, limit)
-}
-
 // GetReceivedFriendRequests mocks base method.
 func (m *MockQuerier) GetReceivedFriendRequests(ctx context.Context, arg dao.GetReceivedFriendRequestsParams) ([]dao.FriendRequest, error) {
 	m.ctrl.T.Helper()
@@ -900,20 +885,6 @@ func (mr *MockQuerierMockRecorder) InsertMessageIndex(ctx, arg interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertMessageIndex", reflect.TypeOf((*MockQuerier)(nil).InsertMessageIndex), ctx, arg)
 }
 
-// InsertOutboxEvent mocks base method.
-func (m *MockQuerier) InsertOutboxEvent(ctx context.Context, arg dao.InsertOutboxEventParams) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "InsertOutboxEvent", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// InsertOutboxEvent indicates an expected call of InsertOutboxEvent.
-func (mr *MockQuerierMockRecorder) InsertOutboxEvent(ctx, arg interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertOutboxEvent", reflect.TypeOf((*MockQuerier)(nil).InsertOutboxEvent), ctx, arg)
-}
-
 // ListGroups mocks base method.
 func (m *MockQuerier) ListGroups(ctx context.Context, arg dao.ListGroupsParams) ([]dao.Group, error) {
 	m.ctrl.T.Helper()
@@ -957,34 +928,6 @@ func (m *MockQuerier) ListUsersByNickname(ctx context.Context, arg dao.ListUsers
 func (mr *MockQuerierMockRecorder) ListUsersByNickname(ctx, arg interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListUsersByNickname", reflect.TypeOf((*MockQuerier)(nil).ListUsersByNickname), ctx, arg)
-}
-
-// MarkOutboxEventFailed mocks base method.
-func (m *MockQuerier) MarkOutboxEventFailed(ctx context.Context, id uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkOutboxEventFailed", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// MarkOutboxEventFailed indicates an expected call of MarkOutboxEventFailed.
-func (mr *MockQuerierMockRecorder) MarkOutboxEventFailed(ctx, id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkOutboxEventFailed", reflect.TypeOf((*MockQuerier)(nil).MarkOutboxEventFailed), ctx, id)
-}
-
-// MarkOutboxEventSent mocks base method.
-func (m *MockQuerier) MarkOutboxEventSent(ctx context.Context, id uint64) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "MarkOutboxEventSent", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// MarkOutboxEventSent indicates an expected call of MarkOutboxEventSent.
-func (mr *MockQuerierMockRecorder) MarkOutboxEventSent(ctx, id interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MarkOutboxEventSent", reflect.TypeOf((*MockQuerier)(nil).MarkOutboxEventSent), ctx, id)
 }
 
 // MarkRead mocks base method.

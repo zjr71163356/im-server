@@ -72,8 +72,8 @@ func (s *MessageExtService) SendMessage(ctx context.Context, req *messagepb.Send
 	// 6. 序列号（Redis 递增）
 	seq := s.rdb.Incr(ctx, fmt.Sprintf("conv_seq:%s", convID)).Val()
 
-	// 7. 组装并持久化（Mongo 消息体 + MySQL 索引 + Outbox）
-	resp, err := s.storeMessageWithOutbox(ctx, uid, req, convID, seq)
+	// 7. 组装并持久化（Mongo 消息体 + MySQL 索引）
+	resp, err := s.storeMessage(ctx, uid, req, convID, seq)
 	if err != nil {
 		return nil, err
 	}
@@ -91,8 +91,8 @@ func buildP2PConvID(a, b uint64) string {
 	return fmt.Sprintf("p_%d_%d", b, a)
 }
 
-// storeMessageWithOutbox 将消息体写入 Mongo，并在一个 DB 事务内写入索引/会话/未读；Outbox 在 Mongo 成功后立即写入
-func (s *MessageExtService) storeMessageWithOutbox(ctx context.Context, senderID uint64, req *messagepb.SendMessageRequest, convID string, seq int64) (*messagepb.SendMessageReply, error) {
+// storeMessage 将消息体写入 Mongo，并在一个 DB 事务内写入索引/会话/未读，然后尝试发布 Kafka
+func (s *MessageExtService) storeMessage(ctx context.Context, senderID uint64, req *messagepb.SendMessageRequest, convID string, seq int64) (*messagepb.SendMessageReply, error) {
 	// 生成 message_id（简单用时间+seq，可换为雪花）
 	msgID := fmt.Sprintf("%d-%d", time.Now().UnixNano(), seq)
 
@@ -108,20 +108,6 @@ func (s *MessageExtService) storeMessageWithOutbox(ctx context.Context, senderID
 		Body:           bodyRaw,
 	}); err != nil {
 		return nil, status.Errorf(codes.Internal, "save body: %v", err)
-	}
-
-	// 1.5) 立即写入 Outbox（与后续 MySQL 事务解耦，用于失败补偿与异步投递）
-	payload, _ := json.Marshal(map[string]any{
-		"message_id":      msgID,
-		"conversation_id": convID,
-		"seq":             seq,
-		"sender_id":       senderID,
-		"recipient_id":    req.RecipientId,
-		"type":            contentType,
-	})
-	if err := s.queries.InsertOutboxEvent(ctx, dao.InsertOutboxEventParams{Topic: "message.deliver", Payload: payload}); err != nil {
-		// 不阻断主流程：记录日志，后续仍尝试 MySQL 事务与即时发布
-		log.Printf("warn: insert outbox failed (will continue): %v", err)
 	}
 
 	// 2) MySQL 事务：索引/会话/未读
@@ -185,9 +171,17 @@ func (s *MessageExtService) storeMessageWithOutbox(ctx context.Context, senderID
 		return nil, status.Errorf(codes.Internal, "commit: %v", err)
 	}
 
-	// 3) 尝试立即异步投递到 Kafka（即使失败也有 Outbox 兜底/补偿）
+	// 3) 尝试立即异步投递到 Kafka
+	payload, _ := json.Marshal(map[string]any{
+		"message_id":      msgID,
+		"conversation_id": convID,
+		"seq":             seq,
+		"sender_id":       senderID,
+		"recipient_id":    req.RecipientId,
+		"type":            contentType,
+	})
 	if err := s.kafka.Publish(ctx, s.kafka.Topic("message.deliver"), []byte(convID), payload); err != nil {
-		log.Printf("kafka publish failed: %v, will rely on outbox", err)
+		log.Printf("kafka publish failed: %v", err)
 	}
 
 	return &messagepb.SendMessageReply{

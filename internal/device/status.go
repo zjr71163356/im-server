@@ -14,13 +14,23 @@ const (
 	deviceInfoKey = "device:info:"
 	OnLine        = 1 // 设备在线
 	OffLine       = 0 // 设备离线
+
+	// 在线记录的有效期，心跳或读写消息时会续期，防止“假在线”
+	DeviceOnlineTTL = 5 * time.Minute
+	// 离线记录的存活时间，保留一段时间便于排查/查询
+	deviceOfflineTTL = 24 * time.Hour
 )
+
+func deviceKey(deviceID uint64) string {
+	return deviceInfoKey + strconv.FormatUint(deviceID, 10)
+}
 
 // SetDeviceOnline 设置设备在线信息到redis
 func SetDeviceOnline(ctx context.Context, device *dao.Device) error {
-	key := deviceInfoKey + strconv.FormatUint(device.ID, 10)
+	key := deviceKey(device.ID)
 	device.Status = OnLine
 	device.UpdatedAt = time.Now()
+	expiresAt := device.UpdatedAt.Add(DeviceOnlineTTL)
 
 	fields := map[string]interface{}{
 		"user_id":     device.UserID,
@@ -28,23 +38,53 @@ func SetDeviceOnline(ctx context.Context, device *dao.Device) error {
 		"conn_addr":   device.ConnAddr,
 		"client_addr": device.ClientAddr,
 		"updated_at":  device.UpdatedAt.Unix(),
+		"expires_at":  expiresAt.Unix(),
 	}
-	return redisPkg.RedisClient.HSet(ctx, key, fields).Err()
+	pipe := redisPkg.RedisClient.TxPipeline()
+	pipe.HSet(ctx, key, fields)
+	pipe.Expire(ctx, key, DeviceOnlineTTL)
+	_, err := pipe.Exec(ctx)
+	return err
 }
 
-// SetDeviceOffline 设置设备离线
+// TouchDeviceOnline 续期在线态，避免连接异常中断导致“假在线”
+func TouchDeviceOnline(ctx context.Context, deviceID, userID uint64, connAddr, clientAddr string) error {
+	key := deviceKey(deviceID)
+	now := time.Now()
+	fields := map[string]interface{}{
+		"user_id":     userID,
+		"status":      OnLine,
+		"conn_addr":   connAddr,
+		"client_addr": clientAddr,
+		"updated_at":  now.Unix(),
+		"expires_at":  now.Add(DeviceOnlineTTL).Unix(),
+	}
+	pipe := redisPkg.RedisClient.TxPipeline()
+	pipe.HSet(ctx, key, fields)
+	pipe.Expire(ctx, key, DeviceOnlineTTL)
+	_, err := pipe.Exec(ctx)
+	return err
+}
+
+// SetDeviceOffline 设置设备离线（幂等：多次调用只会覆盖为离线并刷新过期时间）
 func SetDeviceOffline(ctx context.Context, deviceID uint64) error {
-	key := deviceInfoKey + strconv.FormatUint(deviceID, 10)
+	key := deviceKey(deviceID)
+	now := time.Now()
 	fields := map[string]interface{}{
 		"status":     OffLine,
-		"updated_at": time.Now().Unix(),
+		"updated_at": now.Unix(),
+		"expires_at": now.Add(deviceOfflineTTL).Unix(),
 	}
-	return redisPkg.RedisClient.HSet(ctx, key, fields).Err()
+	pipe := redisPkg.RedisClient.TxPipeline()
+	pipe.HSet(ctx, key, fields)
+	pipe.Expire(ctx, key, deviceOfflineTTL)
+	_, err := pipe.Exec(ctx)
+	return err
 }
 
 // GetDeviceOnline 获取设备在线信息
 func GetDeviceOnline(ctx context.Context, deviceID uint64) (*dao.Device, error) {
-	key := deviceInfoKey + strconv.FormatUint(deviceID, 10)
+	key := deviceKey(deviceID)
 	ret, err := redisPkg.RedisClient.HGetAll(ctx, key).Result()
 	if err != nil {
 		if err == redis.Nil {

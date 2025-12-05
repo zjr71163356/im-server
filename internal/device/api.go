@@ -95,6 +95,12 @@ func (s *DeviceIntService) Offline(ctx context.Context, req *devicepb.OfflineReq
 		return nil, status.Error(codes.PermissionDenied, "device does not belong to user")
 	}
 
+	// 幂等：如果数据库已是离线态，仅刷新 Redis 并返回成功
+	if device.Status == OffLine {
+		_ = SetDeviceOffline(ctx, req.DeviceId)
+		return new(emptypb.Empty), nil
+	}
+
 	now := time.Now()
 	if err := s.queries.UpdateDeviceOffline(ctx, dao.UpdateDeviceOfflineParams{
 		UpdatedAt: now,

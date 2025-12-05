@@ -6,54 +6,9 @@ package dao
 
 import (
 	"database/sql"
-	"database/sql/driver"
 	"encoding/json"
-	"fmt"
 	"time"
 )
-
-type OutboxEventsStatus string
-
-const (
-	OutboxEventsStatusPending OutboxEventsStatus = "pending"
-	OutboxEventsStatusSent    OutboxEventsStatus = "sent"
-	OutboxEventsStatusFailed  OutboxEventsStatus = "failed"
-)
-
-func (e *OutboxEventsStatus) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = OutboxEventsStatus(s)
-	case string:
-		*e = OutboxEventsStatus(s)
-	default:
-		return fmt.Errorf("unsupported scan type for OutboxEventsStatus: %T", src)
-	}
-	return nil
-}
-
-type NullOutboxEventsStatus struct {
-	OutboxEventsStatus OutboxEventsStatus `json:"outbox_events_status"`
-	Valid              bool               `json:"valid"` // Valid is true if OutboxEventsStatus is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullOutboxEventsStatus) Scan(value interface{}) error {
-	if value == nil {
-		ns.OutboxEventsStatus, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.OutboxEventsStatus.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullOutboxEventsStatus) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.OutboxEventsStatus), nil
-}
 
 // 会话表（热数据）
 type Conversation struct {
@@ -219,26 +174,6 @@ type MessageIndex struct {
 	CreatedAt time.Time `json:"created_at"`
 	// 更新时间
 	UpdatedAt time.Time `json:"updated_at"`
-}
-
-// Outbox事件表
-type OutboxEvent struct {
-	// 自增主键
-	ID uint64 `json:"id"`
-	// 事件主题
-	Topic string `json:"topic"`
-	// 事件负载
-	Payload json.RawMessage `json:"payload"`
-	// 状态
-	Status NullOutboxEventsStatus `json:"status"`
-	// 重试次数
-	RetryCount sql.NullInt32 `json:"retry_count"`
-	// 下次投递时间
-	NextDeliveryAt sql.NullTime `json:"next_delivery_at"`
-	// 创建时间
-	CreatedAt sql.NullTime `json:"created_at"`
-	// 更新时间
-	UpdatedAt sql.NullTime `json:"updated_at"`
 }
 
 // 序列号

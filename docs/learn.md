@@ -756,24 +756,13 @@ func (s *AuthIntService) KickDevice(ctx context.Context, req *authpb.KickDeviceR
   - 期望：B 的所有在线设备都能收到 Kafka 推来的 deliver 事件，Connect 经 `DeliverToUser` 广播，客户端弹出一条 JSON 消息负载。
 - Kafka 侧验证
   - 在 Kafka 容器里用 console-consumer 订阅 `im.message.deliver`，确认事件确实入了队列。
-- Outbox 兜底链路
-  - 停掉 Kafka，再发消息：MySQL 的 outbox_events 应出现一条待发送记录；启动 Outbox 分发器后应补发到 Kafka。
 - 幂等与多设备
   - 用相同 client_msg_id 重复调用 SendMessage，应只产生一次有效入库/未读+1；B 的多设备应都能收到同一条 deliver。
 
 需要启动的进程:
 
 - Connect（已内置 Kafka 消费并调用 `DeliverToUser` 推送）
-- Message（提供 SendMessage，写 Mongo、Outbox、MySQL，并尝试直发 Kafka）
-- Outbox 分发器（cmd/outbox/main.go，会扫描 outbox_events 并发布到 Kafka）
-- Indexer（可选，cmd/indexer/main.go，用于从 deliver 事件回填 MySQL 索引/未读，保证最终一致性）
-
-你的第二个问题：本项目是否已实现“扫描 outbox 表然后重新发送”？
-
-- 已实现。位置在 main.go：
-  - 周期性查询待发送的 outbox_events
-  - 发布到 `${topic_prefix}.message.deliver`（默认 `im.message.deliver`）
-  - 成功后标记已发送，保证消息最终至少一次投递。
+- Message（提供 SendMessage，写 Mongo、MySQL，并尝试直发 Kafka）
 
 若需要，我可以提供一套具体的测试清单（登录拿 token → 建立两端 WS → 发消息 → 看 Kafka/Connect 日志与客户端收包），或编写一个简单的前端页专门用来发消息与收消息，便于你一键演示整链路。
 
@@ -804,16 +793,12 @@ func (w *kafka.Writer) WriteMessages(ctx context.Context, msgs ...kafka.Message)
 3. **消费者封装**：
    - `broker.NewKafkaConsumer` 创建 `KafkaConsumer`，使用 `GroupID` 和 `GroupTopics` 实现消费者组。
    - `Start(ctx, handler)` 循环调用 `reader.ReadMessage`，并将消息交给业务处理回调。
-4. **Outbox 模式**：
-   - 写入业务数据库后将事件存入 `outbox_events` 表，定时扫描并调用 `Publish` 可靠投递。
-   - 成功后标记已发送，保证消息最终至少一次投递。
-5. **实时投递与回填**：
+4. **实时投递与回填**：
    - Connect 服务直接消费 `im.message.deliver` 并通过 WebSocket 推送给在线设备。
-   - Indexer 服务消费同一主题，将事件回写 MySQL 索引和未读数，实现最终一致性。
-6. **幂等和错误处理**：
-   - 生产者可重试，写失败时保留在 Outbox 继续重试。
+5. **幂等和错误处理**：
+   - 生产者可重试，写失败时记录日志再重试。
    - 消费者侧需捕获 JSON 解析错误、业务错误后跳过或重试。
-7. **监控与扩展**：
+6. **监控与扩展**：
    - 可配合 Kafka 控制台工具（console-consumer、kafka-topics）观察消息流。
    - 在生产者/消费者封装中可添加指标、结构化日志和重试策略，满足高可用需求。
 
@@ -995,52 +980,6 @@ if err != nil {
 达到最大重试次数(3次) -> 返回错误，停止阻塞
 ```
 
-### 在本项目中的实际表现
-
-#### 当前 Outbox 分发器的使用
-
-```go
-// cmd/outbox/main.go 当前实现
-for _, r := range rows {
-    var key json.RawMessage
-
-    // 这里会阻塞直到成功或达到最大重试次数
-    _ = producer.Publish(ctx, producer.Topic(r.Topic), key, r.Payload)
-    //  ^-- 注意：当前代码忽略了错误！
-
-    // 无论成功失败都标记为已发送（这可能有问题）
-    if err := q.MarkOutboxEventSent(ctx, r.ID); err != nil {
-        log.Printf("mark sent failed id=%d: %v", r.ID, err)
-    }
-}
-```
-
-#### 改进版本（处理重试失败）
-
-```go
-// 改进后的 Outbox 分发器
-for _, r := range rows {
-    var key json.RawMessage
-
-    // 正确处理发布结果
-    err := producer.Publish(ctx, producer.Topic(r.Topic), key, r.Payload)
-    if err != nil {
-        log.Printf("publish failed for event %d: %v", r.ID, err)
-
-        // 标记为失败，下次继续重试
-        if markErr := q.MarkOutboxEventFailed(ctx, r.ID); markErr != nil {
-            log.Printf("mark failed error: %v", markErr)
-        }
-        continue
-    }
-
-    // 只有成功时才标记为已发送
-    if err := q.MarkOutboxEventSent(ctx, r.ID); err != nil {
-        log.Printf("mark sent failed id=%d: %v", r.ID, err)
-    }
-}
-```
-
 ### 常见的重试失败场景
 
 #### 网络问题
@@ -1061,6 +1000,6 @@ for _, r := range rows {
 - **阻塞等待**：`WriteMessages` 会一直等待，不会立即返回
 - **成功条件**：所有消息都成功写入 Kafka 并得到确认
 - **失败条件**：经过多次重试后仍然失败，达到配置的最大重试次数
-- **本项目影响**：当前 Outbox 分发器没有正确处理重试失败的情况，建议改进错误处理逻辑
+- **项目提示**：发送失败需有明确重试和告警策略，避免静默丢失
 
 这种设计保证了消息的可靠投递，同时通过重试机制处理临时性故障，是 Kafka 客户端的标准行为。

@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strings"
 
+	"github.com/gofiber/adaptor/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -22,6 +26,7 @@ import (
 // GatewayServer grpc-gateway 服务器
 type GatewayServer struct {
 	mux    *runtime.ServeMux
+	app    *fiber.App
 	config *config.Configuration
 }
 
@@ -55,21 +60,26 @@ func NewGatewayServer(cfg *config.Configuration) *GatewayServer {
 	mux := runtime.NewServeMux(
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{}),
 		runtime.WithErrorHandler(customErrorHandler),
-		// 仅透传 Authorization 头到下游 gRPC metadata（仅凭 token 验证）
-		runtime.WithIncomingHeaderMatcher(func(key string) (string, bool) {
-			switch strings.ToLower(key) {
-			case "authorization":
-				return key, true
-			default:
-				return runtime.DefaultHeaderMatcher(key)
-			}
-		}),
 	)
 
-	return &GatewayServer{
+	app := fiber.New(fiber.Config{
+		DisableStartupMessage: true,
+	})
+	app.Use(recover.New())
+	app.Use(logger.New())
+	app.Use(cors.New())
+
+	g := &GatewayServer{
 		mux:    mux,
+		app:    app,
 		config: cfg,
 	}
+	app.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{"status": "ok", "service": "api-gateway"})
+	})
+	app.All("/*", adaptor.HTTPHandler(g.mux))
+
+	return g
 }
 
 // RegisterHandlers 注册所有 gRPC 服务的 HTTP 处理器
@@ -122,34 +132,7 @@ func (g *GatewayServer) RegisterHandlers() error {
 	return nil
 }
 
-// handleHealth 健康检查端点
-func (g *GatewayServer) handleHealth(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"status":"ok","service":"api-gateway"}`))
-}
-
-// ServeHTTP 实现 http.Handler 接口
-func (g *GatewayServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// 添加 CORS 头
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-	if r.Method == "OPTIONS" {
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	// 健康检查端点
-	if r.URL.Path == "/health" {
-		g.handleHealth(w, r)
-		return
-	}
-
-	// 记录请求
-	log.Printf("%s %s %s", r.Method, r.URL.Path, r.RemoteAddr)
-
-	// 委托给 grpc-gateway
-	g.mux.ServeHTTP(w, r)
+// Listen 启动 Fiber 网关
+func (g *GatewayServer) Listen(port int) error {
+	return g.app.Listen(fmt.Sprintf(":%d", port))
 }
