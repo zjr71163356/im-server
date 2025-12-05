@@ -2,12 +2,17 @@ package main
 
 import (
 	"context"
-	"im-server/internal/device"
-	"im-server/pkg/config"
-	devicepb "im-server/pkg/protocol/pb/devicepb"
+	"database/sql"
+	"log"
 	"log/slog"
 	"net"
 
+	"im-server/internal/device"
+	"im-server/pkg/config"
+	"im-server/pkg/dao"
+	devicepb "im-server/pkg/protocol/pb/devicepb"
+
+	_ "github.com/go-sql-driver/mysql"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -25,6 +30,14 @@ func validationUnaryInterceptor(ctx context.Context, req interface{}, info *grpc
 
 func main() {
 
+	db, err := sql.Open("mysql", config.Config.Database.MySQL.DSN)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+	defer db.Close()
+
+	queries := dao.New(db)
+
 	server := grpc.NewServer(
 		grpc.UnaryInterceptor(validationUnaryInterceptor),
 	)
@@ -33,7 +46,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	devicepb.RegisterDeviceIntServiceServer(server, &device.DeviceIntService{})
+	devicepb.RegisterDeviceIntServiceServer(server, device.NewDeviceIntService(queries))
 	err = server.Serve(listener)
 	if err != nil {
 		slog.Error("serve error", "error", err)

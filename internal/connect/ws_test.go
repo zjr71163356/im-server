@@ -1,7 +1,9 @@
 package connect
 
 import (
+	"fmt"
 	"im-server/pkg/config"
+	"im-server/pkg/jwt"
 	"im-server/pkg/mocks"
 	"im-server/pkg/protocol/pb/connectpb"
 	"im-server/pkg/rpc"
@@ -40,9 +42,16 @@ func TestMockServerSignInFlow(t *testing.T) {
 	go StartWSServer(addr)
 	// 等待服务器启动
 	time.Sleep(100 * time.Millisecond)
+
+	// 准备 JWT（wsHandler 校验）
+	token, err := jwt.GenerateJWT(67890, 12345, []byte(config.Config.JWT.Secret), time.Hour, config.Config.JWT.Issuer, config.Config.JWT.Audience)
+	if err != nil {
+		t.Fatalf("生成 JWT 失败: %v", err)
+	}
+
 	// 3. 发起Http请求连接到 WebSocket
 	// 构造 WebSocket URL，客户端通过这个地址发起 HTTP GET 请求进行协议升级
-	wsURL := "ws://" + addr + "/ws"
+	wsURL := fmt.Sprintf("ws://%s/ws?token=%s", addr, token)
 
 	// websocket.DefaultDialer.Dial 会发起一个 HTTP 请求来建立连接
 	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)

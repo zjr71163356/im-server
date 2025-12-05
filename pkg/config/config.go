@@ -3,6 +3,8 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
 
 	"gopkg.in/yaml.v3"
 )
@@ -14,11 +16,11 @@ var (
 
 // init 函数在程序启动时自动运行，加载配置文件
 func init() {
-	// 注意：为了简单起见，这里硬编码了配置文件路径。
-	// 在生产环境中，最好通过命令行标志或环境变量来传递路径。
-	err := loadConfigFromFile("/home/tyrfly/im-server/config.yaml")
+	configPath, err := resolveConfigPath()
 	if err != nil {
-		// 配置是程序运行的基础，如果加载失败，则直接 panic
+		panic(fmt.Sprintf("加载配置失败: %v", err))
+	}
+	if err := loadConfigFromFile(configPath); err != nil {
 		panic(fmt.Sprintf("加载配置失败: %v", err))
 	}
 }
@@ -49,6 +51,43 @@ func LoadConfig(path string) (*Configuration, error) {
 		return nil, err
 	}
 	return &Config, nil
+}
+
+// resolveConfigPath 通过多种方式寻找配置文件的路径，优先级：
+// 1) 环境变量 IM_CONFIG
+// 2) repo 根目录下的 config.yaml（基于本文件位置推导）
+// 3) 进程工作目录下的 config.yaml
+// 4) 历史硬编码路径（兼容旧脚本）
+func resolveConfigPath() (string, error) {
+	if envPath := os.Getenv("IM_CONFIG"); envPath != "" {
+		if _, err := os.Stat(envPath); err == nil {
+			return envPath, nil
+		}
+	}
+
+	candidates := []string{}
+	if _, filename, _, ok := runtime.Caller(0); ok {
+		base := filepath.Dir(filename)
+		candidates = append(candidates, filepath.Join(base, "..", "..", "config.yaml"))
+	}
+	candidates = append(candidates,
+		"config.yaml",
+		"/home/tyrfly/im-server/config.yaml",
+	)
+
+	for _, p := range candidates {
+		if p == "" {
+			continue
+		}
+		if abs, err := filepath.Abs(p); err == nil {
+			p = abs
+		}
+		if _, err := os.Stat(p); err == nil {
+			return p, nil
+		}
+	}
+
+	return "", fmt.Errorf("配置文件不存在，尝试路径: %v", candidates)
 }
 
 // generateGRPCClientConfig 根据加载的服务配置动态生成 gRPC 客户端的目标地址
